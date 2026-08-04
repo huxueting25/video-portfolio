@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: portfolio
+    runtime: node
+    buildCommand: npm install
+    startCommand: node server-cloud.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_TOKEN
+        sync: false
+      - key: PORTFOLIO_TOKEN
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false

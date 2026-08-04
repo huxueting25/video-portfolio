@@ -1,0 +1,209 @@
+/* ========== 展示页面专用样式 ========== */
+:root {
+  --bg: #0a0a14;
+  --bg-card: #141428;
+  --border: #2a2a44;
+  --text: #e8e8e8;
+  --text-muted: #777;
+  --accent: #e94560;
+  --accent-soft: rgba(233, 69, 96, 0.15);
+  --radius: 16px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.4);
+  --max-width: 960px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* ========== 加载 ========== */
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 24px;
+  color: var(--text-muted);
+}
+
+.loading-animation {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pulse-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  animation: pulse 1.5s ease-out infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+.error-screen {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.error-screen .small { font-size: 13px; color: var(--text-muted); }
+
+/* ========== 导航 ========== */
+.showcase-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 32px;
+  background: rgba(10, 10, 20, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-brand { font-weight: 600; font-size: 16px; }
+
+.badge-private {
+  background: var(--accent-soft);
+  color: var(--accent);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid rgba(233, 69, 96, 0.3);
+}
+
+/* ========== 主内容 ========== */
+.showcase-main {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 48px 32px 64px;
+}
+
+/* ========== 视频英雄区 ========== */
+.hero-section {
+  margin-bottom: 40px;
+}
+
+.video-container {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #000;
+  box-shadow: var(--shadow);
+  aspect-ratio: 16 / 9;
+}
+
+.video-container video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.video-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: opacity 0.3s;
+}
+
+.play-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s;
+  filter: drop-shadow(0 4px 12px rgba(233, 69, 96, 0.4));
+}
+
+.play-btn:hover { transform: scale(1.1); }
+
+/* ========== 作品信息 ========== */
+.info-section {
+  padding: 0 4px;
+}
+
+.work-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+}
+
+.work-description {
+  color: var(--text-muted);
+  font-size: 16px;
+  margin-bottom: 24px;
+  max-width: 640px;
+  line-height: 1.8;
+}
+
+.work-meta {
+  display: flex;
+  gap: 16px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.meta-date::before { content: '📅 '; }
+
+/* ========== 底部 ========== */
+.showcase-footer {
+  text-align: center;
+  padding: 32px;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-top: 64px;
+}
+
+.footer-note {
+  margin-top: 8px;
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+/* ========== 背景装饰 ========== */
+body::before {
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(ellipse at 20% 50%, rgba(233, 69, 96, 0.05) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 50%, rgba(78, 204, 163, 0.03) 0%, transparent 50%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* ========== 移动端 ========== */
+@media (max-width: 640px) {
+  .showcase-main { padding: 24px 16px 48px; }
+  .work-title { font-size: 22px; }
+  .work-description { font-size: 14px; }
+  .showcase-nav { padding: 16px; }
+}

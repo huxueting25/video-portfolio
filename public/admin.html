@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <title>作品集管理</title>
+  <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+  <div id="app">
+    <!-- 登录界面 -->
+    <div id="login-view" class="view active">
+      <div class="login-card">
+        <div class="login-logo">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <rect width="48" height="48" rx="12" fill="#1a1a2e"/>
+            <path d="M16 14L36 24L16 34V14Z" fill="#e94560"/>
+          </svg>
+        </div>
+        <h1>作品集管理</h1>
+        <p class="login-subtitle">私密视频作品集 · 仅分享链接可访问</p>
+        <form id="login-form">
+          <input type="password" id="password-input" placeholder="输入管理密码" autocomplete="off">
+          <button type="submit" class="btn-primary btn-block">登录</button>
+          <p id="login-error" class="error-text" style="display:none"></p>
+        </form>
+      </div>
+    </div>
+
+    <!-- 管理界面 -->
+    <div id="admin-view" class="view">
+      <header class="admin-header">
+        <div class="header-left">
+          <svg width="32" height="32" viewBox="0 0 48 48" fill="none">
+            <rect width="48" height="48" rx="12" fill="#1a1a2e"/>
+            <path d="M16 14L36 24L16 34V14Z" fill="#e94560"/>
+          </svg>
+          <h2>我的作品集</h2>
+        </div>
+        <div class="header-right">
+          <button id="btn-export" class="btn-icon" title="导出数据">📤</button>
+          <button id="btn-settings" class="btn-icon" title="设置">⚙️</button>
+          <button id="btn-logout" class="btn-icon" title="退出">🚪</button>
+        </div>
+      </header>
+
+      <main class="admin-main">
+        <!-- 作品集分享链接 -->
+        <div class="portfolio-link-bar">
+          <span class="link-label">📎 发给面试官的链接</span>
+          <div class="link-row">
+            <input type="text" id="portfolio-link" readonly class="link-input">
+            <button class="btn-primary btn-sm" onclick="copyPortfolioLink()">复制链接</button>
+            <button class="btn-secondary btn-sm" onclick="regeneratePortfolioToken()">🔄 换新链接</button>
+          </div>
+          <p class="link-hint">面试官通过此链接可查看所有作品，旧链接失效后无法访问</p>
+        </div>
+
+        <!-- 操作栏 -->
+        <div class="section-title">
+          <h3>我的作品 (<span id="work-count">0</span>)</h3>
+          <button id="btn-add" class="btn-primary btn-sm">+ 上传新作品</button>
+        </div>
+
+        <!-- 作品列表 -->
+        <div id="works-list" class="works-list"></div>
+        <div id="empty-state" class="empty-state" style="display:none">
+          <div class="empty-icon">🎬</div>
+          <p>还没有作品</p>
+          <p class="empty-sub">点击上方「+ 上传新作品」开始</p>
+        </div>
+      </main>
+
+      <!-- 上传/编辑弹窗 -->
+      <div id="modal-upload" class="modal" style="display:none">
+        <div class="modal-content modal-lg">
+          <div class="modal-header">
+            <h3 id="modal-title">上传新作品</h3>
+            <button class="btn-close" onclick="closeUploadModal()">✕</button>
+          </div>
+          <form id="upload-form">
+            <input type="hidden" id="edit-id">
+            <div class="modal-body">
+              <div class="form-group">
+                <label>作品标题</label>
+                <input type="text" id="work-title" placeholder="例如：色轮转场动画" required>
+              </div>
+
+              <div class="form-group">
+                <label>作品描述</label>
+                <textarea id="work-description" rows="3" placeholder="简短描述作品内容、技术手段..."></textarea>
+              </div>
+
+              <div class="form-group" id="upload-area">
+                <label>视频文件</label>
+                <div class="upload-drop" id="drop-zone">
+                  <input type="file" id="video-file" accept=".mp4,.webm,.mov,.avi,.mkv" style="display:none">
+                  <div class="upload-hint" id="upload-hint">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                      <path d="M20 8V28M12 16L20 8L28 16" stroke="#888" stroke-width="2" stroke-linecap="round"/>
+                      <path d="M6 28V32C6 34 8 36 10 36H30C32 36 34 34 34 32V28" stroke="#888" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <p>点击或拖拽上传视频</p>
+                    <p class="small">支持 MP4/WebM/MOV，最大 500MB</p>
+                  </div>
+                  <div class="upload-progress" id="upload-progress" style="display:none">
+                    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+                    <p id="upload-status">上传中...</p>
+                  </div>
+                  <div class="upload-done" id="upload-done" style="display:none">
+                    <p>✅ <span id="uploaded-name"></span> 已上传</p>
+                    <button class="btn-text" onclick="clearUpload()">重新选择</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 编辑模式：替换视频区域 -->
+              <div class="form-group" id="replace-video-area" style="display:none">
+                <label>当前视频</label>
+                <div class="current-video-info" style="margin-bottom:10px;">
+                  <p id="current-video-name" style="color:var(--text-secondary);font-size:13px;">—</p>
+                </div>
+                <label>替换视频</label>
+                <div class="upload-drop" id="replace-drop-zone">
+                  <input type="file" id="replace-video-file" accept=".mp4,.webm,.mov,.avi,.mkv" style="display:none">
+                  <div class="upload-hint" id="replace-upload-hint">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                      <path d="M20 8V28M12 16L20 8L28 16" stroke="#888" stroke-width="2" stroke-linecap="round"/>
+                      <path d="M6 28V32C6 34 8 36 10 36H30C32 36 34 34 34 32V28" stroke="#888" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <p>点击或拖拽替换视频</p>
+                    <p class="small">上传后自动替换原视频，不可撤销</p>
+                  </div>
+                  <div class="upload-progress" id="replace-upload-progress" style="display:none">
+                    <div class="progress-bar"><div class="progress-fill" id="replace-progress-fill"></div></div>
+                    <p id="replace-upload-status">替换中...</p>
+                  </div>
+                  <div class="upload-done" id="replace-upload-done" style="display:none">
+                    <p>✅ <span id="replace-uploaded-name"></span> 已替换</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>封面图</label>
+                <div id="cover-preview-area" style="margin-bottom:12px;">
+                  <div id="cover-preview-empty" class="cover-empty">
+                    <p>暂无封面，点下方按钮从视频中选帧</p>
+                  </div>
+                  <div id="cover-preview-img" style="display:none;">
+                    <img id="cover-img" style="width:100%;max-height:200px;object-fit:contain;border-radius:8px;border:1px solid var(--border);">
+                    <button class="btn-danger btn-xs" style="margin-top:8px;" onclick="clearCover()">✕ 删除封面</button>
+                  </div>
+                </div>
+                <div id="frame-picker-area" style="margin-bottom:12px;">
+                  <div class="frame-picker-header">
+                    <span style="font-size:13px;color:var(--text-secondary);">从视频中选一帧做封面</span>
+                    <button class="btn-primary btn-xs" onclick="openFramePicker()">🎬 选帧截取</button>
+                  </div>
+                </div>
+                <input type="hidden" id="work-cover" value="">
+                <input type="hidden" id="work-cover-filename" value="">
+                <input type="hidden" id="work-video-url" value="">
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn-secondary" onclick="closeUploadModal()">取消</button>
+              <button type="submit" class="btn-primary">💾 保存作品</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- 设置弹窗 -->
+      <div id="modal-settings" class="modal" style="display:none">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>设置</h3>
+            <button class="btn-close" onclick="closeSettings()">✕</button>
+          </div>
+          <form id="settings-form">
+            <div class="modal-body">
+              <div class="form-group">
+                <label>修改管理密码</label>
+                <input type="password" id="new-password" placeholder="新密码（至少6位）">
+              </div>
+              <div class="form-group">
+                <label>确认新密码</label>
+                <input type="password" id="confirm-password" placeholder="再次输入新密码">
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn-secondary" onclick="closeSettings()">取消</button>
+              <button type="submit" class="btn-primary">保存</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- 选帧弹窗 -->
+      <div id="modal-framepicker" class="modal" style="display:none">
+        <div class="modal-content modal-lg">
+          <div class="modal-header">
+            <h3>从视频中选帧做封面</h3>
+            <button class="btn-close" onclick="closeFramePicker()">✕</button>
+          </div>
+          <div class="modal-body">
+            <div class="frame-picker-video-wrap">
+              <video id="frame-picker-video" controls preload="auto" style="width:100%;max-height:400px;border-radius:8px;"></video>
+              <p class="frame-picker-tip">拖动进度条到你想截取的位置，然后暂停，点下方「截取当前帧」</p>
+            </div>
+            <div style="display:flex;gap:12px;justify-content:center;margin-top:16px;">
+              <button class="btn-primary" onclick="captureFrame()">📸 截取当前帧</button>
+              <button class="btn-secondary" onclick="closeFramePicker()">取消</button>
+            </div>
+            <div id="frame-captured-preview" style="display:none;margin-top:20px;text-align:center;">
+              <p style="font-size:13px;color:var(--success);margin-bottom:12px;">✅ 已截取，确认使用这张做封面？</p>
+              <img id="frame-captured-img" style="width:100%;max-height:200px;object-fit:contain;border-radius:8px;border:1px solid var(--border);">
+              <div style="display:flex;gap:12px;justify-content:center;margin-top:16px;">
+                <button class="btn-primary" onclick="confirmFrame()">确认使用</button>
+                <button class="btn-secondary" onclick="recaptureFrame()">重新选帧</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========== 状态管理 ==========
+    let adminToken = '';
+    let currentWorks = [];
+    let uploadedFile = null;
+    let portfolioToken = '';
+
+    // ========== 登录 ==========
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const password = document.getElementById('password-input').value;
+      const errEl = document.getElementById('login-error');
+      errEl.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+        const data = await res.json();
+        if (data.success) {
+          adminToken = data.token;
+          localStorage.setItem('adminToken', adminToken);
+          showAdminView();
+          loadWorks();
+          loadPortfolioConfig();
+        } else {
+          errEl.textContent = data.error;
+          errEl.style.display = 'block';
+        }
+      } catch (err) {
+        errEl.textContent = '连接失败';
+        errEl.style.display = 'block';
+      }
+    });
+
+    // 自动登录
+    (function autoLogin() {
+      const saved = localStorage.getItem('adminToken');
+      if (saved) {
+        adminToken = saved;
+        fetch('/api/works', { headers: { 'X-Admin-Token': saved } })
+          .then(res => {
+            if (res.ok) {
+              showAdminView();
+              loadWorks();
+              loadPortfolioConfig();
+            } else {
+              localStorage.removeItem('adminToken');
+            }
+          })
+          .catch(() => {});
+      }
+    })();
+
+    // ========== 作品集链接 ==========
+    async function loadPortfolioConfig() {
+      try {
+        const res = await fetch('/api/config', { headers: { 'X-Admin-Token': adminToken } });
+        const data = await res.json();
+        portfolioToken = data.portfolioToken;
+        document.getElementById('portfolio-link').value = `${window.location.origin}/portfolio?p=${portfolioToken}`;
+      } catch (e) {}
+    }
+
+    function copyPortfolioLink() {
+      const link = document.getElementById('portfolio-link').value;
+      navigator.clipboard.writeText(link).then(() => {
+        showToast('✅ 作品集链接已复制');
+      }).catch(() => {
+        prompt('请手动复制链接:', link);
+      });
+    }
+
+    async function regeneratePortfolioToken() {
+      if (!confirm('重新生成后，旧链接将失效。面试官需要用新链接才能访问。确定？')) return;
+      const res = await fetch('/api/regenerate-portfolio-token', {
+        method: 'POST',
+        headers: { 'X-Admin-Token': adminToken }
+      });
+      const data = await res.json();
+      if (data.success) {
+        portfolioToken = data.portfolioToken;
+        document.getElementById('portfolio-link').value = `${window.location.origin}/portfolio?p=${portfolioToken}`;
+        showToast('✅ 链接已更新，请复制新链接');
+      }
+    }
+
+    function showAdminView() {
+      document.getElementById('login-view').classList.remove('active');
+      document.getElementById('admin-view').classList.add('active');
+    }
+
+    // ========== 作品列表 ==========
+    async function loadWorks() {
+      const res = await fetch('/api/works', { headers: { 'X-Admin-Token': adminToken } });
+      currentWorks = await res.json();
+      renderWorks();
+    }
+
+    function renderWorks() {
+      const container = document.getElementById('works-list');
+      const empty = document.getElementById('empty-state');
+      document.getElementById('work-count').textContent = currentWorks.length;
+
+      if (currentWorks.length === 0) {
+        container.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+
+      empty.style.display = 'none';
+      container.innerHTML = currentWorks.sort((a, b) => a.order - b.order).map(w => `
+        <div class="work-item" data-id="${w.id}" draggable="true">
+          <div class="drag-handle" title="拖拽排序">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <circle cx="4" cy="3" r="1.5"/><circle cx="12" cy="3" r="1.5"/>
+              <circle cx="4" cy="8" r="1.5"/><circle cx="12" cy="8" r="1.5"/>
+              <circle cx="4" cy="13" r="1.5"/><circle cx="12" cy="13" r="1.5"/>
+            </svg>
+          </div>
+          <div class="work-preview" onmouseenter="previewHoverEnter('${w.id}', this)" onmouseleave="previewHoverLeave('${w.id}', this)">
+            ${w.coverUrl
+              ? `<img src="${w.coverUrl}" class="preview-cover" data-work-id="${w.id}" style="width:100%;height:100%;object-fit:contain;border-radius:8px;" crossorigin="anonymous">`
+              : ''
+            }
+            <video
+              src="${w.videoUrl || ''}"
+              preload="metadata"
+              muted
+              onclick="this.paused ? this.play() : this.pause()"
+              class="preview-video"
+              data-work-id="${w.id}"
+              style="width:100%;height:100%;object-fit:contain;border-radius:8px;cursor:pointer;${w.coverUrl ? 'display:none;' : ''}"
+            ></video>
+            <div class="play-overlay" onclick="previewFullscreen('${w.id}')">🔍</div>
+          </div>
+          <div class="work-detail">
+            <h4 class="work-title-text">${w.title}</h4>
+            <p class="work-desc-text">${w.description || '暂无描述'}</p>
+            <p class="work-date">${formatDate(w.createdAt)}</p>
+            <div class="work-btns">
+              <button class="btn-primary btn-xs" onclick="editWork('${w.id}')">✏️ 编辑</button>
+              <button class="btn-secondary btn-xs" onclick="copyShareLink('${w.shareToken}')">📋 单个链接</button>
+              <button class="btn-danger btn-xs" onclick="deleteWork('${w.id}')">🗑 删除</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      initDragSort();
+    }
+
+    function formatDate(d) {
+      if (!d) return '';
+      return new Date(d).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function previewFullscreen(id) {
+      const work = currentWorks.find(w => w.id === id);
+      if (!work) return;
+      const url = `/share?s=${work.shareToken}`;
+      window.open(url, '_blank');
+    }
+
+    function previewHoverEnter(id, el) {
+      const work = currentWorks.find(w => w.id === id);
+      if (!work || !work.coverUrl) return;
+      const cover = el.querySelector('.preview-cover');
+      const video = el.querySelector('.preview-video');
+      if (cover) cover.style.display = 'none';
+      if (video) { video.style.display = 'block'; video.play(); }
+    }
+
+    function previewHoverLeave(id, el) {
+      const work = currentWorks.find(w => w.id === id);
+      if (!work || !work.coverUrl) return;
+      const cover = el.querySelector('.preview-cover');
+      const video = el.querySelector('.preview-video');
+      if (video) { video.pause(); video.currentTime = 0; video.style.display = 'none'; }
+      if (cover) cover.style.display = 'block';
+    }
+
+    function copyShareLink(token) {
+      const url = `${window.location.origin}/share?s=${token}`;
+      navigator.clipboard.writeText(url).then(() => {
+        showToast('✅ 单个作品链接已复制');
+      }).catch(() => {
+        prompt('请手动复制:', url);
+      });
+    }
+
+    function showToast(msg) {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // ========== 上传弹窗 ==========
+    document.getElementById('btn-add').addEventListener('click', () => {
+      uploadedFile = null;
+      resetUploadForm();
+      document.getElementById('modal-upload').style.display = 'flex';
+    });
+
+    function resetUploadForm() {
+      document.getElementById('edit-id').value = '';
+      document.getElementById('work-title').value = '';
+      document.getElementById('work-description').value = '';
+      document.getElementById('work-cover').value = '';
+      document.getElementById('work-cover-filename').value = '';
+      document.getElementById('work-video-url').value = '';
+      document.getElementById('cover-preview-empty').style.display = 'block';
+      document.getElementById('cover-preview-img').style.display = 'none';
+      document.getElementById('upload-area').style.display = 'block';
+      document.getElementById('replace-video-area').style.display = 'none';
+      document.getElementById('upload-hint').style.display = 'flex';
+      document.getElementById('upload-progress').style.display = 'none';
+      document.getElementById('upload-done').style.display = 'none';
+      document.getElementById('replace-upload-hint').style.display = 'flex';
+      document.getElementById('replace-upload-progress').style.display = 'none';
+      document.getElementById('replace-upload-done').style.display = 'none';
+      document.getElementById('modal-title').textContent = '上传新作品';
+    }
+
+    function closeUploadModal() {
+      document.getElementById('modal-upload').style.display = 'none';
+    }
+
+    // 拖拽上传
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('video-file');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files.length) uploadVideo(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) uploadVideo(fileInput.files[0]);
+    });
+
+    async function uploadVideo(file) {
+      document.getElementById('upload-hint').style.display = 'none';
+      document.getElementById('upload-progress').style.display = 'block';
+
+      const formData = new FormData();
+      formData.append('video', file);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/upload');
+      xhr.setRequestHeader('X-Admin-Token', adminToken);
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const pct = Math.round(e.loaded / e.total * 100);
+          document.getElementById('progress-fill').style.width = pct + '%';
+          document.getElementById('upload-status').textContent = `上传中... ${pct}%`;
+        }
+      };
+
+      xhr.onload = () => {
+        const data = JSON.parse(xhr.responseText);
+        if (data.success) {
+          uploadedFile = data;
+          document.getElementById('upload-progress').style.display = 'none';
+          document.getElementById('upload-done').style.display = 'block';
+          document.getElementById('uploaded-name').textContent = data.originalName;
+          if (!document.getElementById('work-title').value) {
+            document.getElementById('work-title').value = data.originalName.replace(/\.\w+$/, '');
+          }
+        } else {
+          document.getElementById('upload-status').textContent = '上传失败: ' + data.error;
+        }
+      };
+
+      xhr.onerror = () => {
+        document.getElementById('upload-status').textContent = '上传失败，网络错误';
+      };
+
+      xhr.send(formData);
+    }
+
+    function clearUpload() {
+      uploadedFile = null;
+      fileInput.value = '';
+      document.getElementById('upload-hint').style.display = 'flex';
+      document.getElementById('upload-progress').style.display = 'none';
+      document.getElementById('upload-done').style.display = 'none';
+    }
+
+    // 保存作品
+    document.getElementById('upload-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const editId = document.getElementById('edit-id').value;
+      const payload = {
+        title: document.getElementById('work-title').value,
+        description: document.getElementById('work-description').value,
+        coverUrl: document.getElementById('work-cover').value,
+        coverFilename: document.getElementById('work-cover-filename').value,
+      };
+
+      if (!editId) {
+        if (!uploadedFile) {
+          showToast('⚠️ 请先上传视频文件');
+          return;
+        }
+        payload.filename = uploadedFile.filename;
+        payload.originalName = uploadedFile.originalName;
+        payload.videoUrl = uploadedFile.videoUrl;
+      }
+
+      if (editId) payload.id = editId;
+
+      const res = await fetch('/api/works', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': adminToken },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        closeUploadModal();
+        loadWorks();
+        showToast('✅ 作品已保存');
+      } else {
+        showToast('⚠️ ' + data.error);
+      }
+    });
+
+    // 编辑作品
+    function editWork(id) {
+      const work = currentWorks.find(w => w.id === id);
+      if (!work) return;
+      document.getElementById('edit-id').value = work.id;
+      document.getElementById('work-title').value = work.title;
+      document.getElementById('work-description').value = work.description || '';
+      document.getElementById('work-video-url').value = work.videoUrl || '';
+      document.getElementById('modal-title').textContent = '编辑作品：' + work.title;
+      document.getElementById('upload-area').style.display = 'none';
+      document.getElementById('replace-video-area').style.display = 'block';
+      document.getElementById('current-video-name').textContent = work.originalName || work.filename;
+      document.getElementById('replace-upload-hint').style.display = 'flex';
+      document.getElementById('replace-upload-progress').style.display = 'none';
+      document.getElementById('replace-upload-done').style.display = 'none';
+      uploadedFile = null;
+      restoreCoverPreview(work);
+      document.getElementById('modal-upload').style.display = 'flex';
+    }
+
+    // 删除作品
+    async function deleteWork(id) {
+      if (!confirm('确定删除这个作品？视频也会一起删掉，不可恢复。')) return;
+      const res = await fetch(`/api/works/${id}`, {
+        method: 'DELETE',
+        headers: { 'X-Admin-Token': adminToken }
+      });
+      const data = await res.json();
+      if (data.success) {
+        loadWorks();
+        showToast('✅ 作品已删除');
+      }
+    }
+
+    // ========== 设置 ==========
+    document.getElementById('btn-settings').addEventListener('click', () => {
+      document.getElementById('modal-settings').style.display = 'flex';
+    });
+    function closeSettings() {
+      document.getElementById('modal-settings').style.display = 'none';
+    }
+    document.getElementById('settings-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const newPw = document.getElementById('new-password').value;
+      const confirmPw = document.getElementById('confirm-password').value;
+      if (newPw !== confirmPw) { showToast('⚠️ 两次密码不一致'); return; }
+      if (newPw.length < 6) { showToast('⚠️ 密码至少6位'); return; }
+
+      const res = await fetch('/api/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': adminToken },
+        body: JSON.stringify({ newPassword: newPw })
+      });
+      const data = await res.json();
+      if (data.success) {
+        closeSettings();
+        showToast('✅ 密码已修改');
+      } else {
+        showToast('⚠️ ' + data.error);
+      }
+    });
+
+    // 导出数据
+    document.getElementById('btn-export').addEventListener('click', async () => {
+      const res = await fetch('/api/export', { headers: { 'X-Admin-Token': adminToken } });
+      const data = await res.json();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'portfolio-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('✅ 数据已导出');
+    });
+
+    // 退出登录
+    document.getElementById('btn-logout').addEventListener('click', () => {
+      adminToken = '';
+      localStorage.removeItem('adminToken');
+      document.getElementById('admin-view').classList.remove('active');
+      document.getElementById('login-view').classList.add('active');
+    });
+
+    // ========== 拖拽排序 ==========
+    let dragSrcId = null;
+
+    function initDragSort() {
+      const items = document.querySelectorAll('.work-item[draggable]');
+      items.forEach(item => {
+        const handle = item.querySelector('.drag-handle');
+        if (handle) {
+          handle.addEventListener('mousedown', () => { item.setAttribute('draggable', 'true'); });
+        }
+
+        item.addEventListener('dragstart', (e) => {
+          dragSrcId = item.dataset.id;
+          item.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', dragSrcId);
+        });
+
+        item.addEventListener('dragend', () => {
+          item.classList.remove('dragging');
+          dragSrcId = null;
+          document.querySelectorAll('.work-item').forEach(el => el.classList.remove('drag-over'));
+        });
+
+        item.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          if (item.dataset.id !== dragSrcId) {
+            item.classList.add('drag-over');
+          }
+        });
+
+        item.addEventListener('dragleave', () => {
+          item.classList.remove('drag-over');
+        });
+
+        item.addEventListener('drop', (e) => {
+          e.preventDefault();
+          item.classList.remove('drag-over');
+          const targetId = item.dataset.id;
+          if (dragSrcId && dragSrcId !== targetId) {
+            const container = document.getElementById('works-list');
+            const srcEl = container.querySelector(`[data-id="${dragSrcId}"]`);
+            const targetEl = container.querySelector(`[data-id="${targetId}"]`);
+            const allItems = [...container.querySelectorAll('.work-item')];
+            const srcIdx = allItems.indexOf(srcEl);
+            const tgtIdx = allItems.indexOf(targetEl);
+            if (srcIdx < tgtIdx) {
+              container.insertBefore(srcEl, targetEl.nextSibling);
+            } else {
+              container.insertBefore(srcEl, targetEl);
+            }
+            const newOrder = [...container.querySelectorAll('.work-item')].map(el => el.dataset.id);
+            saveOrder(newOrder);
+          }
+        });
+      });
+    }
+
+    async function saveOrder(order) {
+      const res = await fetch('/api/works/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': adminToken },
+        body: JSON.stringify({ order })
+      });
+      const data = await res.json();
+      if (data.success) {
+        currentWorks.sort((a, b) => {
+          const aIdx = order.indexOf(a.id);
+          const bIdx = order.indexOf(b.id);
+          return aIdx - bIdx;
+        });
+        currentWorks.forEach((w, i) => w.order = i);
+        showToast('✅ 排序已保存');
+      } else {
+        showToast('⚠️ 排序保存失败');
+      }
+    }
+
+    // ========== 视频选帧截取封面 ==========
+    let framePickerWorkId = null;
+    let capturedBlob = null;
+
+    function openFramePicker() {
+      const editId = document.getElementById('edit-id').value;
+      if (!editId && !uploadedFile) {
+        showToast('⚠️ 请先上传视频再选帧');
+        return;
+      }
+      const video = document.getElementById('frame-picker-video');
+      if (editId) {
+        const work = currentWorks.find(w => w.id === editId);
+        if (!work) return;
+        framePickerWorkId = editId;
+        video.src = work.videoUrl;
+      } else {
+        framePickerWorkId = null;
+        video.src = uploadedFile.videoUrl;
+      }
+      video.currentTime = 0;
+      document.getElementById('frame-captured-preview').style.display = 'none';
+      capturedBlob = null;
+      document.getElementById('modal-framepicker').style.display = 'flex';
+    }
+
+    function closeFramePicker() {
+      document.getElementById('frame-picker-video').pause();
+      document.getElementById('modal-framepicker').style.display = 'none';
+    }
+
+    function captureFrame() {
+      const video = document.getElementById('frame-picker-video');
+      if (!video.paused) video.pause();
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => {
+        capturedBlob = blob;
+        document.getElementById('frame-captured-img').src = URL.createObjectURL(blob);
+        document.getElementById('frame-captured-preview').style.display = 'block';
+      }, 'image/jpeg', 0.92);
+    }
+
+    function recaptureFrame() {
+      capturedBlob = null;
+      document.getElementById('frame-captured-preview').style.display = 'none';
+    }
+
+    async function confirmFrame() {
+      if (!capturedBlob) return;
+      const formData = new FormData();
+      formData.append('cover', capturedBlob, 'cover.jpg');
+      const res = await fetch('/api/upload-cover', {
+        method: 'POST',
+        headers: { 'X-Admin-Token': adminToken },
+        body: formData
+      });
+      const data = await res.json();
+      if (!data.success) {
+        showToast('⚠️ 封面上传失败：' + (data.error || '未知错误'));
+        return;
+      }
+
+      document.getElementById('work-cover').value = data.coverUrl;
+      document.getElementById('work-cover-filename').value = data.coverFilename;
+      document.getElementById('cover-preview-empty').style.display = 'none';
+      document.getElementById('cover-preview-img').style.display = 'block';
+      document.getElementById('cover-img').src = data.coverUrl;
+      closeFramePicker();
+
+      // 编辑已有作品时自动保存
+      const editId = document.getElementById('edit-id').value;
+      if (editId) {
+        const work = currentWorks.find(w => w.id === editId);
+        const saveRes = await fetch('/api/works', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Token': adminToken },
+          body: JSON.stringify({
+            id: editId,
+            title: work.title,
+            description: work.description || '',
+            coverUrl: data.coverUrl,
+            coverFilename: data.coverFilename
+          })
+        });
+        const saveData = await saveRes.json();
+        if (saveData.success) {
+          closeUploadModal();
+          loadWorks();
+          showToast('✅ 封面已保存');
+        } else {
+          showToast('⚠️ 封面截取成功但保存失败');
+        }
+      } else {
+        showToast('✅ 封面已截取，请填写标题后点「保存作品」');
+      }
+    }
+
+    function clearCover() {
+      document.getElementById('work-cover').value = '';
+      document.getElementById('work-cover-filename').value = '';
+      document.getElementById('cover-preview-empty').style.display = 'block';
+      document.getElementById('cover-preview-img').style.display = 'none';
+    }
+
+    function restoreCoverPreview(work) {
+      if (work.coverUrl) {
+        document.getElementById('cover-preview-empty').style.display = 'none';
+        document.getElementById('cover-preview-img').style.display = 'block';
+        document.getElementById('cover-img').src = work.coverUrl;
+        document.getElementById('work-cover').value = work.coverUrl;
+        document.getElementById('work-cover-filename').value = work.coverFilename || '';
+      } else {
+        document.getElementById('cover-preview-empty').style.display = 'block';
+        document.getElementById('cover-preview-img').style.display = 'none';
+        document.getElementById('work-cover').value = '';
+        document.getElementById('work-cover-filename').value = '';
+      }
+    }
+
+    // ========== 替换视频（编辑模式） ==========
+    const replaceDropZone = document.getElementById('replace-drop-zone');
+    const replaceFileInput = document.getElementById('replace-video-file');
+
+    replaceDropZone.addEventListener('click', () => replaceFileInput.click());
+    replaceDropZone.addEventListener('dragover', (e) => { e.preventDefault(); replaceDropZone.classList.add('dragover'); });
+    replaceDropZone.addEventListener('dragleave', () => replaceDropZone.classList.remove('dragover'));
+    replaceDropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      replaceDropZone.classList.remove('dragover');
+      if (e.dataTransfer.files.length) replaceVideo(e.dataTransfer.files[0]);
+    });
+    replaceFileInput.addEventListener('change', () => {
+      if (replaceFileInput.files.length) replaceVideo(replaceFileInput.files[0]);
+    });
+
+    async function replaceVideo(file) {
+      const editId = document.getElementById('edit-id').value;
+      if (!editId) return;
+
+      document.getElementById('replace-upload-hint').style.display = 'none';
+      document.getElementById('replace-upload-progress').style.display = 'block';
+
+      const formData = new FormData();
+      formData.append('video', file);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/replace-video/' + editId);
+      xhr.setRequestHeader('X-Admin-Token', adminToken);
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const pct = Math.round(e.loaded / e.total * 100);
+          document.getElementById('replace-progress-fill').style.width = pct + '%';
+          document.getElementById('replace-upload-status').textContent = `替换中... ${pct}%`;
+        }
+      };
+
+      xhr.onload = () => {
+        const data = JSON.parse(xhr.responseText);
+        if (data.success) {
+          document.getElementById('replace-upload-progress').style.display = 'none';
+          document.getElementById('replace-upload-done').style.display = 'block';
+          document.getElementById('replace-uploaded-name').textContent = data.work.originalName;
+          document.getElementById('current-video-name').textContent = data.work.originalName;
+          const idx = currentWorks.findIndex(w => w.id === editId);
+          if (idx !== -1) currentWorks[idx] = data.work;
+          showToast('✅ 视频已替换');
+        } else {
+          document.getElementById('replace-upload-status').textContent = '替换失败: ' + data.error;
+        }
+      };
+
+      xhr.onerror = () => {
+        document.getElementById('replace-upload-status').textContent = '替换失败，网络错误';
+      };
+
+      xhr.send(formData);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="googlebot" content="noindex, nofollow, noarchive">
+  <title>作品集</title>
+  <link rel="stylesheet" href="/static/css/portfolio.css">
+</head>
+<body>
+  <div id="app">
+    <div id="loading" class="loading-screen">
+      <div class="loading-animation">
+        <div class="pulse-ring"></div>
+        <svg width="40" height="40" viewBox="0 0 48 48" fill="none">
+          <path d="M16 14L36 24L16 34V14Z" fill="#e94560"/>
+        </svg>
+      </div>
+      <p>正在加载作品集...</p>
+    </div>
+
+    <div id="portfolio" style="display:none">
+      <nav class="nav">
+        <div class="nav-brand">胡雪婷 · 作品集</div>
+        <div class="badge-private">🔒 私密分享</div>
+      </nav>
+
+      <main class="main">
+        <div class="hero-text">
+          <h1>作品集</h1>
+          <p class="hero-sub">跨媒体与动画艺术 · 数字化交互表达</p>
+        </div>
+
+        <div id="works-grid" class="works-grid"></div>
+      </main>
+
+      <footer class="footer">
+        <p>此页面通过私密链接分享，仅供指定收件人查看</p>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const tokenParam = params.get('p') || params.get('s');
+    const tokenKey = params.get('p') ? 'p' : 's';
+
+    if (!tokenParam) {
+      document.getElementById('loading').innerHTML = '<p>访问需要有效的分享链接</p>';
+    } else {
+      fetch(`/api/portfolio-data?${tokenKey}=${tokenParam}`)
+        .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+        .then(works => {
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('portfolio').style.display = 'block';
+
+          if (!works.length) {
+            document.getElementById('works-grid').innerHTML = '<p class="empty">暂无作品</p>';
+            return;
+          }
+
+          const grid = document.getElementById('works-grid');
+          grid.innerHTML = works.map((w, i) => `
+            <div class="work-card" data-index="${i}">
+              <div class="work-video-wrap">
+                <video id="video-${i}" controls playsinline preload="metadata"
+                       poster="${w.coverUrl || ''}"
+                       class="work-video">
+                  <source src="${w.videoUrl || ''}" type="video/mp4">
+                </video>
+              </div>
+              <div class="work-info">
+                <h2 class="work-title">${w.title}</h2>
+                <p class="work-desc">${w.description || ''}</p>
+              </div>
+            </div>
+          `).join('');
+
+          // 播放互斥
+          const allVideos = document.querySelectorAll('.work-video');
+          allVideos.forEach(video => {
+            video.addEventListener('play', () => {
+              allVideos.forEach(other => {
+                if (other !== video && !other.paused) {
+                  other.pause();
+                }
+              });
+            });
+          });
+        })
+        .catch(() => {
+          document.getElementById('loading').innerHTML = `
+            <div class="error-screen">
+              <svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" stroke="#e94560" stroke-width="2" fill="none"/><path d="M24 14V26M24 30V32" stroke="#e94560" stroke-width="3" stroke-linecap="round"/></svg>
+              <p>分享链接无效或已失效</p>
+              <p class="small">请联系创作者获取新的分享链接</p>
+            </div>`;
+        });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="googlebot" content="noindex, nofollow, noarchive">
+  <title>作品展示</title>
+  <link rel="stylesheet" href="/static/css/share.css">
+</head>
+<body>
+  <div id="app">
+    <div id="loading" class="loading-screen">
+      <div class="loading-animation">
+        <div class="pulse-ring"></div>
+        <svg width="40" height="40" viewBox="0 0 48 48" fill="none">
+          <path d="M16 14L36 24L16 34V14Z" fill="#e94560"/>
+        </svg>
+      </div>
+      <p>正在加载作品...</p>
+    </div>
+
+    <div id="showcase" style="display:none">
+      <nav class="showcase-nav">
+        <div class="nav-brand"><span id="creator-name"></span></div>
+        <div class="nav-badge"><span class="badge-private">🔒 私密分享</span></div>
+      </nav>
+
+      <main class="showcase-main">
+        <div class="hero-section">
+          <div class="video-container" id="video-container">
+            <video id="video-player" controls playsinline preload="metadata">
+              <source id="video-source" type="video/mp4">
+            </video>
+            <div class="video-overlay" id="video-overlay">
+              <button class="play-btn" id="play-btn">
+                <svg width="48" height="48" viewBox="0 0 48 48">
+                  <circle cx="24" cy="24" r="22" fill="rgba(0,0,0,0.5)" stroke="#e94560" stroke-width="2"/>
+                  <path d="M18 14L38 24L18 34V14Z" fill="#e94560"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-section">
+          <h1 class="work-title" id="work-title"></h1>
+          <p class="work-description" id="work-description"></p>
+          <div class="work-meta" id="work-meta">
+            <span class="meta-date" id="work-date"></span>
+          </div>
+        </div>
+      </main>
+
+      <footer class="showcase-footer">
+        <p>此页面通过私密链接分享，仅供指定收件人查看</p>
+        <p class="footer-note">如需获取更多作品，请联系创作者</p>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    const shareToken = new URLSearchParams(window.location.search).get('s');
+    if (!shareToken) {
+      document.getElementById('loading').innerHTML = '<p>访问需要有效的分享链接</p>';
+    } else {
+      fetch(`/api/share-data?s=${shareToken}`)
+        .then(res => {
+          if (!res.ok) throw new Error('分享链接无效');
+          return res.json();
+        })
+        .then(work => {
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('showcase').style.display = 'block';
+          document.getElementById('work-title').textContent = work.title;
+          document.getElementById('work-description').textContent = work.description || '';
+          document.title = work.title;
+          const date = new Date(work.createdAt);
+          document.getElementById('work-date').textContent = date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long' });
+
+          // 视频源直接用 Cloudinary URL
+          document.getElementById('video-source').src = work.videoUrl || '';
+          const player = document.getElementById('video-player');
+          player.load();
+
+          const overlay = document.getElementById('video-overlay');
+          const playBtn = document.getElementById('play-btn');
+
+          playBtn.addEventListener('click', () => {
+            player.play();
+            overlay.style.display = 'none';
+          });
+
+          player.addEventListener('pause', () => {
+            if (player.currentTime === 0 || player.ended) {
+              overlay.style.display = 'flex';
+            }
+          });
+
+          player.addEventListener('ended', () => {
+            overlay.style.display = 'flex';
+          });
+        })
+        .catch(err => {
+          document.getElementById('loading').innerHTML = `
+            <div class="error-screen">
+              <svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" stroke="#e94560" stroke-width="2" fill="none"/><path d="M24 14V26M24 30V32" stroke="#e94560" stroke-width="3" stroke-linecap="round"/></svg>
+              <p>分享链接无效或已失效</p>
+              <p class="small">请联系创作者获取新的分享链接</p>
+            </div>`;
+        });
+    }
+  </script>
+</body>
+</html>
