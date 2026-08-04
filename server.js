@@ -394,16 +394,22 @@ app.get('/', (req, res) => {
 });
 
 // ========== 启动 ==========
-
-loadFromCloud().then(() => {
-  app.listen(PORT, () => {
-    console.log(`\n✨ 私密作品集网站已启动`);
-    console.log(`   管理面板: http://localhost:${PORT}/admin`);
-    console.log(`   密码: ${config.password}`);
-    console.log(`   作品集分享链接: /portfolio?p=${config.portfolioToken}`);
-    console.log(`   作品数: ${works.length}\n`);
-  });
-}).catch(err => {
-  console.error('❌ 启动失败:', err);
-  process.exit(1);
+// 关键：先 listen 让 Render proxy 立即找到端口，再异步加载 Cloudinary
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n✨ 私密作品集网站已启动`);
+  console.log(`   管理面板: http://localhost:${PORT}/admin`);
+  console.log(`   密码: ${config.password}`);
+  console.log(`   作品集分享链接: /portfolio?p=${config.portfolioToken}`);
+  console.log(`   作品数: ${works.length}`);
+  console.log(`   启动时间: ${new Date().toISOString()}\n`);
 });
+
+// 异步加载 Cloudinary（不阻塞 listen）
+loadFromCloud().catch(err => {
+  console.log('Cloudinary 加载失败（不影响网站运行）:', err.message);
+});
+
+// 心跳防止 Render 误判进程卡死
+setInterval(() => {
+  console.log(`💓 ${new Date().toISOString()} 作品数 ${works.length}`);
+}, 30000);
