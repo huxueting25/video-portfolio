@@ -2,20 +2,25 @@ services:
   - type: web
     name: portfolio
     runtime: node
+    plan: starter
     buildCommand: npm install
-    startCommand: node server-cloud.js
+    startCommand: node server.js
     envVars:
       - key: NODE_ENV
         value: production
       - key: ADMIN_PASSWORD
-        sync: false
+        value: portfolio2026
       - key: ADMIN_TOKEN
-        sync: false
+        value: a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6
       - key: PORTFOLIO_TOKEN
-        sync: false
+        value: f2ed6d2a9d760bd0dea0a45c
       - key: CLOUDINARY_CLOUD_NAME
-        sync: false
+        value: fagndkrs
       - key: CLOUDINARY_API_KEY
-        sync: false
+        value: "377334291729132"
       - key: CLOUDINARY_API_SECRET
-        sync: false
+        value: rmT5IzAsirbtS8IzEiSJEi2A3O8
+    disk:
+      name: portfolio-data
+      mountPath: /data
+      sizeGB: 1

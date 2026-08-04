@@ -2,6 +2,8 @@ const express = require('express');
 const multer = require('multer');
 const crypto = require('crypto');
 const { Readable } = require('stream');
+const fs = require('fs');
+const path = require('path');
 
 // ========== Cloudinary 配置 ==========
 const cloudinary = require('cloudinary').v2;
@@ -13,30 +15,55 @@ cloudinary.config({
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const DATA_DIR = process.env.RENDER ? '/data' : path.join(__dirname, 'data');
 
-// ========== 数据存储（内存 + 持久化） ==========
-// 使用环境变量配置，无需本地文件
+// ========== 数据存储 ==========
 let config = {
   password: process.env.ADMIN_PASSWORD || 'portfolio2026',
-  adminToken: process.env.ADMIN_TOKEN || crypto.randomBytes(16).toString('hex'),
-  portfolioToken: process.env.PORTFOLIO_TOKEN || crypto.randomBytes(12).toString('hex'),
+  adminToken: process.env.ADMIN_TOKEN || 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6',
+  portfolioToken: process.env.PORTFOLIO_TOKEN || 'f2ed6d2a9d760bd0dea0a45c',
 };
 
-// 作品数据存内存，启动时从环境变量加载
 let works = [];
-try {
-  if (process.env.WORKS_DATA) {
-    works = JSON.parse(process.env.WORKS_DATA);
-    console.log(`✅ 从环境变量加载了 ${works.length} 个作品`);
+
+// 从本地文件加载数据（Render 持久化磁盘 /data）
+function loadData() {
+  try {
+    const configPath = path.join(DATA_DIR, 'config.json');
+    const worksPath = path.join(DATA_DIR, 'works.json');
+    
+    if (fs.existsSync(configPath)) {
+      const saved = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      if (saved.password) config.password = saved.password;
+      if (saved.adminToken) config.adminToken = saved.adminToken;
+      if (saved.portfolioToken) config.portfolioToken = saved.portfolioToken;
+      console.log('✅ 从磁盘加载配置');
+    }
+    
+    if (fs.existsSync(worksPath)) {
+      works = JSON.parse(fs.readFileSync(worksPath, 'utf8'));
+      console.log(`✅ 从磁盘加载了 ${works.length} 个作品`);
+    }
+  } catch (e) {
+    console.log('⚠️ 从磁盘加载数据失败:', e.message);
   }
-} catch (e) {
-  console.log('⚠️ 环境变量 WORKS_DATA 解析失败，从空数据开始');
 }
 
-function saveWorksToEnv() {
-  // 数据变化时保存到内存（Render 会自动持久化到磁盘）
-  // 同时提供 API 让管理面板导出/导入数据
+// 保存数据到磁盘
+function saveData() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    fs.writeFileSync(path.join(DATA_DIR, 'config.json'), JSON.stringify(config, null, 2));
+    fs.writeFileSync(path.join(DATA_DIR, 'works.json'), JSON.stringify(works, null, 2));
+  } catch (e) {
+    console.error('❌ 保存数据失败:', e.message);
+  }
 }
+
+// 启动时加载数据
+loadData();
 
 // ========== 中间件 ==========
 app.use(express.json({ limit: '50mb' }));
@@ -78,7 +105,7 @@ function uploadToCloudinary(buffer, options) {
   });
 }
 
-// Multer 内存存储（上传到 Cloudinary 不需要本地文件）
+// Multer 内存存储
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 500 * 1024 * 1024 },
@@ -114,7 +141,8 @@ app.post('/api/change-password', authAdmin, (req, res) => {
     return res.json({ success: false, error: '密码至少6位' });
   }
   config.password = newPassword;
-  res.json({ success: true, hint: '⚠️ 密码已修改，但云部署重启后密码会恢复为环境变量值。如需永久修改，请更新环境变量 ADMIN_PASSWORD。' });
+  saveData();
+  res.json({ success: true });
 });
 
 // 上传视频到 Cloudinary
@@ -168,6 +196,7 @@ app.post('/api/works', authAdmin, (req, res) => {
     const idx = works.findIndex(w => w.id === id);
     if (idx === -1) return res.json({ success: false, error: '作品不存在' });
     works[idx] = { ...works[idx], ...req.body };
+    saveData();
     res.json({ success: true, work: works[idx] });
   } else {
     const shareToken = crypto.randomBytes(12).toString('hex');
@@ -185,6 +214,7 @@ app.post('/api/works', authAdmin, (req, res) => {
       order: works.length
     };
     works.push(work);
+    saveData();
     res.json({ success: true, work });
   }
 });
@@ -209,6 +239,7 @@ app.delete('/api/works/:id', authAdmin, async (req, res) => {
   }
   
   works.splice(idx, 1);
+  saveData();
   res.json({ success: true });
 });
 
@@ -236,6 +267,7 @@ app.post('/api/replace-video/:id', authAdmin, upload.single('video'), async (req
     works[idx].filename = result.public_id;
     works[idx].originalName = req.file.originalname;
     works[idx].videoUrl = result.secure_url;
+    saveData();
     res.json({ success: true, work: works[idx] });
   } catch (err) {
     console.error('替换视频上传失败:', err);
@@ -248,6 +280,7 @@ app.post('/api/works/:id/regenerate-token', authAdmin, (req, res) => {
   const idx = works.findIndex(w => w.id === req.params.id);
   if (idx === -1) return res.json({ success: false, error: '作品不存在' });
   works[idx].shareToken = crypto.randomBytes(12).toString('hex');
+  saveData();
   res.json({ success: true, shareToken: works[idx].shareToken });
 });
 
@@ -259,6 +292,7 @@ app.get('/api/config', authAdmin, (req, res) => {
 // 重新生成作品集 token
 app.post('/api/regenerate-portfolio-token', authAdmin, (req, res) => {
   config.portfolioToken = crypto.randomBytes(12).toString('hex');
+  saveData();
   res.json({ success: true, portfolioToken: config.portfolioToken });
 });
 
@@ -270,6 +304,7 @@ app.post('/api/works/reorder', authAdmin, (req, res) => {
     const w = works.find(w => w.id === id);
     if (w) w.order = idx;
   });
+  saveData();
   res.json({ success: true });
 });
 
@@ -278,12 +313,12 @@ app.get('/api/works', authAdmin, (req, res) => {
   res.json(works);
 });
 
-// 导出数据（用于备份/迁移）
+// 导出数据
 app.get('/api/export', authAdmin, (req, res) => {
   res.json({ config, works });
 });
 
-// 导入数据（用于恢复）
+// 导入数据
 app.post('/api/import', authAdmin, (req, res) => {
   const { config: newConfig, works: newWorks } = req.body;
   if (newWorks && Array.isArray(newWorks)) {
@@ -292,12 +327,12 @@ app.post('/api/import', authAdmin, (req, res) => {
   if (newConfig) {
     config = { ...config, ...newConfig };
   }
+  saveData();
   res.json({ success: true, count: works.length });
 });
 
 // ========== 分享数据接口 ==========
 
-// 单个作品数据
 app.get('/api/share-data', authShare, (req, res) => {
   if (req.isPortfolio) {
     res.json(works);
@@ -306,7 +341,6 @@ app.get('/api/share-data', authShare, (req, res) => {
   }
 });
 
-// 作品集数据
 app.get('/api/portfolio-data', authShare, (req, res) => {
   res.json(works);
 });
@@ -315,25 +349,25 @@ app.get('/api/portfolio-data', authShare, (req, res) => {
 
 app.get('/admin', (req, res) => {
   res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
-  res.sendFile(require('path').join(__dirname, 'public', 'admin.html'));
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
 app.get('/share', authShare, (req, res) => {
   res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
   if (req.isPortfolio) {
-    res.sendFile(require('path').join(__dirname, 'public', 'portfolio.html'));
+    res.sendFile(path.join(__dirname, 'public', 'portfolio.html'));
   } else {
-    res.sendFile(require('path').join(__dirname, 'public', 'share.html'));
+    res.sendFile(path.join(__dirname, 'public', 'share.html'));
   }
 });
 
 app.get('/portfolio', authShare, (req, res) => {
   res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
-  res.sendFile(require('path').join(__dirname, 'public', 'portfolio.html'));
+  res.sendFile(path.join(__dirname, 'public', 'portfolio.html'));
 });
 
 // 静态文件
-app.use('/static', express.static(require('path').join(__dirname, 'public'), {
+app.use('/static', express.static(path.join(__dirname, 'public'), {
   setHeaders: (res) => {
     res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
   }
