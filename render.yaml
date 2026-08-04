@@ -2,7 +2,7 @@ services:
   - type: web
     name: portfolio
     runtime: node
-    plan: starter
+    plan: free
     buildCommand: npm install
     startCommand: node server.js
     envVars:
@@ -20,7 +20,3 @@ services:
         value: "377334291729132"
       - key: CLOUDINARY_API_SECRET
         value: rmT5IzAsirbtS8IzEiSJEi2A3O8
-    disk:
-      name: portfolio-data
-      mountPath: /data
-      sizeGB: 1

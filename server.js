@@ -2,8 +2,6 @@ const express = require('express');
 const multer = require('multer');
 const crypto = require('crypto');
 const { Readable } = require('stream');
-const fs = require('fs');
-const path = require('path');
 
 // ========== Cloudinary 配置 ==========
 const cloudinary = require('cloudinary').v2;
@@ -15,7 +13,6 @@ cloudinary.config({
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DATA_DIR = process.env.RENDER ? '/data' : path.join(__dirname, 'data');
 
 // ========== 数据存储 ==========
 let config = {
@@ -25,45 +22,66 @@ let config = {
 };
 
 let works = [];
+let dataSaveTimer = null;
 
-// 从本地文件加载数据（Render 持久化磁盘 /data）
-function loadData() {
+// 从 Cloudinary 加载数据（启动时）
+async function loadFromCloud() {
   try {
-    const configPath = path.join(DATA_DIR, 'config.json');
-    const worksPath = path.join(DATA_DIR, 'works.json');
-    
-    if (fs.existsSync(configPath)) {
-      const saved = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-      if (saved.password) config.password = saved.password;
-      if (saved.adminToken) config.adminToken = saved.adminToken;
-      if (saved.portfolioToken) config.portfolioToken = saved.portfolioToken;
-      console.log('✅ 从磁盘加载配置');
-    }
-    
-    if (fs.existsSync(worksPath)) {
-      works = JSON.parse(fs.readFileSync(worksPath, 'utf8'));
-      console.log(`✅ 从磁盘加载了 ${works.length} 个作品`);
-    }
+    const result = await cloudinary.api.resource('portfolio/data/config', { resource_type: 'raw' });
+    const resp = await fetch(result.secure_url);
+    const saved = await resp.json();
+    if (saved.password) config.password = saved.password;
+    if (saved.adminToken) config.adminToken = saved.adminToken;
+    if (saved.portfolioToken) config.portfolioToken = saved.portfolioToken;
+    console.log('✅ 从云端加载配置');
   } catch (e) {
-    console.log('⚠️ 从磁盘加载数据失败:', e.message);
+    console.log('⚠️ 云端无配置数据，使用默认值');
+  }
+  try {
+    const result = await cloudinary.api.resource('portfolio/data/works', { resource_type: 'raw' });
+    const resp = await fetch(result.secure_url);
+    works = await resp.json();
+    console.log(`✅ 从云端加载了 ${works.length} 个作品`);
+  } catch (e) {
+    console.log('⚠️ 云端无作品数据，从空数据开始');
   }
 }
 
-// 保存数据到磁盘
+// 保存数据到 Cloudinary（防抖，3秒内只保存一次）
 function saveData() {
-  try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
+  if (dataSaveTimer) clearTimeout(dataSaveTimer);
+  dataSaveTimer = setTimeout(async () => {
+    try {
+      // 保存配置
+      const configBuffer = Buffer.from(JSON.stringify(config));
+      await uploadBufferToCloudinary(configBuffer, {
+        resource_type: 'raw',
+        public_id: 'portfolio/data/config',
+        overwrite: true,
+      });
+      // 保存作品
+      const worksBuffer = Buffer.from(JSON.stringify(works));
+      await uploadBufferToCloudinary(worksBuffer, {
+        resource_type: 'raw',
+        public_id: 'portfolio/data/works',
+        overwrite: true,
+      });
+      console.log('💾 数据已保存到云端');
+    } catch (e) {
+      console.error('❌ 保存数据到云端失败:', e.message);
     }
-    fs.writeFileSync(path.join(DATA_DIR, 'config.json'), JSON.stringify(config, null, 2));
-    fs.writeFileSync(path.join(DATA_DIR, 'works.json'), JSON.stringify(works, null, 2));
-  } catch (e) {
-    console.error('❌ 保存数据失败:', e.message);
-  }
+  }, 3000);
 }
 
-// 启动时加载数据
-loadData();
+function uploadBufferToCloudinary(buffer, options) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
+      if (error) reject(error);
+      else resolve(result);
+    });
+    Readable.from(buffer).pipe(stream);
+  });
+}
 
 // ========== 中间件 ==========
 app.use(express.json({ limit: '50mb' }));
@@ -190,7 +208,7 @@ app.post('/api/upload-cover', authAdmin, coverUpload.single('cover'), async (req
 
 // 创建/更新作品
 app.post('/api/works', authAdmin, (req, res) => {
-  const { id, title, description, filename, originalName, coverUrl, coverFilename, videoUrl } = req.body;
+  const { id } = req.body;
 
   if (id) {
     const idx = works.findIndex(w => w.id === id);
@@ -202,11 +220,11 @@ app.post('/api/works', authAdmin, (req, res) => {
     const shareToken = crypto.randomBytes(12).toString('hex');
     const work = {
       id: crypto.randomBytes(8).toString('hex'),
-      title: title || '未命名作品',
-      description: description || '',
-      filename: filename || '',
-      originalName: originalName || '',
-      videoUrl: videoUrl || '',
+      title: req.body.title || '未命名作品',
+      description: req.body.description || '',
+      filename: req.body.filename || '',
+      originalName: req.body.originalName || '',
+      videoUrl: req.body.videoUrl || '',
       coverUrl: req.body.coverUrl || '',
       coverFilename: req.body.coverFilename || '',
       shareToken,
@@ -225,17 +243,11 @@ app.delete('/api/works/:id', authAdmin, async (req, res) => {
   if (idx === -1) return res.json({ success: false, error: '作品不存在' });
   const work = works[idx];
   
-  // 从 Cloudinary 删除视频
   if (work.filename) {
-    try {
-      await cloudinary.uploader.destroy(work.filename, { resource_type: 'video' });
-    } catch (e) { console.error('删除视频失败:', e); }
+    try { await cloudinary.uploader.destroy(work.filename, { resource_type: 'video' }); } catch (e) { console.error('删除视频失败:', e); }
   }
-  // 从 Cloudinary 删除封面
   if (work.coverFilename) {
-    try {
-      await cloudinary.uploader.destroy(work.coverFilename, { resource_type: 'image' });
-    } catch (e) { console.error('删除封面失败:', e); }
+    try { await cloudinary.uploader.destroy(work.coverFilename, { resource_type: 'image' }); } catch (e) { console.error('删除封面失败:', e); }
   }
   
   works.splice(idx, 1);
@@ -250,11 +262,8 @@ app.post('/api/replace-video/:id', authAdmin, upload.single('video'), async (req
   if (idx === -1) return res.json({ success: false, error: '作品不存在' });
   
   const work = works[idx];
-  // 删除旧视频
   if (work.filename) {
-    try {
-      await cloudinary.uploader.destroy(work.filename, { resource_type: 'video' });
-    } catch (e) { console.error('删除旧视频失败:', e); }
+    try { await cloudinary.uploader.destroy(work.filename, { resource_type: 'video' }); } catch (e) { console.error('删除旧视频失败:', e); }
   }
   
   try {
@@ -349,25 +358,25 @@ app.get('/api/portfolio-data', authShare, (req, res) => {
 
 app.get('/admin', (req, res) => {
   res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+  res.sendFile(require('path').join(__dirname, 'public', 'admin.html'));
 });
 
 app.get('/share', authShare, (req, res) => {
   res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
   if (req.isPortfolio) {
-    res.sendFile(path.join(__dirname, 'public', 'portfolio.html'));
+    res.sendFile(require('path').join(__dirname, 'public', 'portfolio.html'));
   } else {
-    res.sendFile(path.join(__dirname, 'public', 'share.html'));
+    res.sendFile(require('path').join(__dirname, 'public', 'share.html'));
   }
 });
 
 app.get('/portfolio', authShare, (req, res) => {
   res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
-  res.sendFile(path.join(__dirname, 'public', 'portfolio.html'));
+  res.sendFile(require('path').join(__dirname, 'public', 'portfolio.html'));
 });
 
 // 静态文件
-app.use('/static', express.static(path.join(__dirname, 'public'), {
+app.use('/static', express.static(require('path').join(__dirname, 'public'), {
   setHeaders: (res) => {
     res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
   }
@@ -386,10 +395,15 @@ app.get('/', (req, res) => {
 
 // ========== 启动 ==========
 
-app.listen(PORT, () => {
-  console.log(`\n✨ 私密作品集网站已启动`);
-  console.log(`   管理面板: http://localhost:${PORT}/admin`);
-  console.log(`   密码: ${config.password}`);
-  console.log(`   作品集分享链接: /portfolio?p=${config.portfolioToken}`);
-  console.log(`   作品数: ${works.length}\n`);
+loadFromCloud().then(() => {
+  app.listen(PORT, () => {
+    console.log(`\n✨ 私密作品集网站已启动`);
+    console.log(`   管理面板: http://localhost:${PORT}/admin`);
+    console.log(`   密码: ${config.password}`);
+    console.log(`   作品集分享链接: /portfolio?p=${config.portfolioToken}`);
+    console.log(`   作品数: ${works.length}\n`);
+  });
+}).catch(err => {
+  console.error('❌ 启动失败:', err);
+  process.exit(1);
 });
