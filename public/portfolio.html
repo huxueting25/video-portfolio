@@ -83,6 +83,13 @@
   </style>
 </head>
 <body>
+  <!-- 回到顶端按钮 -->
+  <button id="scroll-to-top" title="回到顶端" onclick="scrollToTop()" style="display:none">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+      <path d="M18 15l-6-6-6 6"/>
+    </svg>
+  </button>
+
   <div id="app">
     <div id="loading" class="loading-screen">
       <div class="loading-animation">
@@ -249,6 +256,22 @@
 
       placeholder.style.display = 'none';
       video.play().catch(() => {});
+    }
+
+    // ========== 回到顶端 ==========
+    const scrollTopBtn = document.getElementById('scroll-to-top');
+
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 400) {
+        scrollTopBtn.style.display = 'flex';
+        scrollTopBtn.style.animation = 'fadeIn 0.3s ease';
+      } else {
+        scrollTopBtn.style.display = 'none';
+      }
+    });
+
+    function scrollToTop() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   </script>
 </body>
