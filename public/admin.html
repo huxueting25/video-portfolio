@@ -755,6 +755,9 @@
     function closeFramePicker() {
       document.getElementById('frame-picker-video').pause();
       document.getElementById('modal-framepicker').style.display = 'none';
+      // 恢复上传弹窗的滚动能力
+      var form = document.querySelector('#modal-upload form');
+      if (form) form.style.overflow = 'hidden';
     }
 
     function captureFrame() {
@@ -797,6 +800,9 @@
       document.getElementById('cover-preview-img').style.display = 'block';
       document.getElementById('cover-img').src = data.coverUrl;
       closeFramePicker();
+      // 确保上传弹窗可以滚动
+      var uploadForm = document.querySelector('#modal-upload form');
+      if (uploadForm) uploadForm.style.overflow = 'hidden';
 
       // 编辑已有作品时自动保存
       const editId = document.getElementById('edit-id').value;
