@@ -29,6 +29,13 @@
     </div>
 
     <!-- 管理界面 -->
+    <!-- 回到顶端按钮 -->
+    <button id="scroll-to-top" title="回到顶端" onclick="scrollToTop()" style="display:none">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <path d="M18 15l-6-6-6 6"/>
+      </svg>
+    </button>
+
     <div id="admin-view" class="view">
       <header class="admin-header">
         <div class="header-left">
@@ -755,9 +762,6 @@
     function closeFramePicker() {
       document.getElementById('frame-picker-video').pause();
       document.getElementById('modal-framepicker').style.display = 'none';
-      // 恢复上传弹窗的滚动能力
-      var form = document.querySelector('#modal-upload form');
-      if (form) form.style.overflow = 'hidden';
     }
 
     function captureFrame() {
@@ -800,9 +804,6 @@
       document.getElementById('cover-preview-img').style.display = 'block';
       document.getElementById('cover-img').src = data.coverUrl;
       closeFramePicker();
-      // 确保上传弹窗可以滚动
-      var uploadForm = document.querySelector('#modal-upload form');
-      if (uploadForm) uploadForm.style.overflow = 'hidden';
 
       // 编辑已有作品时自动保存
       const editId = document.getElementById('edit-id').value;
@@ -869,6 +870,24 @@
     replaceFileInput.addEventListener('change', () => {
       if (replaceFileInput.files.length) replaceVideo(replaceFileInput.files[0]);
     });
+
+    // ========== 回到顶端 ==========
+    const scrollTopBtn = document.getElementById('scroll-to-top');
+
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 400) {
+        scrollTopBtn.style.display = 'flex';
+        scrollTopBtn.style.animation = 'fadeIn 0.3s ease';
+      } else {
+        scrollTopBtn.style.display = 'none';
+      }
+    });
+
+    function scrollToTop() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ========== 替换视频（编辑模式） ==========
 
     async function replaceVideo(file) {
       const editId = document.getElementById('edit-id').value;
