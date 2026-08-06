@@ -96,7 +96,16 @@
           <!-- 操作栏 -->
           <div class="section-title">
             <h3>我的作品 (<span id="work-count">0</span>)</h3>
-            <button id="btn-add" class="btn-primary btn-sm">+ 上传新作品</button>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <div class="admin-search-wrap">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round">
+                  <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input type="text" class="admin-search-input" id="admin-search-input" placeholder="搜索标题..." oninput="onAdminSearch(this.value)">
+                <button class="admin-search-clear" id="admin-search-clear" onclick="clearAdminSearch()" style="display:none">✕</button>
+              </div>
+              <button id="btn-add" class="btn-primary btn-sm">+ 上传新作品</button>
+            </div>
           </div>
 
           <!-- 分类区域 -->
@@ -435,14 +444,18 @@
     // ========== 按分类渲染 ==========
     function renderWorksByCategory() {
       const container = document.getElementById('category-sections');
-      document.getElementById('work-count').textContent = currentWorks.length;
 
       // 统计
       const counts = { EN: 0, JP: 0, CN: 0, KR: 0 };
+      let totalVisible = 0;
       currentWorks.forEach(w => {
         const cat = w.category || 'EN';
-        if (counts[cat] !== undefined) counts[cat]++;
+        const match = !adminSearchQuery || w.title.toLowerCase().includes(adminSearchQuery);
+        if (match && counts[cat] !== undefined) counts[cat]++;
+        if (match) totalVisible++;
       });
+      document.getElementById('work-count').textContent = adminSearchQuery ? totalVisible : currentWorks.length;
+
       Object.keys(counts).forEach(cat => {
         document.getElementById('admin-side-count-' + cat).textContent = counts[cat];
       });
@@ -454,6 +467,7 @@
         const cfg = catConfig[cat];
         const filtered = currentWorks
           .filter(w => (w.category || 'EN') === cat)
+          .filter(w => !adminSearchQuery || w.title.toLowerCase().includes(adminSearchQuery))
           .sort((a, b) => a.order - b.order);
         const collapsed = adminCollapsedState[cat];
 
@@ -569,6 +583,22 @@
       document.querySelectorAll('.admin-sidebar .side-link').forEach(link => {
         link.classList.toggle('active', link.dataset.cat === adminActiveCat);
       });
+    }
+
+    // ========== 搜索 ==========
+    let adminSearchQuery = '';
+
+    function onAdminSearch(query) {
+      adminSearchQuery = query.trim().toLowerCase();
+      document.getElementById('admin-search-clear').style.display = adminSearchQuery ? 'flex' : 'none';
+      renderWorksByCategory();
+    }
+
+    function clearAdminSearch() {
+      document.getElementById('admin-search-input').value = '';
+      document.getElementById('admin-search-clear').style.display = 'none';
+      adminSearchQuery = '';
+      renderWorksByCategory();
     }
 
     // 滚动自动高亮
