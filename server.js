@@ -192,9 +192,19 @@ app.post('/api/upload-cover', authAdmin, coverUpload.single('cover'), async (req
   }
 });
 
+// 根据标题自动识别分类
+function detectCategory(title, originalName) {
+  const text = (title + ' ' + (originalName || '')).toUpperCase();
+  if (/[_\s-]JP[_\s-]|_JP_|_JP$|^JP_|^JP[_\s-]/.test(text)) return 'JP';
+  if (/[_\s-]CN[_\s-]|_CN_|_CN$|^CN_|^CN[_\s-]/.test(text)) return 'CN';
+  if (/[_\s-]KR[_\s-]|_KR_|_KR$|^KR_|^KR[_\s-]/.test(text)) return 'KR';
+  if (/[_\s-]EN[_\s-]|_EN_|_EN$|^EN_|^EN[_\s-]/.test(text)) return 'EN';
+  return 'EN'; // 默认归类到欧美EN
+}
+
 // 创建/更新作品
 app.post('/api/works', authAdmin, (req, res) => {
-  const { id, title, description, filename, originalName, coverUrl, coverFilename, videoUrl } = req.body;
+  const { id, title, description, filename, originalName, coverUrl, coverFilename, videoUrl, category } = req.body;
 
   if (id) {
     const idx = works.findIndex(w => w.id === id);
@@ -213,6 +223,7 @@ app.post('/api/works', authAdmin, (req, res) => {
       videoUrl: videoUrl || '',
       coverUrl: req.body.coverUrl || '',
       coverFilename: req.body.coverFilename || '',
+      category: category || detectCategory(title, originalName),
       shareToken,
       createdAt: new Date().toISOString(),
       order: works.length
@@ -315,6 +326,19 @@ app.post('/api/works/reorder', authAdmin, (req, res) => {
 // 获取所有作品
 app.get('/api/works', authAdmin, (req, res) => {
   res.json(works);
+});
+
+// 一键自动归类（批量给所有作品打 category 标签）
+app.post('/api/works/auto-categorize', authAdmin, (req, res) => {
+  let count = 0;
+  works.forEach(w => {
+    if (!w.category) {
+      w.category = detectCategory(w.title, w.originalName);
+      count++;
+    }
+  });
+  saveWorksToCloudinary();
+  res.json({ success: true, categorized: count, total: works.length });
 });
 
 // 导出数据（用于备份/迁移）
