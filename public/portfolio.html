@@ -310,46 +310,43 @@
       video.play().catch(() => {});
     }
 
-    // ========== 折叠切换（手风琴模式：同时只展开一个） ==========
-    function toggleSection(cat) {
-      // 如果当前分类已展开 → 折叠它
-      if (!collapsedState[cat]) {
-        collapsedState[cat] = true;
-        document.getElementById('body-' + cat).classList.add('collapsed');
-        document.getElementById('toggle-' + cat).classList.add('collapsed');
-        return;
-      }
-
-      // 展开当前分类，同时折叠其他所有分类
+    // ========== 折叠切换（手风琴模式：同时只展开一个，其他完全隐藏） ==========
+    function expandOnly(cat) {
       ['EN', 'JP', 'CN', 'KR'].forEach(c => {
-        collapsedState[c] = true;
+        const section = document.getElementById('section-' + c);
         const body = document.getElementById('body-' + c);
         const toggle = document.getElementById('toggle-' + c);
-        if (body) body.classList.add('collapsed');
-        if (toggle) toggle.classList.add('collapsed');
+        if (c === cat) {
+          collapsedState[c] = false;
+          if (section) section.style.display = '';
+          if (body) body.classList.remove('collapsed');
+          if (toggle) toggle.classList.remove('collapsed');
+        } else {
+          collapsedState[c] = true;
+          if (section) section.style.display = 'none';
+          if (body) body.classList.add('collapsed');
+          if (toggle) toggle.classList.add('collapsed');
+        }
       });
+    }
 
-      // 展开目标分类
-      collapsedState[cat] = false;
-      document.getElementById('body-' + cat).classList.remove('collapsed');
-      document.getElementById('toggle-' + cat).classList.remove('collapsed');
+    function toggleSection(cat) {
+      if (!collapsedState[cat]) {
+        // 当前已展开 → 全部折叠
+        expandOnly(null);
+        return;
+      }
+      expandOnly(cat);
     }
 
     // ========== 侧边栏点击滚动 ==========
     function scrollToSection(cat) {
+      expandOnly(cat);
       const section = document.getElementById('section-' + cat);
       if (!section) return;
-
-      // 如果折叠中，先展开
-      if (collapsedState[cat]) {
-        toggleSection(cat);
-      }
-
-      // 滚动到该 section
       const topNavHeight = document.querySelector('.top-nav').offsetHeight;
       const targetTop = section.getBoundingClientRect().top + window.scrollY - topNavHeight - 16;
       window.scrollTo({ top: targetTop, behavior: 'smooth' });
-
       activeCat = cat;
       updateSidebarActive();
     }
@@ -369,6 +366,7 @@
         const topNavH = document.querySelector('.top-nav').offsetHeight;
         let current = 'EN';
         sections.forEach(sec => {
+          if (sec.style.display === 'none') return;
           const rect = sec.getBoundingClientRect();
           if (rect.top <= topNavH + 100) {
             current = sec.id.replace('section-', '');
