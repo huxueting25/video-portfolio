@@ -222,7 +222,25 @@ body {
 .play-overlay:hover { background: var(--accent); }
 
 .work-detail { padding: 20px; flex: 1; min-width: 0; }
-.work-title-text { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+.work-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.work-title-text { font-size: 17px; font-weight: 600; }
+.cat-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  letter-spacing: 0.03em;
+}
+.cat-badge-EN { background: rgba(78, 204, 163, 0.18); color: #4ecca3; }
+.cat-badge-JP { background: rgba(255, 152, 0, 0.18); color: #ff9800; }
+.cat-badge-CN { background: rgba(233, 69, 96, 0.18); color: #e94560; }
+.cat-badge-KR { background: rgba(100, 149, 237, 0.18); color: #6495ed; }
 .work-desc-text {
   color: var(--text-secondary);
   font-size: 14px;
