@@ -28,7 +28,6 @@
       </div>
     </div>
 
-    <!-- 管理界面 -->
     <!-- 回到顶端按钮 -->
     <button id="scroll-to-top" title="回到顶端" onclick="scrollToTop()" style="display:none">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
@@ -36,6 +35,7 @@
       </svg>
     </button>
 
+    <!-- 管理界面 -->
     <div id="admin-view" class="view">
       <header class="admin-header">
         <div class="header-left">
@@ -52,192 +52,217 @@
         </div>
       </header>
 
-      <main class="admin-main">
-        <!-- 作品集分享链接 -->
-        <div class="portfolio-link-bar">
-          <span class="link-label">📎 发给面试官的链接</span>
-          <div class="link-row">
-            <input type="text" id="portfolio-link" readonly class="link-input">
-            <button class="btn-primary btn-sm" onclick="copyPortfolioLink()">复制链接</button>
-            <button class="btn-secondary btn-sm" onclick="regeneratePortfolioToken()">🔄 换新链接</button>
-          </div>
-          <p class="link-hint">面试官通过此链接可查看所有作品，旧链接失效后无法访问</p>
-        </div>
+      <div class="admin-layout">
+        <!-- 侧边栏 -->
+        <aside class="admin-sidebar" id="admin-sidebar">
+          <div class="sidebar-title">买量广告</div>
+          <nav class="sidebar-nav">
+            <a class="side-link active" href="#admin-section-EN" data-cat="EN" onclick="scrollToAdminSection('EN')">
+              <span class="side-dot side-dot-EN"></span>
+              欧美EN
+              <span class="side-count" id="admin-side-count-EN">0</span>
+            </a>
+            <a class="side-link" href="#admin-section-JP" data-cat="JP" onclick="scrollToAdminSection('JP')">
+              <span class="side-dot side-dot-JP"></span>
+              日本JP
+              <span class="side-count" id="admin-side-count-JP">0</span>
+            </a>
+            <a class="side-link" href="#admin-section-CN" data-cat="CN" onclick="scrollToAdminSection('CN')">
+              <span class="side-dot side-dot-CN"></span>
+              简中CN
+              <span class="side-count" id="admin-side-count-CN">0</span>
+            </a>
+            <a class="side-link" href="#admin-section-KR" data-cat="KR" onclick="scrollToAdminSection('KR')">
+              <span class="side-dot side-dot-KR"></span>
+              韩国KR
+              <span class="side-count" id="admin-side-count-KR">0</span>
+            </a>
+          </nav>
+        </aside>
 
-        <!-- 操作栏 -->
-        <div class="section-title">
-          <h3>我的作品 (<span id="work-count">0</span>)</h3>
-          <button id="btn-add" class="btn-primary btn-sm">+ 上传新作品</button>
-        </div>
-
-        <!-- 作品列表 -->
-        <div id="works-list" class="works-list"></div>
-        <div id="empty-state" class="empty-state" style="display:none">
-          <div class="empty-icon">🎬</div>
-          <p>还没有作品</p>
-          <p class="empty-sub">点击上方「+ 上传新作品」开始</p>
-        </div>
-      </main>
-
-      <!-- 上传/编辑弹窗 -->
-      <div id="modal-upload" class="modal" style="display:none">
-        <div class="modal-content modal-lg">
-          <div class="modal-header">
-            <h3 id="modal-title">上传新作品</h3>
-            <button class="btn-close" onclick="closeUploadModal()">✕</button>
-          </div>
-          <form id="upload-form">
-            <input type="hidden" id="edit-id">
-            <div class="modal-body">
-              <div class="form-group">
-                <label>作品标题</label>
-                <input type="text" id="work-title" placeholder="例如：色轮转场动画" required>
-              </div>
-
-              <div class="form-group">
-                <label>作品描述</label>
-                <textarea id="work-description" rows="3" placeholder="简短描述作品内容、技术手段..."></textarea>
-              </div>
-
-              <div class="form-group">
-                <label>市场分类</label>
-                <select id="work-category" style="width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px;">
-                  <option value="EN">🌍 欧美EN</option>
-                  <option value="JP">🎌 日本JP</option>
-                  <option value="CN">🇨🇳 简中CN</option>
-                  <option value="KR">🇰🇷 韩国KR</option>
-                </select>
-              </div>
-
-              <div class="form-group" id="upload-area">
-                <label>视频文件</label>
-                <div class="upload-drop" id="drop-zone">
-                  <input type="file" id="video-file" accept=".mp4,.webm,.mov,.avi,.mkv" style="display:none">
-                  <div class="upload-hint" id="upload-hint">
-                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-                      <path d="M20 8V28M12 16L20 8L28 16" stroke="#888" stroke-width="2" stroke-linecap="round"/>
-                      <path d="M6 28V32C6 34 8 36 10 36H30C32 36 34 34 34 32V28" stroke="#888" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                    <p>点击或拖拽上传视频</p>
-                    <p class="small">支持 MP4/WebM/MOV，最大 500MB</p>
-                  </div>
-                  <div class="upload-progress" id="upload-progress" style="display:none">
-                    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
-                    <p id="upload-status">上传中...</p>
-                  </div>
-                  <div class="upload-done" id="upload-done" style="display:none">
-                    <p>✅ <span id="uploaded-name"></span> 已上传</p>
-                    <button class="btn-text" onclick="clearUpload()">重新选择</button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 编辑模式：替换视频区域 -->
-              <div class="form-group" id="replace-video-area" style="display:none">
-                <label>当前视频</label>
-                <div class="current-video-info" style="margin-bottom:10px;">
-                  <p id="current-video-name" style="color:var(--text-secondary);font-size:13px;">—</p>
-                </div>
-                <label>替换视频</label>
-                <div class="upload-drop" id="replace-drop-zone">
-                  <input type="file" id="replace-video-file" accept=".mp4,.webm,.mov,.avi,.mkv" style="display:none">
-                  <div class="upload-hint" id="replace-upload-hint">
-                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-                      <path d="M20 8V28M12 16L20 8L28 16" stroke="#888" stroke-width="2" stroke-linecap="round"/>
-                      <path d="M6 28V32C6 34 8 36 10 36H30C32 36 34 34 34 32V28" stroke="#888" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                    <p>点击或拖拽替换视频</p>
-                    <p class="small">上传后自动替换原视频，不可撤销</p>
-                  </div>
-                  <div class="upload-progress" id="replace-upload-progress" style="display:none">
-                    <div class="progress-bar"><div class="progress-fill" id="replace-progress-fill"></div></div>
-                    <p id="replace-upload-status">替换中...</p>
-                  </div>
-                  <div class="upload-done" id="replace-upload-done" style="display:none">
-                    <p>✅ <span id="replace-uploaded-name"></span> 已替换</p>
-                  </div>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>封面图</label>
-                <div id="cover-preview-area" style="margin-bottom:12px;">
-                  <div id="cover-preview-empty" class="cover-empty">
-                    <p>暂无封面，点下方按钮从视频中选帧</p>
-                  </div>
-                  <div id="cover-preview-img" style="display:none;">
-                    <img id="cover-img" style="width:100%;max-height:200px;object-fit:contain;border-radius:8px;border:1px solid var(--border);">
-                    <button class="btn-danger btn-xs" style="margin-top:8px;" onclick="clearCover()">✕ 删除封面</button>
-                  </div>
-                </div>
-                <div id="frame-picker-area" style="margin-bottom:12px;">
-                  <div class="frame-picker-header">
-                    <span style="font-size:13px;color:var(--text-secondary);">从视频中选一帧做封面</span>
-                    <button class="btn-primary btn-xs" onclick="openFramePicker()">🎬 选帧截取</button>
-                  </div>
-                </div>
-                <input type="hidden" id="work-cover" value="">
-                <input type="hidden" id="work-cover-filename" value="">
-                <input type="hidden" id="work-video-url" value="">
-              </div>
+        <!-- 主内容 -->
+        <main class="admin-main" id="admin-main">
+          <!-- 作品集分享链接 -->
+          <div class="portfolio-link-bar">
+            <span class="link-label">📎 发给面试官的链接</span>
+            <div class="link-row">
+              <input type="text" id="portfolio-link" readonly class="link-input">
+              <button class="btn-primary btn-sm" onclick="copyPortfolioLink()">复制链接</button>
+              <button class="btn-secondary btn-sm" onclick="regeneratePortfolioToken()">🔄 换新链接</button>
             </div>
-            <div class="modal-footer">
-              <button type="button" class="btn-secondary" onclick="closeUploadModal()">取消</button>
-              <button type="submit" class="btn-primary">💾 保存作品</button>
-            </div>
-          </form>
-        </div>
+            <p class="link-hint">面试官通过此链接可查看所有作品，旧链接失效后无法访问</p>
+          </div>
+
+          <!-- 操作栏 -->
+          <div class="section-title">
+            <h3>我的作品 (<span id="work-count">0</span>)</h3>
+            <button id="btn-add" class="btn-primary btn-sm">+ 上传新作品</button>
+          </div>
+
+          <!-- 分类区域 -->
+          <div id="category-sections"></div>
+        </main>
       </div>
+    </div>
 
-      <!-- 设置弹窗 -->
-      <div id="modal-settings" class="modal" style="display:none">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h3>设置</h3>
-            <button class="btn-close" onclick="closeSettings()">✕</button>
-          </div>
-          <form id="settings-form">
-            <div class="modal-body">
-              <div class="form-group">
-                <label>修改管理密码</label>
-                <input type="password" id="new-password" placeholder="新密码（至少6位）">
-              </div>
-              <div class="form-group">
-                <label>确认新密码</label>
-                <input type="password" id="confirm-password" placeholder="再次输入新密码">
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn-secondary" onclick="closeSettings()">取消</button>
-              <button type="submit" class="btn-primary">保存</button>
-            </div>
-          </form>
+    <!-- 上传/编辑弹窗 -->
+    <div id="modal-upload" class="modal" style="display:none">
+      <div class="modal-content modal-lg">
+        <div class="modal-header">
+          <h3 id="modal-title">上传新作品</h3>
+          <button class="btn-close" onclick="closeUploadModal()">✕</button>
         </div>
-      </div>
-
-      <!-- 选帧弹窗 -->
-      <div id="modal-framepicker" class="modal" style="display:none">
-        <div class="modal-content modal-lg">
-          <div class="modal-header">
-            <h3>从视频中选帧做封面</h3>
-            <button class="btn-close" onclick="closeFramePicker()">✕</button>
-          </div>
+        <form id="upload-form">
+          <input type="hidden" id="edit-id">
           <div class="modal-body">
-            <div class="frame-picker-video-wrap">
-              <video id="frame-picker-video" controls preload="auto" style="width:100%;max-height:400px;border-radius:8px;"></video>
-              <p class="frame-picker-tip">拖动进度条到你想截取的位置，然后暂停，点下方「截取当前帧」</p>
+            <div class="form-group">
+              <label>作品标题</label>
+              <input type="text" id="work-title" placeholder="例如：色轮转场动画" required>
             </div>
-            <div style="display:flex;gap:12px;justify-content:center;margin-top:16px;">
-              <button class="btn-primary" onclick="captureFrame()">📸 截取当前帧</button>
-              <button class="btn-secondary" onclick="closeFramePicker()">取消</button>
+
+            <div class="form-group">
+              <label>作品描述</label>
+              <textarea id="work-description" rows="3" placeholder="简短描述作品内容、技术手段..."></textarea>
             </div>
-            <div id="frame-captured-preview" style="display:none;margin-top:20px;text-align:center;">
-              <p style="font-size:13px;color:var(--success);margin-bottom:12px;">✅ 已截取，确认使用这张做封面？</p>
-              <img id="frame-captured-img" style="width:100%;max-height:200px;object-fit:contain;border-radius:8px;border:1px solid var(--border);">
-              <div style="display:flex;gap:12px;justify-content:center;margin-top:16px;">
-                <button class="btn-primary" onclick="confirmFrame()">确认使用</button>
-                <button class="btn-secondary" onclick="recaptureFrame()">重新选帧</button>
+
+            <div class="form-group">
+              <label>市场分类</label>
+              <select id="work-category" style="width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px;">
+                <option value="EN">🌍 欧美EN</option>
+                <option value="JP">🎌 日本JP</option>
+                <option value="CN">🇨🇳 简中CN</option>
+                <option value="KR">🇰🇷 韩国KR</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="upload-area">
+              <label>视频文件</label>
+              <div class="upload-drop" id="drop-zone">
+                <input type="file" id="video-file" accept=".mp4,.webm,.mov,.avi,.mkv" style="display:none">
+                <div class="upload-hint" id="upload-hint">
+                  <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <path d="M20 8V28M12 16L20 8L28 16" stroke="#888" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M6 28V32C6 34 8 36 10 36H30C32 36 34 34 34 32V28" stroke="#888" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  <p>点击或拖拽上传视频</p>
+                  <p class="small">支持 MP4/WebM/MOV，最大 500MB</p>
+                </div>
+                <div class="upload-progress" id="upload-progress" style="display:none">
+                  <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+                  <p id="upload-status">上传中...</p>
+                </div>
+                <div class="upload-done" id="upload-done" style="display:none">
+                  <p>✅ <span id="uploaded-name"></span> 已上传</p>
+                  <button class="btn-text" onclick="clearUpload()">重新选择</button>
+                </div>
               </div>
+            </div>
+
+            <!-- 编辑模式：替换视频区域 -->
+            <div class="form-group" id="replace-video-area" style="display:none">
+              <label>当前视频</label>
+              <div class="current-video-info" style="margin-bottom:10px;">
+                <p id="current-video-name" style="color:var(--text-secondary);font-size:13px;">—</p>
+              </div>
+              <label>替换视频</label>
+              <div class="upload-drop" id="replace-drop-zone">
+                <input type="file" id="replace-video-file" accept=".mp4,.webm,.mov,.avi,.mkv" style="display:none">
+                <div class="upload-hint" id="replace-upload-hint">
+                  <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <path d="M20 8V28M12 16L20 8L28 16" stroke="#888" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M6 28V32C6 34 8 36 10 36H30C32 36 34 34 34 32V28" stroke="#888" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  <p>点击或拖拽替换视频</p>
+                  <p class="small">上传后自动替换原视频，不可撤销</p>
+                </div>
+                <div class="upload-progress" id="replace-upload-progress" style="display:none">
+                  <div class="progress-bar"><div class="progress-fill" id="replace-progress-fill"></div></div>
+                  <p id="replace-upload-status">替换中...</p>
+                </div>
+                <div class="upload-done" id="replace-upload-done" style="display:none">
+                  <p>✅ <span id="replace-uploaded-name"></span> 已替换</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>封面图</label>
+              <div id="cover-preview-area" style="margin-bottom:12px;">
+                <div id="cover-preview-empty" class="cover-empty">
+                  <p>暂无封面，点下方按钮从视频中选帧</p>
+                </div>
+                <div id="cover-preview-img" style="display:none;">
+                  <img id="cover-img" style="width:100%;max-height:200px;object-fit:contain;border-radius:8px;border:1px solid var(--border);">
+                  <button class="btn-danger btn-xs" style="margin-top:8px;" onclick="clearCover()">✕ 删除封面</button>
+                </div>
+              </div>
+              <div id="frame-picker-area" style="margin-bottom:12px;">
+                <div class="frame-picker-header">
+                  <span style="font-size:13px;color:var(--text-secondary);">从视频中选一帧做封面</span>
+                  <button class="btn-primary btn-xs" onclick="openFramePicker()">🎬 选帧截取</button>
+                </div>
+              </div>
+              <input type="hidden" id="work-cover" value="">
+              <input type="hidden" id="work-cover-filename" value="">
+              <input type="hidden" id="work-video-url" value="">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="closeUploadModal()">取消</button>
+            <button type="submit" class="btn-primary">💾 保存作品</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 设置弹窗 -->
+    <div id="modal-settings" class="modal" style="display:none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>设置</h3>
+          <button class="btn-close" onclick="closeSettings()">✕</button>
+        </div>
+        <form id="settings-form">
+          <div class="modal-body">
+            <div class="form-group">
+              <label>修改管理密码</label>
+              <input type="password" id="new-password" placeholder="新密码（至少6位）">
+            </div>
+            <div class="form-group">
+              <label>确认新密码</label>
+              <input type="password" id="confirm-password" placeholder="再次输入新密码">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="closeSettings()">取消</button>
+            <button type="submit" class="btn-primary">保存</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 选帧弹窗 -->
+    <div id="modal-framepicker" class="modal" style="display:none">
+      <div class="modal-content modal-lg">
+        <div class="modal-header">
+          <h3>从视频中选帧做封面</h3>
+          <button class="btn-close" onclick="closeFramePicker()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="frame-picker-video-wrap">
+            <video id="frame-picker-video" controls preload="auto" style="width:100%;max-height:400px;border-radius:8px;"></video>
+            <p class="frame-picker-tip">拖动进度条到你想截取的位置，然后暂停，点下方「截取当前帧」</p>
+          </div>
+          <div style="display:flex;gap:12px;justify-content:center;margin-top:16px;">
+            <button class="btn-primary" onclick="captureFrame()">📸 截取当前帧</button>
+            <button class="btn-secondary" onclick="closeFramePicker()">取消</button>
+          </div>
+          <div id="frame-captured-preview" style="display:none;margin-top:20px;text-align:center;">
+            <p style="font-size:13px;color:var(--success);margin-bottom:12px;">✅ 已截取，确认使用这张做封面？</p>
+            <img id="frame-captured-img" style="width:100%;max-height:200px;object-fit:contain;border-radius:8px;border:1px solid var(--border);">
+            <div style="display:flex;gap:12px;justify-content:center;margin-top:16px;">
+              <button class="btn-primary" onclick="confirmFrame()">确认使用</button>
+              <button class="btn-secondary" onclick="recaptureFrame()">重新选帧</button>
             </div>
           </div>
         </div>
@@ -251,6 +276,15 @@
     let currentWorks = [];
     let uploadedFile = null;
     let portfolioToken = '';
+    let adminCollapsedState = { EN: false, JP: false, CN: true, KR: true };
+    let adminActiveCat = 'EN';
+
+    const catConfig = {
+      EN: { label: '欧美EN', icon: '🌍', color: '#4ecca3' },
+      JP: { label: '日本JP', icon: '🎌', color: '#ff9800' },
+      CN: { label: '简中CN', icon: '🇨🇳', color: '#e94560' },
+      KR: { label: '韩国KR', icon: '🇰🇷', color: '#6495ed' }
+    };
 
     // ========== 登录 ==========
     document.getElementById('login-form').addEventListener('submit', async (e) => {
@@ -339,67 +373,11 @@
       document.getElementById('admin-view').classList.add('active');
     }
 
-    // ========== 作品列表 ==========
+    // ========== 作品列表（按分类渲染） ==========
     async function loadWorks() {
       const res = await fetch('/api/works', { headers: { 'X-Admin-Token': adminToken } });
       currentWorks = await res.json();
-      renderWorks();
-    }
-
-    function renderWorks() {
-      const container = document.getElementById('works-list');
-      const empty = document.getElementById('empty-state');
-      document.getElementById('work-count').textContent = currentWorks.length;
-
-      if (currentWorks.length === 0) {
-        container.innerHTML = '';
-        empty.style.display = 'block';
-        return;
-      }
-
-      empty.style.display = 'none';
-      container.innerHTML = currentWorks.sort((a, b) => a.order - b.order).map(w => `
-        <div class="work-item" data-id="${w.id}" draggable="true">
-          <div class="drag-handle" title="拖拽排序">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <circle cx="4" cy="3" r="1.5"/><circle cx="12" cy="3" r="1.5"/>
-              <circle cx="4" cy="8" r="1.5"/><circle cx="12" cy="8" r="1.5"/>
-              <circle cx="4" cy="13" r="1.5"/><circle cx="12" cy="13" r="1.5"/>
-            </svg>
-          </div>
-          <div class="work-preview" onmouseenter="previewHoverEnter('${w.id}', this)" onmouseleave="previewHoverLeave('${w.id}', this)">
-            ${w.coverUrl
-              ? `<img src="${w.coverUrl}" class="preview-cover" data-work-id="${w.id}" style="width:100%;height:100%;object-fit:contain;border-radius:8px;" crossorigin="anonymous">`
-              : ''
-            }
-            <video
-              src="${w.videoUrl || ''}"
-              preload="metadata"
-              muted
-              onclick="this.paused ? this.play() : this.pause()"
-              class="preview-video"
-              data-work-id="${w.id}"
-              style="width:100%;height:100%;object-fit:contain;border-radius:8px;cursor:pointer;${w.coverUrl ? 'display:none;' : ''}"
-            ></video>
-            <div class="play-overlay" onclick="previewFullscreen('${w.id}')">🔍</div>
-          </div>
-          <div class="work-detail">
-            <div class="work-title-row">
-              <h4 class="work-title-text">${w.title}</h4>
-              <span class="cat-badge cat-badge-${w.category || 'EN'}">${categoryLabel(w.category)}</span>
-            </div>
-            <p class="work-desc-text">${w.description || '暂无描述'}</p>
-            <p class="work-date">${formatDate(w.createdAt)}</p>
-            <div class="work-btns">
-              <button class="btn-primary btn-xs" onclick="editWork('${w.id}')">✏️ 编辑</button>
-              <button class="btn-secondary btn-xs" onclick="copyShareLink('${w.shareToken}')">📋 单个链接</button>
-              <button class="btn-danger btn-xs" onclick="deleteWork('${w.id}')">🗑 删除</button>
-            </div>
-          </div>
-        </div>
-      `).join('');
-
-      initDragSort();
+      renderWorksByCategory();
     }
 
     function formatDate(d) {
@@ -453,6 +431,152 @@
       document.body.appendChild(toast);
       setTimeout(() => toast.remove(), 3000);
     }
+
+    // ========== 按分类渲染 ==========
+    function renderWorksByCategory() {
+      const container = document.getElementById('category-sections');
+      document.getElementById('work-count').textContent = currentWorks.length;
+
+      // 统计
+      const counts = { EN: 0, JP: 0, CN: 0, KR: 0 };
+      currentWorks.forEach(w => {
+        const cat = w.category || 'EN';
+        if (counts[cat] !== undefined) counts[cat]++;
+      });
+      Object.keys(counts).forEach(cat => {
+        document.getElementById('admin-side-count-' + cat).textContent = counts[cat];
+      });
+
+      const order = ['EN', 'JP', 'CN', 'KR'];
+      let html = '';
+
+      order.forEach(cat => {
+        const cfg = catConfig[cat];
+        const filtered = currentWorks
+          .filter(w => (w.category || 'EN') === cat)
+          .sort((a, b) => a.order - b.order);
+        const collapsed = adminCollapsedState[cat];
+
+        html += `
+        <section class="cat-section" id="admin-section-${cat}">
+          <div class="section-header" onclick="toggleAdminSection('${cat}')">
+            <div class="section-header-left">
+              <span class="section-icon">${cfg.icon}</span>
+              <h2 class="section-label">${cfg.label}</h2>
+              <span class="section-count">${filtered.length} 个作品</span>
+            </div>
+            <div class="section-toggle ${collapsed ? 'collapsed' : ''}" id="admin-toggle-${cat}">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <path d="M6 9l6 6 6-6"/>
+              </svg>
+            </div>
+          </div>
+          <div class="section-body ${collapsed ? 'collapsed' : ''}" id="admin-body-${cat}">
+            ${filtered.length === 0 ? '<p class="section-empty">暂无作品</p>' : renderWorkItems(filtered)}
+          </div>
+        </section>`;
+      });
+
+      container.innerHTML = html;
+      initAllDragSort();
+    }
+
+    function renderWorkItems(works) {
+      return works.map(w => `
+        <div class="work-item" data-id="${w.id}" draggable="true">
+          <div class="drag-handle" title="拖拽排序">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <circle cx="4" cy="3" r="1.5"/><circle cx="12" cy="3" r="1.5"/>
+              <circle cx="4" cy="8" r="1.5"/><circle cx="12" cy="8" r="1.5"/>
+              <circle cx="4" cy="13" r="1.5"/><circle cx="12" cy="13" r="1.5"/>
+            </svg>
+          </div>
+          <div class="work-preview" onmouseenter="previewHoverEnter('${w.id}', this)" onmouseleave="previewHoverLeave('${w.id}', this)">
+            ${w.coverUrl
+              ? `<img src="${w.coverUrl}" class="preview-cover" data-work-id="${w.id}" style="width:100%;height:100%;object-fit:contain;border-radius:8px;" crossorigin="anonymous">`
+              : ''
+            }
+            <video
+              src="${w.videoUrl || ''}"
+              preload="metadata"
+              muted
+              onclick="this.paused ? this.play() : this.pause()"
+              class="preview-video"
+              data-work-id="${w.id}"
+              style="width:100%;height:100%;object-fit:contain;border-radius:8px;cursor:pointer;${w.coverUrl ? 'display:none;' : ''}"
+            ></video>
+            <div class="play-overlay" onclick="previewFullscreen('${w.id}')">🔍</div>
+          </div>
+          <div class="work-detail">
+            <div class="work-title-row">
+              <h4 class="work-title-text">${w.title}</h4>
+              <span class="cat-badge cat-badge-${w.category || 'EN'}">${categoryLabel(w.category)}</span>
+            </div>
+            <p class="work-desc-text">${w.description || '暂无描述'}</p>
+            <p class="work-date">${formatDate(w.createdAt)}</p>
+            <div class="work-btns">
+              <button class="btn-primary btn-xs" onclick="editWork('${w.id}')">✏️ 编辑</button>
+              <button class="btn-secondary btn-xs" onclick="copyShareLink('${w.shareToken}')">📋 单个链接</button>
+              <button class="btn-danger btn-xs" onclick="deleteWork('${w.id}')">🗑 删除</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ========== 分类折叠 ==========
+    function toggleAdminSection(cat) {
+      adminCollapsedState[cat] = !adminCollapsedState[cat];
+      const body = document.getElementById('admin-body-' + cat);
+      const toggle = document.getElementById('admin-toggle-' + cat);
+      if (adminCollapsedState[cat]) {
+        body.classList.add('collapsed');
+        toggle.classList.add('collapsed');
+      } else {
+        body.classList.remove('collapsed');
+        toggle.classList.remove('collapsed');
+      }
+    }
+
+    function scrollToAdminSection(cat) {
+      const section = document.getElementById('admin-section-' + cat);
+      if (!section) return;
+      if (adminCollapsedState[cat]) toggleAdminSection(cat);
+
+      const headerH = document.querySelector('.admin-header').offsetHeight;
+      const targetTop = section.getBoundingClientRect().top + window.scrollY - headerH - 12;
+      window.scrollTo({ top: targetTop, behavior: 'smooth' });
+
+      adminActiveCat = cat;
+      updateAdminSidebarActive();
+    }
+
+    function updateAdminSidebarActive() {
+      document.querySelectorAll('.admin-sidebar .side-link').forEach(link => {
+        link.classList.toggle('active', link.dataset.cat === adminActiveCat);
+      });
+    }
+
+    // 滚动自动高亮
+    let adminScrollDebounce;
+    window.addEventListener('scroll', () => {
+      clearTimeout(adminScrollDebounce);
+      adminScrollDebounce = setTimeout(() => {
+        const sections = document.querySelectorAll('#category-sections .cat-section');
+        const headerH = document.querySelector('.admin-header').offsetHeight;
+        let current = 'EN';
+        sections.forEach(sec => {
+          const rect = sec.getBoundingClientRect();
+          if (rect.top <= headerH + 100) {
+            current = sec.id.replace('admin-section-', '');
+          }
+        });
+        if (current !== adminActiveCat) {
+          adminActiveCat = current;
+          updateAdminSidebarActive();
+        }
+      }, 100);
+    });
 
     // ========== 上传弹窗 ==========
     document.getElementById('btn-add').addEventListener('click', () => {
@@ -678,9 +802,8 @@
     // ========== 拖拽排序 ==========
     let dragSrcId = null;
 
-    function initDragSort() {
-      const items = document.querySelectorAll('.work-item[draggable]');
-      items.forEach(item => {
+    function initAllDragSort() {
+      document.querySelectorAll('.cat-section .work-item[draggable]').forEach(item => {
         const handle = item.querySelector('.drag-handle');
         if (handle) {
           handle.addEventListener('mousedown', () => { item.setAttribute('draggable', 'true'); });
@@ -696,7 +819,7 @@
         item.addEventListener('dragend', () => {
           item.classList.remove('dragging');
           dragSrcId = null;
-          document.querySelectorAll('.work-item').forEach(el => el.classList.remove('drag-over'));
+          document.querySelectorAll('.cat-section .work-item').forEach(el => el.classList.remove('drag-over'));
         });
 
         item.addEventListener('dragover', (e) => {
@@ -716,18 +839,18 @@
           item.classList.remove('drag-over');
           const targetId = item.dataset.id;
           if (dragSrcId && dragSrcId !== targetId) {
-            const container = document.getElementById('works-list');
-            const srcEl = container.querySelector(`[data-id="${dragSrcId}"]`);
-            const targetEl = container.querySelector(`[data-id="${targetId}"]`);
-            const allItems = [...container.querySelectorAll('.work-item')];
+            const parentBody = item.closest('.section-body');
+            const srcEl = parentBody.querySelector(`[data-id="${dragSrcId}"]`);
+            const targetEl = parentBody.querySelector(`[data-id="${targetId}"]`);
+            const allItems = [...parentBody.querySelectorAll('.work-item')];
             const srcIdx = allItems.indexOf(srcEl);
             const tgtIdx = allItems.indexOf(targetEl);
             if (srcIdx < tgtIdx) {
-              container.insertBefore(srcEl, targetEl.nextSibling);
+              parentBody.insertBefore(srcEl, targetEl.nextSibling);
             } else {
-              container.insertBefore(srcEl, targetEl);
+              parentBody.insertBefore(srcEl, targetEl);
             }
-            const newOrder = [...container.querySelectorAll('.work-item')].map(el => el.dataset.id);
+            const newOrder = [...parentBody.querySelectorAll('.work-item')].map(el => el.dataset.id);
             saveOrder(newOrder);
           }
         });
@@ -826,7 +949,6 @@
       document.getElementById('cover-img').src = data.coverUrl;
       closeFramePicker();
 
-      // 编辑已有作品时自动保存
       const editId = document.getElementById('edit-id').value;
       if (editId) {
         const work = currentWorks.find(w => w.id === editId);
@@ -837,6 +959,7 @@
             id: editId,
             title: work.title,
             description: work.description || '',
+            category: work.category || 'EN',
             coverUrl: data.coverUrl,
             coverFilename: data.coverFilename
           })
@@ -892,24 +1015,6 @@
       if (replaceFileInput.files.length) replaceVideo(replaceFileInput.files[0]);
     });
 
-    // ========== 回到顶端 ==========
-    const scrollTopBtn = document.getElementById('scroll-to-top');
-
-    window.addEventListener('scroll', () => {
-      if (window.scrollY > 400) {
-        scrollTopBtn.style.display = 'flex';
-        scrollTopBtn.style.animation = 'fadeIn 0.3s ease';
-      } else {
-        scrollTopBtn.style.display = 'none';
-      }
-    });
-
-    function scrollToTop() {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    // ========== 替换视频（编辑模式） ==========
-
     async function replaceVideo(file) {
       const editId = document.getElementById('edit-id').value;
       if (!editId) return;
@@ -952,6 +1057,15 @@
       };
 
       xhr.send(formData);
+    }
+
+    // ========== 回到顶端 ==========
+    const scrollTopBtn = document.getElementById('scroll-to-top');
+    window.addEventListener('scroll', () => {
+      scrollTopBtn.style.display = window.scrollY > 400 ? 'flex' : 'none';
+    });
+    function scrollToTop() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   </script>
 </body>
