@@ -99,6 +99,16 @@
                 <textarea id="work-description" rows="3" placeholder="简短描述作品内容、技术手段..."></textarea>
               </div>
 
+              <div class="form-group">
+                <label>市场分类</label>
+                <select id="work-category" style="width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px;">
+                  <option value="EN">🌍 欧美EN</option>
+                  <option value="JP">🎌 日本JP</option>
+                  <option value="CN">🇨🇳 简中CN</option>
+                  <option value="KR">🇰🇷 韩国KR</option>
+                </select>
+              </div>
+
               <div class="form-group" id="upload-area">
                 <label>视频文件</label>
                 <div class="upload-drop" id="drop-zone">
@@ -374,7 +384,10 @@
             <div class="play-overlay" onclick="previewFullscreen('${w.id}')">🔍</div>
           </div>
           <div class="work-detail">
-            <h4 class="work-title-text">${w.title}</h4>
+            <div class="work-title-row">
+              <h4 class="work-title-text">${w.title}</h4>
+              <span class="cat-badge cat-badge-${w.category || 'EN'}">${categoryLabel(w.category)}</span>
+            </div>
             <p class="work-desc-text">${w.description || '暂无描述'}</p>
             <p class="work-date">${formatDate(w.createdAt)}</p>
             <div class="work-btns">
@@ -392,6 +405,11 @@
     function formatDate(d) {
       if (!d) return '';
       return new Date(d).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function categoryLabel(cat) {
+      const map = { EN: '欧美EN', JP: '日本JP', CN: '简中CN', KR: '韩国KR' };
+      return map[cat] || '欧美EN';
     }
 
     function previewFullscreen(id) {
@@ -447,6 +465,7 @@
       document.getElementById('edit-id').value = '';
       document.getElementById('work-title').value = '';
       document.getElementById('work-description').value = '';
+      document.getElementById('work-category').value = 'EN';
       document.getElementById('work-cover').value = '';
       document.getElementById('work-cover-filename').value = '';
       document.getElementById('work-video-url').value = '';
@@ -539,6 +558,7 @@
       const payload = {
         title: document.getElementById('work-title').value,
         description: document.getElementById('work-description').value,
+        category: document.getElementById('work-category').value,
         coverUrl: document.getElementById('work-cover').value,
         coverFilename: document.getElementById('work-cover-filename').value,
       };
@@ -577,6 +597,7 @@
       document.getElementById('edit-id').value = work.id;
       document.getElementById('work-title').value = work.title;
       document.getElementById('work-description').value = work.description || '';
+      document.getElementById('work-category').value = work.category || 'EN';
       document.getElementById('work-video-url').value = work.videoUrl || '';
       document.getElementById('modal-title').textContent = '编辑作品：' + work.title;
       document.getElementById('upload-area').style.display = 'none';
