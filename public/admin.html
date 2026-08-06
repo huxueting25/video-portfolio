@@ -524,18 +524,29 @@
       `).join('');
     }
 
-    // ========== 分类折叠 ==========
+    // ========== 分类折叠（手风琴模式：同时只展开一个） ==========
     function toggleAdminSection(cat) {
-      adminCollapsedState[cat] = !adminCollapsedState[cat];
-      const body = document.getElementById('admin-body-' + cat);
-      const toggle = document.getElementById('admin-toggle-' + cat);
-      if (adminCollapsedState[cat]) {
-        body.classList.add('collapsed');
-        toggle.classList.add('collapsed');
-      } else {
-        body.classList.remove('collapsed');
-        toggle.classList.remove('collapsed');
+      // 如果当前分类已展开 → 折叠它
+      if (!adminCollapsedState[cat]) {
+        adminCollapsedState[cat] = true;
+        document.getElementById('admin-body-' + cat).classList.add('collapsed');
+        document.getElementById('admin-toggle-' + cat).classList.add('collapsed');
+        return;
       }
+
+      // 展开当前分类，同时折叠其他所有分类
+      ['EN', 'JP', 'CN', 'KR'].forEach(c => {
+        adminCollapsedState[c] = true;
+        const body = document.getElementById('admin-body-' + c);
+        const toggle = document.getElementById('admin-toggle-' + c);
+        if (body) body.classList.add('collapsed');
+        if (toggle) toggle.classList.add('collapsed');
+      });
+
+      // 展开目标分类
+      adminCollapsedState[cat] = false;
+      document.getElementById('admin-body-' + cat).classList.remove('collapsed');
+      document.getElementById('admin-toggle-' + cat).classList.remove('collapsed');
     }
 
     function scrollToAdminSection(cat) {
