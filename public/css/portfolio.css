@@ -2,6 +2,7 @@
 :root {
   --bg: #0a0a14;
   --bg-card: #141428;
+  --bg-hover: #222240;
   --border: #2a2a44;
   --text: #e8e8e8;
   --text-muted: #777;
@@ -85,7 +86,7 @@ body::before {
 
 .hero-text {
   text-align: center;
-  margin-bottom: 48px;
+  margin-bottom: 36px;
 }
 .hero-text h1 {
   font-size: 36px;
@@ -96,6 +97,59 @@ body::before {
 .hero-sub {
   color: var(--text-muted);
   font-size: 16px;
+}
+
+/* ========== 分类标签栏 ========== */
+.category-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+  padding: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.cat-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s;
+  white-space: nowrap;
+  position: relative;
+}
+.cat-tab:hover {
+  color: var(--text);
+  background: var(--bg-hover, #222240);
+}
+.cat-tab.active {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(233, 69, 96, 0.35);
+}
+.cat-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+.cat-count {
+  font-size: 12px;
+  background: rgba(255,255,255,0.2);
+  padding: 2px 8px;
+  border-radius: 10px;
+  min-width: 22px;
+  text-align: center;
+}
+.cat-tab.active .cat-count {
+  background: rgba(255,255,255,0.3);
 }
 
 /* ========== 作品网格 ========== */
