@@ -257,6 +257,52 @@ body {
 .section-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
 .section-title h3 { font-size: 18px; }
 
+/* ========== 管理搜索框 ========== */
+.admin-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.admin-search-wrap svg {
+  position: absolute;
+  left: 10px;
+  pointer-events: none;
+}
+.admin-search-input {
+  width: 180px;
+  padding: 8px 32px 8px 32px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 13px;
+  transition: border-color 0.2s, width 0.3s;
+}
+.admin-search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  width: 240px;
+}
+.admin-search-input::placeholder {
+  color: var(--text-muted);
+}
+.admin-search-clear {
+  position: absolute;
+  right: 4px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+}
+.admin-search-clear:hover {
+  color: var(--text);
+}
+
 /* ========== 分类区域（折叠） ========== */
 .cat-section {
   margin-bottom: 16px;
