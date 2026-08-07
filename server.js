@@ -414,6 +414,14 @@ app.get('/', (req, res) => {
   res.redirect('/admin');
 });
 
+// ========== 健康检查（保活用） ==========
+// 这个端点返回极简响应，不触发任何 Cloudinary 调用，
+// 用于 GitHub Actions 每 14 分钟 ping 一次保活 Render
+app.get('/ping', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.type('text/plain').send('pong');
+});
+
 // ========== 启动 ==========
 // 先启动服务器，再异步加载 Cloudinary 数据
 app.listen(PORT, () => {
