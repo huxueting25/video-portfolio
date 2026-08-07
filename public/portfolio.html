@@ -255,18 +255,18 @@
       if (searchQuery) {
         const firstWithResults = order.find(c => counts[c] > 0);
         if (firstWithResults) expandOnly(firstWithResults);
+      } else {
+        // 首次加载或刷新：确保所有有作品的分类都可见（不受旧的 display:none 残留影响）
+        ['EN', 'JP', 'CN', 'KR'].forEach(c => {
+          const section = document.getElementById('section-' + c);
+          if (section && !collapsedState[c]) {
+            section.style.display = '';
+          }
+        });
       }
 
       setupVideoObservers();
       updateSidebarActive();
-
-      // 确保当前活动分类不被 display:none 残留的旧状态覆盖
-      if (!searchQuery) {
-        const section = document.getElementById('section-' + activeCat);
-        if (section && section.style.display === 'none') {
-          expandOnly(activeCat);
-        }
-      }
     }
 
     function renderWorks(works, cat) {
