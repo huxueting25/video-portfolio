@@ -202,6 +202,9 @@ body {
   background: var(--bg-card);
   overflow: hidden;
 }
+.cat-section.hidden {
+  display: none;
+}
 .section-header {
   display: flex;
   justify-content: space-between;
