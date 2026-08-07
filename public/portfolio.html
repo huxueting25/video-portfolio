@@ -190,12 +190,12 @@
     }
 
     function optimizeCoverUrl(url) {
-      if (!url) return '';
-      return url.replace(/\/upload\//, '/upload/w_800,q_auto,f_auto/');
+      // 直接使用原始 Cloudinary URL，不添加转换参数（节省积分）
+      return url || '';
     }
     function videoThumbnailUrl(videoUrl) {
-      if (!videoUrl) return '';
-      return videoUrl.replace(/\/upload\//, '/upload/so_auto,w_800,q_auto,f_auto/');
+      // 直接使用原始 URL，不添加 so_auto 转换（节省大量视频转换积分）
+      return videoUrl || '';
     }
 
     function renderAll(searchQuery) {
