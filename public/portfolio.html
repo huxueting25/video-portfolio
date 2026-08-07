@@ -190,12 +190,13 @@
     }
 
     function optimizeCoverUrl(url) {
-      // 直接使用原始 Cloudinary URL，不添加转换参数（节省积分）
+      // 直接使用手动上传的封面原始 URL
       return url || '';
     }
     function videoThumbnailUrl(videoUrl) {
-      // 直接使用原始 URL，不添加 so_auto 转换（节省大量视频转换积分）
-      return videoUrl || '';
+      // 视频无手动封面时：用第一帧生成极轻量封面（so_0 缓存不重复计费）
+      if (!videoUrl) return '';
+      return videoUrl.replace(/\/upload\//, '/upload/so_0,w_640,c_scale/');
     }
 
     function renderAll(searchQuery) {
