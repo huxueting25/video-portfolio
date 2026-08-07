@@ -242,7 +242,6 @@ body {
 
 /* 折叠体 */
 .section-body {
-  max-height: 5000px;
   overflow: hidden;
   transition: max-height 0.5s ease, padding 0.3s ease;
   padding: 0 24px 24px;
