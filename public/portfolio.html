@@ -4,441 +4,235 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow, noarchive">
-  <meta name="googlebot" content="noindex, nofollow, noarchive">
   <title>作品集</title>
   <link rel="stylesheet" href="/static/css/portfolio.css">
-  <style>
-    /* ========== 骨架屏 ========== */
-    .work-card-skeleton {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-      box-shadow: var(--shadow);
-    }
-    .skeleton-video {
-      aspect-ratio: 16 / 9;
-      background: linear-gradient(90deg, #1a1a30 25%, #22223a 50%, #1a1a30 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-    }
-    .skeleton-info {
-      padding: 24px 28px;
-    }
-    .skeleton-title {
-      height: 24px; width: 60%; border-radius: 4px;
-      background: linear-gradient(90deg, #1a1a30 25%, #22223a 50%, #1a1a30 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-      margin-bottom: 12px;
-    }
-    .skeleton-desc {
-      height: 16px; width: 80%; border-radius: 4px;
-      background: linear-gradient(90deg, #1a1a30 25%, #22223a 50%, #1a1a30 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-    }
-    @keyframes shimmer {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-
-    /* ========== 视频封面占位 ========== */
-    .work-video-wrap { position: relative; }
-    .video-placeholder {
-      position: absolute; inset: 0;
-      display: flex; align-items: center; justify-content: center;
-      background: #000;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-    .video-placeholder:hover { background: rgba(233, 69, 96, 0.08); }
-    .video-placeholder .play-icon {
-      width: 64px; height: 64px;
-      border-radius: 50%;
-      background: rgba(233, 69, 96, 0.85);
-      display: flex; align-items: center; justify-content: center;
-      transition: transform 0.2s, background 0.2s;
-    }
-    .video-placeholder:hover .play-icon {
-      transform: scale(1.1);
-      background: rgba(233, 69, 96, 1);
-    }
-    .video-placeholder .play-icon svg { margin-left: 3px; }
-    .video-placeholder .cover-img {
-      position: absolute; inset: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
-      opacity: 0.6;
-      transition: opacity 0.3s;
-    }
-    .video-placeholder:hover .cover-img { opacity: 0.8; }
-  </style>
 </head>
 <body>
 
-  <!-- 回到顶端按钮 -->
-  <button id="scroll-to-top" title="回到顶端" onclick="scrollToTop()" style="display:none">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-      <path d="M18 15l-6-6-6 6"/>
-    </svg>
-  </button>
+<button id="scroll-to-top" title="回到顶端" onclick="scrollToTop()" style="display:none">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 15l-6-6-6 6"/></svg>
+</button>
 
-  <!-- 顶栏 -->
-  <nav class="top-nav">
-    <div class="nav-brand">胡雪婷 · 作品集</div>
-    <div class="badge-private">🔒 私密分享</div>
+<nav class="top-nav">
+  <div class="nav-brand">胡雪婷 · 作品集</div>
+  <div class="badge-private">🔒 私密分享</div>
+</nav>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-title">买量广告</div>
+  <nav class="sidebar-nav">
+    <a class="side-link active" href="#section-EN" data-cat="EN" onclick="scrollToCat('EN')">
+      <span class="side-dot side-dot-EN"></span>欧美EN
+      <span class="side-count" id="side-count-EN">0</span>
+    </a>
+    <a class="side-link" href="#section-JP" data-cat="JP" onclick="scrollToCat('JP')">
+      <span class="side-dot side-dot-JP"></span>日本JP
+      <span class="side-count" id="side-count-JP">0</span>
+    </a>
+    <a class="side-link" href="#section-CN" data-cat="CN" onclick="scrollToCat('CN')">
+      <span class="side-dot side-dot-CN"></span>简中CN
+      <span class="side-count" id="side-count-CN">0</span>
+    </a>
+    <a class="side-link" href="#section-KR" data-cat="KR" onclick="scrollToCat('KR')">
+      <span class="side-dot side-dot-KR"></span>韩国KR
+      <span class="side-count" id="side-count-KR">0</span>
+    </a>
   </nav>
+</aside>
 
-  <!-- 侧边栏 -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-title">买量广告</div>
-    <nav class="sidebar-nav">
-      <a class="side-link active" href="#section-EN" data-cat="EN" onclick="scrollToSection('EN')">
-        <span class="side-dot side-dot-EN"></span>
-        欧美EN
-        <span class="side-count" id="side-count-EN">0</span>
-      </a>
-      <a class="side-link" href="#section-JP" data-cat="JP" onclick="scrollToSection('JP')">
-        <span class="side-dot side-dot-JP"></span>
-        日本JP
-        <span class="side-count" id="side-count-JP">0</span>
-      </a>
-      <a class="side-link" href="#section-CN" data-cat="CN" onclick="scrollToSection('CN')">
-        <span class="side-dot side-dot-CN"></span>
-        简中CN
-        <span class="side-count" id="side-count-CN">0</span>
-      </a>
-      <a class="side-link" href="#section-KR" data-cat="KR" onclick="scrollToSection('KR')">
-        <span class="side-dot side-dot-KR"></span>
-        韩国KR
-        <span class="side-count" id="side-count-KR">0</span>
-      </a>
-    </nav>
-  </aside>
-
-  <!-- 主内容 -->
-  <main class="main-content" id="main-content">
-    <div class="hero-text">
-      <h1>买量广告作品集</h1>
-      <p class="hero-sub">跨媒体与动画艺术 · 数字化交互表达</p>
-    </div>
-
-    <!-- 搜索框 -->
-    <div class="search-bar" id="search-bar" style="display:none">
-      <div class="search-input-wrap">
-        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round">
-          <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
-        </svg>
-        <input type="text" class="search-input" id="search-input" placeholder="搜索作品标题..." oninput="onSearch(this.value)">
-        <button class="search-clear" id="search-clear" onclick="clearSearch()" style="display:none">✕</button>
-      </div>
-      <span class="search-result" id="search-result"></span>
-    </div>
-
-    <div id="category-sections"></div>
-  </main>
-
-  <footer class="footer">
-    <p>此页面通过私密链接分享，仅供指定收件人查看</p>
-  </footer>
-
-  <!-- 加载层 -->
-  <div class="loading-overlay" id="loading-overlay">
-    <div class="loading-animation">
-      <div class="pulse-ring"></div>
-      <svg width="40" height="40" viewBox="0 0 48 48" fill="none">
-        <path d="M16 14L36 24L16 34V14Z" fill="#e94560"/>
-      </svg>
-    </div>
-    <p>正在加载作品集...</p>
+<main class="main-content">
+  <div class="hero-text">
+    <h1>买量广告作品集</h1>
+    <p class="hero-sub">跨媒体与动画艺术 · 数字化交互表达</p>
   </div>
+  <div class="search-bar" id="search-bar" style="display:none">
+    <div class="search-input-wrap">
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" class="search-input" id="search-input" placeholder="搜索作品标题..." oninput="onSearch(this.value)">
+      <button class="search-clear" id="search-clear" onclick="clearSearch()" style="display:none">✕</button>
+    </div>
+    <span class="search-result" id="search-result"></span>
+  </div>
+  <div id="category-sections"></div>
+</main>
 
-  <script>
-    const params = new URLSearchParams(window.location.search);
-    const tokenParam = params.get('p') || params.get('s');
-    const tokenKey = params.get('p') ? 'p' : 's';
-    let allWorks = [];
-    let collapsedState = { EN: false, JP: false, CN: true, KR: true };
-    let activeCat = 'EN';
-    let vidCounter = 0;
+<footer class="footer"><p>此页面通过私密链接分享，仅供指定收件人查看</p></footer>
 
-    const catConfig = {
-      EN: { label: '欧美EN', icon: '🌍', color: '#4ecca3' },
-      JP: { label: '日本JP', icon: '🎌', color: '#ff9800' },
-      CN: { label: '简中CN', icon: '🇨🇳', color: '#e94560' },
-      KR: { label: '韩国KR', icon: '🇰🇷', color: '#6495ed' }
-    };
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-animation"><div class="pulse-ring"></div><svg width="40" height="40" viewBox="0 0 48 48" fill="none"><path d="M16 14L36 24L16 34V14Z" fill="#e94560"/></svg></div>
+  <p>正在加载作品集...</p>
+</div>
 
-    if (!tokenParam) {
-      document.getElementById('loading-overlay').innerHTML = '<div style="text-align:center;padding-top:40vh;"><p>访问需要有效的分享链接</p></div>';
+<script>
+const params = new URLSearchParams(window.location.search);
+const tokenParam = params.get('p') || params.get('s');
+const tokenKey = params.get('p') ? 'p' : 's';
+let allWorks = [];
+let searchQuery = '';
+let vidCounter = 0;
+
+const catConfig = {
+  EN: { label: '欧美EN', icon: '🌍', color: '#4ecca3' },
+  JP: { label: '日本JP', icon: '🎌', color: '#ff9800' },
+  CN: { label: '简中CN', icon: '🇨🇳', color: '#e94560' },
+  KR: { label: '韩国KR', icon: '🇰🇷', color: '#6495ed' }
+};
+
+// 每个分类独立折叠状态
+const collapsed = { EN: false, JP: false, CN: true, KR: true };
+
+function showErr(msg) {
+  document.getElementById('loading-overlay').innerHTML = '<div style="text-align:center;padding-top:40vh;">'+msg+'</div>';
+}
+
+if (!tokenParam) {
+  showErr('<p>访问需要有效的分享链接</p>');
+} else {
+  fetch('/api/portfolio-data?'+tokenKey+'='+tokenParam)
+    .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+    .then(works => {
+      allWorks = works;
+      allWorks.forEach(w => { if (!w.category) w.category = 'EN'; });
+      renderAll();
+      document.getElementById('loading-overlay').style.display = 'none';
+    })
+    .catch(() => showErr('<p style="color:#e94560;">分享链接无效或已失效</p>'));
+}
+
+function posterUrl(w) {
+  if (w.coverUrl) return w.coverUrl;
+  if (!w.videoUrl) return '';
+  return w.videoUrl.replace('/upload/','/upload/so_0,w_640/').replace('.mp4','.jpg');
+}
+
+function renderAll() {
+  document.getElementById('search-bar').style.display = allWorks.length > 0 ? 'block' : 'none';
+  const counts = { EN:0, JP:0, CN:0, KR:0 };
+  allWorks.forEach(w => {
+    const cat = w.category || 'EN';
+    if ((!searchQuery || w.title.toLowerCase().includes(searchQuery)) && counts[cat]!==undefined) counts[cat]++;
+  });
+  document.getElementById('search-result').textContent = searchQuery ? '找到 '+Object.values(counts).reduce((a,b)=>a+b,0)+' 个结果' : '';
+  ['EN','JP','CN','KR'].forEach(c => document.getElementById('side-count-'+c).textContent = counts[c]);
+
+  const order = ['EN','JP','CN','KR'];
+  let html = '';
+  order.forEach(cat => {
+    const cfg = catConfig[cat];
+    const items = allWorks
+      .filter(w => (w.category||'EN')===cat)
+      .filter(w => !searchQuery || w.title.toLowerCase().includes(searchQuery))
+      .sort((a,b)=>a.order-b.order);
+    const isCollapsed = collapsed[cat];
+
+    html += '<section class="cat-section" id="section-'+cat+'" data-cat="'+cat+'">';
+    html += '<div class="section-header" onclick="toggleCat(\''+cat+'\')">';
+    html += '<div class="section-header-left"><span class="section-icon">'+cfg.icon+'</span><h2 class="section-label">'+cfg.label+'</h2><span class="section-count">'+items.length+' 个作品</span></div>';
+    html += '<div class="section-toggle'+(isCollapsed?' collapsed':'')+'" id="toggle-'+cat+'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div>';
+    html += '</div>';
+    html += '<div class="section-body'+(isCollapsed?' collapsed':'')+'" id="body-'+cat+'">';
+    if (items.length===0) {
+      html += '<p class="section-empty">暂无作品</p>';
     } else {
-      fetch(`/api/portfolio-data?${tokenKey}=${tokenParam}`)
-        .then(r => { if (!r.ok) throw new Error(); return r.json(); })
-        .then(works => {
-          allWorks = works;
-          allWorks.forEach(w => { if (!w.category) w.category = 'EN'; });
-          renderAll();
-          document.getElementById('loading-overlay').style.display = 'none';
-        })
-        .catch(() => {
-          document.getElementById('loading-overlay').innerHTML = `<div style="text-align:center;padding-top:40vh;">
-            <svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" stroke="#e94560" stroke-width="2" fill="none"/><path d="M24 14V26M24 30V32" stroke="#e94560" stroke-width="3" stroke-linecap="round"/></svg>
-            <p style="margin-top:16px;color:#888;">分享链接无效或已失效</p>
-            <p style="font-size:13px;color:#888;">请联系创作者获取新的分享链接</p></div>`;
-        });
-    }
-
-    function optimizeCoverUrl(url) {
-      // 直接使用手动上传的封面原始 URL
-      return url || '';
-    }
-    function videoThumbnailUrl(videoUrl) {
-      // 视频无手动封面时：用第一帧生成极轻量封面图
-      // Cloudinary 需要 .jpg 后缀才能返回图片格式
-      if (!videoUrl) return '';
-      return videoUrl.replace(/\/upload\//, '/upload/so_0,w_640/').replace(/\.mp4$/, '.jpg');
-    }
-
-    function renderAll(searchQuery) {
-      searchQuery = searchQuery || '';
-      document.getElementById('search-bar').style.display = allWorks.length > 0 ? 'block' : 'none';
-
-      // 更新侧边栏计数
-      const counts = { EN: 0, JP: 0, CN: 0, KR: 0 };
-      allWorks.forEach(w => {
-        const cat = w.category || 'EN';
-        const match = !searchQuery || w.title.toLowerCase().includes(searchQuery);
-        if (match && counts[cat] !== undefined) counts[cat]++;
-      });
-      let totalVisible = Object.values(counts).reduce((a, b) => a + b, 0);
-      document.getElementById('search-result').textContent = searchQuery ? `找到 ${totalVisible} 个结果` : '';
-
-      Object.keys(counts).forEach(cat => {
-        document.getElementById('side-count-' + cat).textContent = counts[cat];
-      });
-
-      // 搜索时自动展开第一个有结果的分类
-      if (searchQuery) {
-        const firstWithResults = ['EN', 'JP', 'CN', 'KR'].find(c => counts[c] > 0);
-        if (firstWithResults) activeCat = firstWithResults;
-      }
-
-      // 渲染各分类区域（accordion 状态由 collapsedState 决定，不依赖 display:none）
-      const order = ['EN', 'JP', 'CN', 'KR'];
-      const container = document.getElementById('category-sections');
-      let html = '';
-
-      order.forEach(cat => {
-        const cfg = catConfig[cat];
-        const filtered = allWorks
-          .filter(w => (w.category || 'EN') === cat)
-          .filter(w => !searchQuery || w.title.toLowerCase().includes(searchQuery))
-          .sort((a, b) => a.order - b.order);
-        const isCollapsed = collapsedState[cat];
-
-        html += `
-        <section class="cat-section ${isCollapsed ? 'hidden' : ''}" id="section-${cat}" data-cat="${cat}">
-          <div class="section-header" onclick="toggleSection('${cat}')">
-            <div class="section-header-left">
-              <span class="section-icon">${cfg.icon}</span>
-              <h2 class="section-label">${cfg.label}</h2>
-              <span class="section-count">${filtered.length} 个作品</span>
-            </div>
-            <div class="section-toggle ${isCollapsed ? 'collapsed' : ''}" id="toggle-${cat}">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                <path d="M6 9l6 6 6-6"/>
-              </svg>
-            </div>
-          </div>
-          <div class="section-body ${isCollapsed ? 'collapsed' : ''}" id="body-${cat}">
-            ${filtered.length === 0 ? '<p class="section-empty">暂无作品</p>' : renderWorks(filtered, cat)}
-          </div>
-        </section>`;
-      });
-
-      container.innerHTML = html;
-      setupVideoObservers();
-      updateSidebarActive();
-    }
-
-    function renderWorks(works, cat) {
-      return works.map((w, i) => {
+      html += items.map(w => {
         const idx = vidCounter++;
-        const posterUrl = w.coverUrl ? optimizeCoverUrl(w.coverUrl) : videoThumbnailUrl(w.videoUrl);
-        return `
-        <div class="work-card" data-idx="${idx}">
-          <div class="work-video-wrap">
-            <video id="video-${idx}" controls playsinline preload="none"
-                   class="work-video"
-                   data-src="${w.videoUrl || ''}"
-                   poster="${posterUrl}">
-            </video>
-            <div class="video-placeholder" id="placeholder-${idx}" onclick="playVideo(${idx})">
-              ${posterUrl ? `<img class="cover-img" src="${posterUrl}" alt="" loading="lazy">` : ''}
-              <div class="play-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-                  <path d="M8 5v14l11-7z"/>
-                </svg>
-              </div>
-            </div>
-          </div>
-          <div class="work-info">
-            <h3 class="work-title">${w.title}</h3>
-            ${w.description ? `<p class="work-desc">${w.description}</p>` : ''}
-          </div>
-        </div>`;
+        const pUrl = posterUrl(w);
+        return '<div class="work-card"><div class="work-video-wrap">'
+        +'<video id="video-'+idx+'" controls playsinline preload="none" class="work-video" data-src="'+ (w.videoUrl||'') +'" poster="'+pUrl+'"></video>'
+        +'<div class="video-placeholder" id="placeholder-'+idx+'" onclick="playVideo('+idx+')">'
+        +(pUrl?'<img class="cover-img" src="'+pUrl+'" alt="" loading="lazy">':'')
+        +'<div class="play-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg></div></div></div>'
+        +'<div class="work-info"><h3 class="work-title">'+w.title+'</h3>'+(w.description?'<p class="work-desc">'+w.description+'</p>':'')+'</div></div>';
       }).join('');
     }
+    html += '</div></section>';
+  });
 
-    function setupVideoObservers() {
-      const allVideos = document.querySelectorAll('.work-video');
-      allVideos.forEach(video => {
-        video.addEventListener('play', () => {
-          allVideos.forEach(other => {
-            if (other !== video && !other.paused) other.pause();
-          });
-        });
-      });
+  document.getElementById('category-sections').innerHTML = html;
+  setupObservers();
+}
 
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            const video = entry.target;
-            const src = video.dataset.src;
-            if (src && !video.querySelector('source')) {
-              const source = document.createElement('source');
-              source.src = src;
-              source.type = 'video/mp4';
-              video.appendChild(source);
-              video.load();
-            }
-            observer.unobserve(video);
-          }
-        });
-      }, { rootMargin: '200px' });
-
-      allVideos.forEach(video => observer.observe(video));
-    }
-
-    function playVideo(idx) {
-      const video = document.getElementById('video-' + idx);
-      const placeholder = document.getElementById('placeholder-' + idx);
-      if (!video) return;
-      if (!video.querySelector('source')) {
-        const src = video.dataset.src;
-        if (src) {
-          const source = document.createElement('source');
-          source.src = src;
-          source.type = 'video/mp4';
-          video.appendChild(source);
-          video.load();
+function setupObservers() {
+  const allVideos = document.querySelectorAll('.work-video');
+  allVideos.forEach(v => v.addEventListener('play', () => {
+    allVideos.forEach(o => { if (o !== v && !o.paused) o.pause(); });
+  }));
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const v = e.target;
+        if (v.dataset.src && !v.querySelector('source')) {
+          const s = document.createElement('source'); s.src = v.dataset.src; s.type = 'video/mp4';
+          v.appendChild(s); v.load();
         }
+        obs.unobserve(v);
       }
-      placeholder.style.display = 'none';
-      video.play().catch(() => {});
-    }
-
-    // ========== 折叠切换（手风琴模式：同时只展开一个） ==========
-    function expandOnly(cat) {
-      ['EN', 'JP', 'CN', 'KR'].forEach(c => {
-        const section = document.getElementById('section-' + c);
-        const body = document.getElementById('body-' + c);
-        const toggle = document.getElementById('toggle-' + c);
-        if (c === cat) {
-          collapsedState[c] = false;
-          if (section) section.classList.remove('hidden');
-          if (body) body.classList.remove('collapsed');
-          if (toggle) toggle.classList.remove('collapsed');
-        } else {
-          collapsedState[c] = true;
-          if (section) section.classList.add('hidden');
-          if (body) body.classList.add('collapsed');
-          if (toggle) toggle.classList.add('collapsed');
-        }
-      });
-    }
-
-    function toggleSection(cat) {
-      if (!collapsedState[cat]) {
-        // 当前已展开 → 全部折叠
-        ['EN', 'JP', 'CN', 'KR'].forEach(c => {
-          collapsedState[c] = true;
-          const section = document.getElementById('section-' + c);
-          const body = document.getElementById('body-' + c);
-          const toggle = document.getElementById('toggle-' + c);
-          if (section) section.classList.add('hidden');
-          if (body) body.classList.add('collapsed');
-          if (toggle) toggle.classList.add('collapsed');
-        });
-        return;
-      }
-      expandOnly(cat);
-      activeCat = cat;
-      updateSidebarActive();
-    }
-
-    // ========== 侧边栏点击滚动 ==========
-    function scrollToSection(cat) {
-      expandOnly(cat);
-      const section = document.getElementById('section-' + cat);
-      if (!section) return;
-      const topNavHeight = document.querySelector('.top-nav').offsetHeight;
-      const targetTop = section.getBoundingClientRect().top + window.scrollY - topNavHeight - 16;
-      window.scrollTo({ top: targetTop, behavior: 'smooth' });
-      activeCat = cat;
-      updateSidebarActive();
-    }
-
-    function updateSidebarActive() {
-      document.querySelectorAll('.side-link').forEach(link => {
-        link.classList.toggle('active', link.dataset.cat === activeCat);
-      });
-    }
-
-    // ========== 搜索 ==========
-    function onSearch(query) {
-      const clearBtn = document.getElementById('search-clear');
-      clearBtn.style.display = query ? 'flex' : 'none';
-
-      renderAll(query.trim().toLowerCase());
-    }
-
-    function clearSearch() {
-      document.getElementById('search-input').value = '';
-      document.getElementById('search-clear').style.display = 'none';
-      renderAll('');
-    }
-
-    // ========== 滚动时自动高亮侧边栏 ==========
-    let scrollDebounce;
-    window.addEventListener('scroll', () => {
-      clearTimeout(scrollDebounce);
-      scrollDebounce = setTimeout(() => {
-        const sections = document.querySelectorAll('.cat-section:not(.hidden)');
-        const topNavH = document.querySelector('.top-nav').offsetHeight;
-        let current = activeCat;
-        sections.forEach(sec => {
-          const rect = sec.getBoundingClientRect();
-          if (rect.top <= topNavH + 100) {
-            current = sec.dataset.cat;
-          }
-        });
-        if (current !== activeCat) {
-          activeCat = current;
-          updateSidebarActive();
-        }
-      }, 100);
     });
+  }, { rootMargin: '200px' });
+  allVideos.forEach(v => obs.observe(v));
+}
 
-    // ========== 回到顶端 ==========
-    const scrollTopBtn = document.getElementById('scroll-to-top');
-    window.addEventListener('scroll', () => {
-      scrollTopBtn.style.display = window.scrollY > 400 ? 'flex' : 'none';
-    });
-    function scrollToTop() {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  </script>
+function playVideo(idx) {
+  const v = document.getElementById('video-'+idx);
+  const p = document.getElementById('placeholder-'+idx);
+  if (!v) return;
+  if (!v.querySelector('source') && v.dataset.src) {
+    const s = document.createElement('source'); s.src = v.dataset.src; s.type = 'video/mp4';
+    v.appendChild(s); v.load();
+  }
+  p.style.display = 'none';
+  v.play().catch(()=>{});
+}
+
+function toggleCat(cat) {
+  collapsed[cat] = !collapsed[cat];
+  const body = document.getElementById('body-'+cat);
+  const toggle = document.getElementById('toggle-'+cat);
+  if (collapsed[cat]) { body.classList.add('collapsed'); toggle.classList.add('collapsed'); }
+  else { body.classList.remove('collapsed'); toggle.classList.remove('collapsed'); }
+}
+
+function scrollToCat(cat) {
+  if (collapsed[cat]) toggleCat(cat);
+  const sec = document.getElementById('section-'+cat);
+  if (sec) {
+    const h = document.querySelector('.top-nav').offsetHeight;
+    window.scrollTo({ top: sec.getBoundingClientRect().top + window.scrollY - h - 16, behavior: 'smooth' });
+  }
+  document.querySelectorAll('.side-link').forEach(l => l.classList.toggle('active', l.dataset.cat===cat));
+}
+
+// 滚动高亮
+let sd;
+window.addEventListener('scroll', () => {
+  clearTimeout(sd);
+  sd = setTimeout(() => {
+    const secs = document.querySelectorAll('.cat-section');
+    const hh = document.querySelector('.top-nav').offsetHeight;
+    let cur = 'EN';
+    secs.forEach(s => { if (s.getBoundingClientRect().top <= hh+100) cur = s.dataset.cat; });
+    document.querySelectorAll('.side-link').forEach(l => l.classList.toggle('active', l.dataset.cat===cur));
+  }, 100);
+});
+
+function onSearch(q) {
+  document.getElementById('search-clear').style.display = q ? 'flex' : 'none';
+  searchQuery = q.trim().toLowerCase();
+  vidCounter = 0;
+  renderAll();
+}
+function clearSearch() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-clear').style.display = 'none';
+  searchQuery = '';
+  vidCounter = 0;
+  renderAll();
+}
+
+// 回到顶端
+const stb = document.getElementById('scroll-to-top');
+window.addEventListener('scroll', () => { stb.style.display = window.scrollY > 400 ? 'flex' : 'none'; });
+function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+</script>
 </body>
 </html>
