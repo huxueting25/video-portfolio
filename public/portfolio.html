@@ -176,12 +176,16 @@ function playVideo(idx) {
   const v = document.getElementById('video-'+idx);
   const p = document.getElementById('placeholder-'+idx);
   if (!v) return;
+  p.style.display = 'none';
   if (!v.querySelector('source') && v.dataset.src) {
     const s = document.createElement('source'); s.src = v.dataset.src; s.type = 'video/mp4';
-    v.appendChild(s); v.load();
+    v.appendChild(s);
+    v.load();
+    // 移动端需要等视频准备好再播放
+    v.addEventListener('canplay', function h() { v.play().catch(()=>{}); v.removeEventListener('canplay', h); }, {once: true});
+  } else {
+    v.play().catch(()=>{});
   }
-  p.style.display = 'none';
-  v.play().catch(()=>{});
 }
 
 function toggleCat(cat) {
