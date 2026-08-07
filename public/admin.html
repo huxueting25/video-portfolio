@@ -494,18 +494,14 @@
       container.innerHTML = html;
       initAllDragSort();
 
-      // 确保当前活动分类可见：如果被折叠了就展开它
+      // 确保所有非折叠分类可见
       if (!adminSearchQuery) {
-        const activeCatBody = document.getElementById('admin-body-' + adminActiveCat);
-        if (activeCatBody && activeCatBody.classList.contains('collapsed')) {
-          expandOnlyAdmin(adminActiveCat);
-        } else if (activeCatBody) {
-          // 确保 section 不是 display:none
-          const section = document.getElementById('admin-section-' + adminActiveCat);
-          if (section && section.style.display === 'none') {
-            expandOnlyAdmin(adminActiveCat);
+        ['EN', 'JP', 'CN', 'KR'].forEach(c => {
+          const section = document.getElementById('admin-section-' + c);
+          if (section && !adminCollapsedState[c]) {
+            section.style.display = '';
           }
-        }
+        });
       }
     }
 
