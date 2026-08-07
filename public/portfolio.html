@@ -185,11 +185,16 @@ function playVideo(idx) {
 }
 
 function toggleCat(cat) {
-  collapsed[cat] = !collapsed[cat];
-  const body = document.getElementById('body-'+cat);
-  const toggle = document.getElementById('toggle-'+cat);
-  if (collapsed[cat]) { body.classList.add('collapsed'); toggle.classList.add('collapsed'); }
-  else { body.classList.remove('collapsed'); toggle.classList.remove('collapsed'); }
+  if (collapsed[cat]) {
+    // Expand this one, collapse all others
+    ['EN','JP','CN','KR'].forEach(c => {
+      collapsed[c] = (c !== cat);
+      const body = document.getElementById('body-'+c);
+      const toggle = document.getElementById('toggle-'+c);
+      if (c !== cat) { if (body) body.classList.add('collapsed'); if (toggle) toggle.classList.add('collapsed'); }
+      else { if (body) body.classList.remove('collapsed'); if (toggle) toggle.classList.remove('collapsed'); }
+    });
+  }
 }
 
 function scrollToCat(cat) {
