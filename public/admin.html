@@ -250,13 +250,17 @@ function copyShareLink(token) { const url=location.origin+'/share?s='+token; nav
 
 // ===== 折叠 =====
 function toggleAdminCat(cat) {
-  if (adminCollapsed[cat]) {
+  if (!adminCollapsed[cat]) {
+    adminCollapsed[cat] = true;
+    document.getElementById('admin-body-'+cat).classList.add('collapsed');
+    document.getElementById('admin-toggle-'+cat).classList.add('collapsed');
+  } else {
     ['EN','JP','CN','KR'].forEach(c => {
       adminCollapsed[c] = (c !== cat);
       const body = document.getElementById('admin-body-'+c);
       const toggle = document.getElementById('admin-toggle-'+c);
-      if (c !== cat) { if (body) body.classList.add('collapsed'); if (toggle) toggle.classList.add('collapsed'); }
-      else { if (body) body.classList.remove('collapsed'); if (toggle) toggle.classList.remove('collapsed'); }
+      if (body) body.classList.toggle('collapsed', c !== cat);
+      if (toggle) toggle.classList.toggle('collapsed', c !== cat);
     });
   }
 }
