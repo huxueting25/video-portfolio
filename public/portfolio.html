@@ -185,14 +185,19 @@ function playVideo(idx) {
 }
 
 function toggleCat(cat) {
-  if (collapsed[cat]) {
-    // Expand this one, collapse all others
+  if (!collapsed[cat]) {
+    // 当前展开 → 折叠它
+    collapsed[cat] = true;
+    document.getElementById('body-'+cat).classList.add('collapsed');
+    document.getElementById('toggle-'+cat).classList.add('collapsed');
+  } else {
+    // 当前折叠 → 展开它，折叠其他
     ['EN','JP','CN','KR'].forEach(c => {
       collapsed[c] = (c !== cat);
-      const body = document.getElementById('body-'+c);
-      const toggle = document.getElementById('toggle-'+c);
-      if (c !== cat) { if (body) body.classList.add('collapsed'); if (toggle) toggle.classList.add('collapsed'); }
-      else { if (body) body.classList.remove('collapsed'); if (toggle) toggle.classList.remove('collapsed'); }
+      ['body-','toggle-'].forEach(p => {
+        const el = document.getElementById(p+c);
+        if (el) el.classList.toggle('collapsed', c !== cat);
+      });
     });
   }
 }
