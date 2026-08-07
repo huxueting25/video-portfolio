@@ -349,7 +349,6 @@ body {
   transform: rotate(-90deg);
 }
 .section-body {
-  max-height: 8000px;
   overflow: hidden;
   transition: max-height 0.5s ease, padding 0.3s ease;
   padding: 0 20px 20px;
