@@ -522,8 +522,10 @@
             }
             <video
               src="${w.videoUrl || ''}"
+              poster="${w.coverUrl || (w.videoUrl ? w.videoUrl.replace(/\/upload\//, '/upload/so_0,w_640,c_scale/') : '')}"
               preload="metadata"
               muted
+              playsinline
               onclick="this.paused ? this.play() : this.pause()"
               class="preview-video"
               data-work-id="${w.id}"
