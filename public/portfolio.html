@@ -198,7 +198,13 @@ function toggleCat(cat) {
 }
 
 function scrollToCat(cat) {
-  if (collapsed[cat]) toggleCat(cat);
+  ['EN','JP','CN','KR'].forEach(c => {
+    collapsed[c] = (c !== cat);
+    ['body-','toggle-'].forEach(p => {
+      const el = document.getElementById(p+c);
+      if (el) el.classList.toggle('collapsed', c !== cat);
+    });
+  });
   const sec = document.getElementById('section-'+cat);
   if (sec) {
     const h = document.querySelector('.top-nav').offsetHeight;
