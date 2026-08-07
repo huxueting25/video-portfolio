@@ -259,6 +259,14 @@
 
       setupVideoObservers();
       updateSidebarActive();
+
+      // 确保当前活动分类不被 display:none 残留的旧状态覆盖
+      if (!searchQuery) {
+        const section = document.getElementById('section-' + activeCat);
+        if (section && section.style.display === 'none') {
+          expandOnly(activeCat);
+        }
+      }
     }
 
     function renderWorks(works, cat) {
