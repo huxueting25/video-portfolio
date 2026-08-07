@@ -469,23 +469,23 @@
           .filter(w => (w.category || 'EN') === cat)
           .filter(w => !adminSearchQuery || w.title.toLowerCase().includes(adminSearchQuery))
           .sort((a, b) => a.order - b.order);
-        const collapsed = adminCollapsedState[cat];
+        const isCollapsed = adminCollapsedState[cat];
 
         html += `
-        <section class="cat-section" id="admin-section-${cat}">
+        <section class="cat-section ${isCollapsed ? 'hidden' : ''}" id="admin-section-${cat}" data-cat="${cat}">
           <div class="section-header" onclick="toggleAdminSection('${cat}')">
             <div class="section-header-left">
               <span class="section-icon">${cfg.icon}</span>
               <h2 class="section-label">${cfg.label}</h2>
               <span class="section-count">${filtered.length} 个作品</span>
             </div>
-            <div class="section-toggle ${collapsed ? 'collapsed' : ''}" id="admin-toggle-${cat}">
+            <div class="section-toggle ${isCollapsed ? 'collapsed' : ''}" id="admin-toggle-${cat}">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                 <path d="M6 9l6 6 6-6"/>
               </svg>
             </div>
           </div>
-          <div class="section-body ${collapsed ? 'collapsed' : ''}" id="admin-body-${cat}">
+          <div class="section-body ${isCollapsed ? 'collapsed' : ''}" id="admin-body-${cat}">
             ${filtered.length === 0 ? '<p class="section-empty">暂无作品</p>' : renderWorkItems(filtered)}
           </div>
         </section>`;
@@ -493,16 +493,6 @@
 
       container.innerHTML = html;
       initAllDragSort();
-
-      // 确保所有非折叠分类可见
-      if (!adminSearchQuery) {
-        ['EN', 'JP', 'CN', 'KR'].forEach(c => {
-          const section = document.getElementById('admin-section-' + c);
-          if (section && !adminCollapsedState[c]) {
-            section.style.display = '';
-          }
-        });
-      }
     }
 
     function renderWorkItems(works) {
@@ -522,7 +512,7 @@
             }
             <video
               src="${w.videoUrl || ''}"
-              poster="${w.coverUrl || (w.videoUrl ? w.videoUrl.replace(/\/upload\//, '/upload/so_0,w_640,c_scale/') : '')}"
+              poster="${w.coverUrl || (w.videoUrl ? w.videoUrl.replace(/\/upload\//, '/upload/so_0,w_640/').replace(/\.mp4$/, '.jpg') : '')}"
               preload="metadata"
               muted
               playsinline
@@ -550,7 +540,7 @@
       `).join('');
     }
 
-    // ========== 分类折叠（手风琴模式：同时只展开一个，其他完全隐藏） ==========
+    // ========== 分类折叠（手风琴模式：同时只展开一个） ==========
     function expandOnlyAdmin(cat) {
       ['EN', 'JP', 'CN', 'KR'].forEach(c => {
         const section = document.getElementById('admin-section-' + c);
@@ -558,12 +548,12 @@
         const toggle = document.getElementById('admin-toggle-' + c);
         if (c === cat) {
           adminCollapsedState[c] = false;
-          if (section) section.style.display = '';
+          if (section) section.classList.remove('hidden');
           if (body) body.classList.remove('collapsed');
           if (toggle) toggle.classList.remove('collapsed');
         } else {
           adminCollapsedState[c] = true;
-          if (section) section.style.display = 'none';
+          if (section) section.classList.add('hidden');
           if (body) body.classList.add('collapsed');
           if (toggle) toggle.classList.add('collapsed');
         }
@@ -572,10 +562,21 @@
 
     function toggleAdminSection(cat) {
       if (!adminCollapsedState[cat]) {
-        expandOnlyAdmin(null);
+        // 当前已展开 → 全部折叠
+        ['EN', 'JP', 'CN', 'KR'].forEach(c => {
+          adminCollapsedState[c] = true;
+          const section = document.getElementById('admin-section-' + c);
+          const body = document.getElementById('admin-body-' + c);
+          const toggle = document.getElementById('admin-toggle-' + c);
+          if (section) section.classList.add('hidden');
+          if (body) body.classList.add('collapsed');
+          if (toggle) toggle.classList.add('collapsed');
+        });
         return;
       }
       expandOnlyAdmin(cat);
+      adminActiveCat = cat;
+      updateAdminSidebarActive();
     }
 
     function scrollToAdminSection(cat) {
@@ -618,14 +619,13 @@
     window.addEventListener('scroll', () => {
       clearTimeout(adminScrollDebounce);
       adminScrollDebounce = setTimeout(() => {
-        const sections = document.querySelectorAll('#category-sections .cat-section');
+        const sections = document.querySelectorAll('#category-sections .cat-section:not(.hidden)');
         const headerH = document.querySelector('.admin-header').offsetHeight;
-        let current = 'EN';
+        let current = adminActiveCat;
         sections.forEach(sec => {
-          if (sec.style.display === 'none') return;
           const rect = sec.getBoundingClientRect();
           if (rect.top <= headerH + 100) {
-            current = sec.id.replace('admin-section-', '');
+            current = sec.dataset.cat;
           }
         });
         if (current !== adminActiveCat) {
