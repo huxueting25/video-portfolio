@@ -261,7 +261,12 @@ function toggleAdminCat(cat) {
   }
 }
 function scrollToAdminCat(cat) {
-  if (adminCollapsed[cat]) toggleAdminCat(cat);
+  ['EN','JP','CN','KR'].forEach(c => {
+    adminCollapsed[c] = (c !== cat);
+    const body = document.getElementById('admin-body-'+c), toggle = document.getElementById('admin-toggle-'+c);
+    if (body) body.classList.toggle('collapsed', c !== cat);
+    if (toggle) toggle.classList.toggle('collapsed', c !== cat);
+  });
   const sec = document.getElementById('admin-section-'+cat);
   if (sec) { const h = document.querySelector('.admin-header').offsetHeight; window.scrollTo({top:sec.getBoundingClientRect().top+window.scrollY-h-12,behavior:'smooth'}); }
   document.querySelectorAll('.admin-sidebar .side-link').forEach(l=>l.classList.toggle('active',l.dataset.cat===cat));
