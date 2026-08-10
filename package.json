@@ -7,9 +7,10 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.21.0",
-    "multer": "^1.4.5-lts.1",
+    "busboy": "^1.6.0",
+    "cloudinary": "^1.41.0",
     "compression": "^1.7.4",
-    "cloudinary": "^1.41.0"
+    "express": "^4.21.0",
+    "multer": "^1.4.5-lts.1"
   }
 }
