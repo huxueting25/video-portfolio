@@ -23,15 +23,15 @@
     <!-- 买量广告（游戏项目组） -->
     <div class="side-category">
       <div class="side-cat-header" onclick="toggleCategory('buyAd')">
-        <span class="cat-arrow" id="cat-arrow-buyAd">▼</span>
+        <svg class="cat-arrow" id="cat-arrow-buyAd" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
         <span class="cat-dot cat-dot-buyAd"></span>
-        买量广告
+        <span class="cat-label">买量广告</span>
         <span class="side-count" id="cat-count-buyAd">0</span>
       </div>
       <div class="side-sub-items" id="cat-sub-buyAd">
         <div class="side-project">
           <div class="side-proj-header" onclick="toggleProject('echocalypse')">
-            <span class="proj-arrow" id="proj-arrow-echocalypse">▼</span>
+            <svg class="proj-arrow" id="proj-arrow-echocalypse" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
             <span class="proj-dot proj-dot-echo"></span>
             绯色回响
             <span class="side-count" id="proj-count-echocalypse">0</span>
@@ -51,7 +51,7 @@
     <!-- 影视混剪 -->
     <div class="side-category">
       <div class="side-cat-header" onclick="toggleCategory('clip')">
-        <span class="cat-arrow" id="cat-arrow-clip">▼</span>
+        <svg class="cat-arrow" id="cat-arrow-clip" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
         <span class="cat-dot cat-dot-clip"></span>
         影视混剪
         <span class="side-count" id="cat-count-clip">0</span>
@@ -273,7 +273,7 @@ function toggleProject(proj) {
   const arrow = document.getElementById('proj-arrow-'+proj);
   if (sub) {
     sub.classList.toggle('hidden');
-    arrow.textContent = sub.classList.contains('hidden') ? '▶' : '▼';
+    if (arrow) arrow.classList.toggle('collapsed');
   }
 }
 
@@ -282,9 +282,8 @@ function toggleCategory(cat) {
   const arrow = document.getElementById('cat-arrow-'+cat);
   if (sub) {
     sub.classList.toggle('hidden');
-    arrow.textContent = sub.classList.contains('hidden') ? '▶' : '▼';
+    if (arrow) arrow.classList.toggle('collapsed');
   }
-  // 同时展开/折叠对应的内容区块
   const body = document.getElementById('cat-body-'+cat);
   const toggle = document.getElementById('cat-toggle-'+cat);
   if (body) body.classList.toggle('collapsed', sub?.classList.contains('hidden'));
