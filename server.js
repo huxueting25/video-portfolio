@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const crypto = require('crypto');
-const compression = require('compression');
+const compression = require('compression'); // gzip 压缩中间件
 const { Readable } = require('stream');
 const path = require('path');
 
