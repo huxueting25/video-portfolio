@@ -47,7 +47,7 @@
   <div class="hero-text">
     <h1>胡雪婷 · 作品集</h1>
     <p class="hero-sub-en">HUXUETING PORTFOLIO</p>
-    <p class="hero-sub">南京师范大学 · 跨媒体与动画艺术</p>
+    <p class="hero-sub">南京师范大学(211) · 跨媒体与动画艺术 · 硕士</p>
   </div>
   <div class="search-bar" id="search-bar" style="display:none">
     <div class="search-input-wrap">
@@ -146,8 +146,9 @@ function renderAll() {
     const pcfg = projConfig[proj];
     const projWorks = allWorks.filter(w => (w.project||'echocalypse')===proj && (!searchQuery || w.title.toLowerCase().includes(searchQuery)));
 
-    html += '<div class="proj-block">';
-    html += '<div class="proj-block-header"><span class="proj-block-icon">'+pcfg.icon+'</span><h2 class="proj-block-label">'+pcfg.label+'</h2><span class="proj-block-count">'+projWorks.length+' 个作品</span></div>';
+    html += '<div class="proj-block" data-proj="'+proj+'">';
+    html += '<div class="proj-block-header" onclick="toggleProjBlock(\''+proj+'\')"><div class="section-header-left"><span class="proj-block-icon">'+pcfg.icon+'</span><h2 class="proj-block-label">'+pcfg.label+'</h2><span class="proj-block-count">'+projWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-'+proj+'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>';
+    html += '<div class="proj-block-body" id="proj-body-'+proj+'">';
 
     if (pcfg.subs) {
       // 有子类：按 EN/JP/CN/KR 分组
@@ -164,16 +165,11 @@ function renderAll() {
         html += '</div></section>';
       });
     } else {
-      // 无子类项目（少年三国志/Zomline/代号GR）：添加 section-header 使其可折叠
+      // 无子类项目：直接展示作品，不再额外加 section-header（项目大标题本身就折叠）
       const items = projWorks.sort((a,b)=>a.order-b.order);
-      const secId = 'section-'+proj;
-      html += '<section class="cat-section" id="'+secId+'" data-proj="'+proj+'">';
-      html += '<div class="section-header" onclick="toggleProjSection(\''+proj+'\')"><div class="section-header-left"><span class="section-icon">'+pcfg.icon+'</span><h3 class="section-label">'+pcfg.label+'</h3><span class="section-count">'+items.length+' 个作品</span></div><div class="section-toggle" id="toggle-'+proj+'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>';
-      html += '<div class="section-body" id="body-'+proj+'">';
       html += items.length===0 ? '<p class="section-empty">暂无作品</p>' : items.map(w => renderCard(w)).join('');
-      html += '</div></section>';
     }
-    html += '</div>';
+    html += '</div></div>';
   });
 
   document.getElementById('category-sections').innerHTML = html;
@@ -235,20 +231,18 @@ function toggleSub(proj, cat) {
   if (toggle) toggle.classList.toggle('collapsed', state[cat]);
 }
 
-function toggleProjSection(proj) {
-  // 折叠/展开整个项目块（用于无子类项目，或整个项目块头部）
-  const pcfg = projConfig[proj];
-  const sectionEl = document.getElementById('section-'+proj);
-  if (!sectionEl) return;
-  const body = sectionEl.querySelector('.section-body');
-  const toggle = sectionEl.querySelector('.section-toggle');
+function toggleProjBlock(proj) {
+  // 折叠/展开整个项目块（含其下所有子类）
+  const body = document.getElementById('proj-body-'+proj);
+  const toggle = document.getElementById('proj-toggle-'+proj);
   if (!body || !toggle) return;
   const isCollapsed = body.classList.contains('collapsed');
   body.classList.toggle('collapsed', !isCollapsed);
   toggle.classList.toggle('collapsed', !isCollapsed);
-  // 同步所有子分类的状态
-  if (pcfg.subs) {
-    Object.keys(pcfg.subs).forEach(c => {
+  // 同步所有子类状态
+  const pcfg = projConfig[proj];
+  if (pcfg && pcfg.subs) {
+    pcfg.subs.forEach(c => {
       collapsed[proj][c] = !isCollapsed;
     });
   }
