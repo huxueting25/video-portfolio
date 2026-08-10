@@ -192,14 +192,24 @@ app.post('/api/upload-cover', authAdmin, coverUpload.single('cover'), async (req
   }
 });
 
-// 根据标题自动识别分类
+// 根据标题自动识别市场分类
 function detectCategory(title, originalName) {
   const text = (title + ' ' + (originalName || '')).toUpperCase();
   if (/[_\s-]JP[_\s-]|_JP_|_JP$|^JP_|^JP[_\s-]/.test(text)) return 'JP';
   if (/[_\s-]CN[_\s-]|_CN_|_CN$|^CN_|^CN[_\s-]/.test(text)) return 'CN';
   if (/[_\s-]KR[_\s-]|_KR_|_KR$|^KR_|^KR[_\s-]/.test(text)) return 'KR';
   if (/[_\s-]EN[_\s-]|_EN_|_EN$|^EN_|^EN[_\s-]/.test(text)) return 'EN';
-  return 'EN'; // 默认归类到欧美EN
+  return 'EN';
+}
+
+// 根据标题自动识别项目（绯色回响 / 少年三国志 / Zomline / 代号GR）
+function detectProject(title, originalName) {
+  const text = (title + ' ' + (originalName || '')).toLowerCase();
+  if (/少年三国|少三|shaonian|young3/i.test(text)) return 'shaonian';
+  if (/zomline|zombie/i.test(text)) return 'zomline';
+  if (/代号gr|gr\d|codename.*gr/i.test(text)) return 'gr';
+  // 默认归到绯色回响
+  return 'echocalypse';
 }
 
 // 创建/更新作品
@@ -224,6 +234,7 @@ app.post('/api/works', authAdmin, (req, res) => {
       coverUrl: req.body.coverUrl || '',
       coverFilename: req.body.coverFilename || '',
       category: category || detectCategory(title, originalName),
+      project: req.body.project || detectProject(title, originalName),
       shareToken,
       createdAt: new Date().toISOString(),
       order: works.length
@@ -339,6 +350,19 @@ app.post('/api/works/auto-categorize', authAdmin, (req, res) => {
   });
   saveWorksToCloudinary();
   res.json({ success: true, categorized: count, total: works.length });
+});
+
+// 一键给所有现有作品分配项目（绯色回响 / 少年三国志等）
+app.post('/api/works/auto-project', authAdmin, (req, res) => {
+  let count = 0;
+  works.forEach(w => {
+    if (!w.project) {
+      w.project = detectProject(w.title, w.originalName);
+      count++;
+    }
+  });
+  saveWorksToCloudinary();
+  res.json({ success: true, assigned: count, total: works.length });
 });
 
 // 导出数据（用于备份/迁移）
