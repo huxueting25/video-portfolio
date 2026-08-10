@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const crypto = require('crypto');
+const compression = require('compression');
 const { Readable } = require('stream');
 const path = require('path');
 
@@ -14,6 +15,19 @@ cloudinary.config({
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// ========== 性能优化 ==========
+// 1. Gzip 压缩 - 减少网络传输 70%+
+app.use(compression({ level: 6, threshold: 1024 }));
+// 2. 静态文件长缓存
+app.use('/static', express.static(path.join(__dirname, 'public'), {
+  maxAge: '7d',
+  etag: true,
+  setHeaders: (res, path) => {
+    if (path.endsWith('.html')) res.setHeader('Cache-Control', 'no-cache');
+    else res.setHeader('Cache-Control', 'public, max-age=604800');
+  }
+}));
 
 // ========== 数据存储（内存 + Cloudinary 持久化） ==========
 let config = {
@@ -110,9 +124,10 @@ function uploadToCloudinary(buffer, options) {
 }
 
 // Multer 内存存储（上传到 Cloudinary 不需要本地文件）
+// 限制文件大小 200MB 防止内存爆掉
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 500 * 1024 * 1024 },
+  limits: { fileSize: 200 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowed = ['.mp4', '.webm', '.mov', '.avi', '.mkv'];
     const ext = '.' + file.originalname.split('.').pop().toLowerCase();
@@ -396,6 +411,8 @@ app.get('/api/share-data', authShare, (req, res) => {
 
 // 作品集数据
 app.get('/api/portfolio-data', authShare, (req, res) => {
+  // 短缓存让 5 秒内多个访客共享同一份响应
+  res.setHeader('Cache-Control', 'public, max-age=5');
   res.json(works);
 });
 
@@ -420,12 +437,7 @@ app.get('/portfolio', authShare, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'portfolio.html'));
 });
 
-// 静态文件
-app.use('/static', express.static(path.join(__dirname, 'public'), {
-  setHeaders: (res) => {
-    res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
-  }
-}));
+// 静态文件已在上方配置（带缓存头条）
 
 // 所有页面设置 noindex
 app.use((req, res, next) => {
