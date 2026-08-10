@@ -103,13 +103,13 @@ body {
   border-bottom: 1px solid var(--border-soft);
 }
 .side-cat-header {
-  display: flex; align-items: center; gap: 10px;
-  padding: 12px 12px;
-  margin-bottom: 4px;
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 14px;
+  margin-bottom: 6px;
   border-radius: 6px;
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 800;
   letter-spacing: 0.06em;
   cursor: pointer;
@@ -122,13 +122,8 @@ body {
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .cat-arrow.collapsed { transform: rotate(-90deg); }
-.cat-dot {
-  width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0;
-  opacity: 0.9;
-}
-.cat-dot-buyAd { background: var(--accent); }
-.cat-dot-clip { background: var(--accent); }
 .cat-label { flex: 1; }
+.cat-dot { display: none; }
 
 /* 子项 */
 .side-sub-items { padding-left: 16px; display: flex; flex-direction: column; gap: 2px; }
