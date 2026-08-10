@@ -19,28 +19,47 @@
 </nav>
 
 <aside class="sidebar">
-  <div class="sidebar-title">买量广告</div>
   <nav class="sidebar-nav">
-    <!-- 绯色回响（有子类） -->
-    <div class="side-project">
-      <div class="side-proj-header" onclick="toggleProject('echocalypse')">
-        <span class="proj-arrow" id="proj-arrow-echocalypse">▼</span>
-        <span class="proj-dot proj-dot-echo"></span>
-        绯色回响
-        <span class="side-count" id="proj-count-echocalypse">0</span>
+    <!-- 买量广告（游戏项目组） -->
+    <div class="side-category">
+      <div class="side-cat-header" onclick="toggleCategory('buyAd')">
+        <span class="cat-arrow" id="cat-arrow-buyAd">▼</span>
+        <span class="cat-dot cat-dot-buyAd"></span>
+        买量广告
+        <span class="side-count" id="cat-count-buyAd">0</span>
       </div>
-      <div class="side-sub-items" id="proj-sub-echocalypse">
-        <a class="side-link sub active" href="#section-echocalypse-EN" data-proj="echocalypse" data-cat="EN" onclick="scrollToSection('echocalypse','EN')"> 欧美EN <span class="side-count" id="side-count-echocalypse-EN">0</span></a>
-        <a class="side-link sub" href="#section-echocalypse-JP" data-proj="echocalypse" data-cat="JP" onclick="scrollToSection('echocalypse','JP')"> 日本JP <span class="side-count" id="side-count-echocalypse-JP">0</span></a>
-        <a class="side-link sub" href="#section-echocalypse-CN" data-proj="echocalypse" data-cat="CN" onclick="scrollToSection('echocalypse','CN')"> 简中CN <span class="side-count" id="side-count-echocalypse-CN">0</span></a>
-        <a class="side-link sub" href="#section-echocalypse-KR" data-proj="echocalypse" data-cat="KR" onclick="scrollToSection('echocalypse','KR')"> 韩国KR <span class="side-count" id="side-count-echocalypse-KR">0</span></a>
+      <div class="side-sub-items" id="cat-sub-buyAd">
+        <div class="side-project">
+          <div class="side-proj-header" onclick="toggleProject('echocalypse')">
+            <span class="proj-arrow" id="proj-arrow-echocalypse">▼</span>
+            <span class="proj-dot proj-dot-echo"></span>
+            绯色回响
+            <span class="side-count" id="proj-count-echocalypse">0</span>
+          </div>
+          <div class="side-sub-items" id="proj-sub-echocalypse">
+            <a class="side-link sub active" href="#section-echocalypse-EN" data-proj="echocalypse" data-cat="EN" onclick="scrollToSection('echocalypse','EN')"> 欧美EN <span class="side-count" id="side-count-echocalypse-EN">0</span></a>
+            <a class="side-link sub" href="#section-echocalypse-JP" data-proj="echocalypse" data-cat="JP" onclick="scrollToSection('echocalypse','JP')"> 日本JP <span class="side-count" id="side-count-echocalypse-JP">0</span></a>
+            <a class="side-link sub" href="#section-echocalypse-CN" data-proj="echocalypse" data-cat="CN" onclick="scrollToSection('echocalypse','CN')"> 简中CN <span class="side-count" id="side-count-echocalypse-CN">0</span></a>
+            <a class="side-link sub" href="#section-echocalypse-KR" data-proj="echocalypse" data-cat="KR" onclick="scrollToSection('echocalypse','KR')"> 韩国KR <span class="side-count" id="side-count-echocalypse-KR">0</span></a>
+          </div>
+        </div>
+        <a class="side-link proj" href="#section-shaonian" data-proj="shaonian" onclick="scrollToSection('shaonian')"> <span class="side-dot side-dot-shaonian"></span> 少年三国志 <span class="side-count" id="proj-count-shaonian">0</span></a>
+        <a class="side-link proj" href="#section-zomline" data-proj="zomline" onclick="scrollToSection('zomline')"> <span class="side-dot side-dot-zomline"></span> Zomline Survival <span class="side-count" id="proj-count-zomline">0</span></a>
+        <a class="side-link proj" href="#section-gr" data-proj="gr" onclick="scrollToSection('gr')"> <span class="side-dot side-dot-gr"></span> 代号GR <span class="side-count" id="proj-count-gr">0</span></a>
       </div>
     </div>
-    <!-- 其他项目（无子类） -->
-    <a class="side-link proj" href="#section-shaonian" data-proj="shaonian" onclick="scrollToSection('shaonian')"> <span class="side-dot side-dot-shaonian"></span> 少年三国志 <span class="side-count" id="proj-count-shaonian">0</span></a>
-    <a class="side-link proj" href="#section-zomline" data-proj="zomline" onclick="scrollToSection('zomline')"> <span class="side-dot side-dot-zomline"></span> Zomline Survival <span class="side-count" id="proj-count-zomline">0</span></a>
-    <a class="side-link proj" href="#section-gr" data-proj="gr" onclick="scrollToSection('gr')"> <span class="side-dot side-dot-gr"></span> 代号GR <span class="side-count" id="proj-count-gr">0</span></a>
-    <a class="side-link proj" href="#section-clip" data-proj="clip" onclick="scrollToSection('clip')"> <span class="side-dot side-dot-clip"></span> 影视混剪 <span class="side-count" id="proj-count-clip">0</span></a>
+    <!-- 影视混剪 -->
+    <div class="side-category">
+      <div class="side-cat-header" onclick="toggleCategory('clip')">
+        <span class="cat-arrow" id="cat-arrow-clip">▼</span>
+        <span class="cat-dot cat-dot-clip"></span>
+        影视混剪
+        <span class="side-count" id="cat-count-clip">0</span>
+      </div>
+      <div class="side-sub-items" id="cat-sub-clip">
+        <a class="side-link sub" href="#section-clip" data-proj="clip" onclick="scrollToSection('clip')"> 全部视频 <span class="side-count" id="proj-count-clip">0</span></a>
+      </div>
+    </div>
   </nav>
 </aside>
 
@@ -126,53 +145,52 @@ function countProjCat(proj, cat) {
 
 function renderAll() {
   document.getElementById('search-bar').style.display = allWorks.length > 0 ? 'block' : 'none';
-  let totalV = 0;
 
-  // 更新计数
+  // 更新计数学 - category + project
+  const buyAdTotal = countProj('echocalypse')+countProj('shaonian')+countProj('zomline')+countProj('gr');
+  document.getElementById('cat-count-buyAd').textContent = buyAdTotal;
+  document.getElementById('cat-count-clip').textContent = countProj('clip');
   ['echocalypse','shaonian','zomline','gr','clip'].forEach(p => {
-    const n = countProj(p);
-    document.getElementById('proj-count-'+p).textContent = n;
-    if (n > 0) totalV += n;
+    document.getElementById('proj-count-'+p).textContent = countProj(p);
     const cfg = projConfig[p];
-    if (cfg.subs) {
-      cfg.subs.forEach(c => {
-        document.getElementById('side-count-'+p+'-'+c).textContent = countProjCat(p, c);
-      });
-    }
+    if (cfg.subs) cfg.subs.forEach(c => { document.getElementById('side-count-'+p+'-'+c).textContent = countProjCat(p, c); });
   });
-  document.getElementById('search-result').textContent = searchQuery ? '找到 '+totalV+' 个结果' : '';
+  document.getElementById('search-result').textContent = searchQuery ? '找到 '+(buyAdTotal+countProj('clip'))+' 个结果' : '';
 
-  // 渲染
   let html = '';
+
+  // ===== 买量广告 =====
+  html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'buyAd\')"><div class="section-header-left"><span class="proj-block-icon">📱</span><h2 class="proj-block-label">买量广告</h2><span class="proj-block-count">'+buyAdTotal+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-buyAd"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body" id="proj-body-buyAd">';
   ['echocalypse','shaonian','zomline','gr'].forEach(proj => {
     const pcfg = projConfig[proj];
     const projWorks = allWorks.filter(w => (w.project||'echocalypse')===proj && (!searchQuery || w.title.toLowerCase().includes(searchQuery)));
-
     html += '<div class="proj-block" data-proj="'+proj+'">';
     html += '<div class="proj-block-header" onclick="toggleProjBlock(\''+proj+'\')"><div class="section-header-left"><span class="proj-block-icon">'+pcfg.icon+'</span><h2 class="proj-block-label">'+pcfg.label+'</h2><span class="proj-block-count">'+projWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-'+proj+'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>';
     html += '<div class="proj-block-body" id="proj-body-'+proj+'">';
-
     if (pcfg.subs) {
-      // 有子类：按 EN/JP/CN/KR 分组
       pcfg.subs.forEach(cat => {
         const items = projWorks.filter(w => (w.category||'EN')===cat).sort((a,b)=>a.order-b.order);
-        const isC = collapsed[proj] && collapsed[proj][cat] !== undefined ? collapsed[proj][cat] : false;
+        const isC = collapsed[proj][cat];
         const ccfg = catConfig[cat];
-        const secId = 'section-'+proj+'-'+cat;
-        html += '<section class="cat-section" id="'+secId+'" data-proj="'+proj+'" data-cat="'+cat+'">';
-        html += '<div class="section-header" onclick="toggleSub(\''+proj+'\',\''+cat+'\')"><div class="section-header-left"><span class="section-icon">'+ccfg.icon+'</span><h3 class="section-label">'+ccfg.label+'</h3><span class="section-count">'+items.length+' 个作品</span></div>';
-        html += '<div class="section-toggle'+(isC?' collapsed':'')+'" id="toggle-'+proj+'-'+cat+'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>';
+        html += '<section class="cat-section" id="section-'+proj+'-'+cat+'" data-proj="'+proj+'" data-cat="'+cat+'">';
+        html += '<div class="section-header" onclick="toggleSub(\''+proj+'\',\''+cat+'\')"><div class="section-header-left"><span class="section-icon">'+ccfg.icon+'</span><h3 class="section-label">'+ccfg.label+'</h3><span class="section-count">'+items.length+' 个作品</span></div><div class="section-toggle'+(isC?' collapsed':'')+'" id="toggle-'+proj+'-'+cat+'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>';
         html += '<div class="section-body'+(isC?' collapsed':'')+'" id="body-'+proj+'-'+cat+'">';
         html += items.length===0 ? '<p class="section-empty">暂无作品</p>' : items.map(w => renderCard(w)).join('');
         html += '</div></section>';
       });
     } else {
-      // 无子类项目：直接展示作品，不再额外加 section-header（项目大标题本身就折叠）
       const items = projWorks.sort((a,b)=>a.order-b.order);
       html += items.length===0 ? '<p class="section-empty">暂无作品</p>' : items.map(w => renderCard(w)).join('');
     }
     html += '</div></div>';
   });
+  html += '</div></div>';
+
+  // ===== 影视混剪 =====
+  const clipWorks = allWorks.filter(w => (w.project||'echocalypse')==='clip' && (!searchQuery || w.title.toLowerCase().includes(searchQuery))).sort((a,b)=>a.order-b.order);
+  html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'clipCat\')"><div class="section-header-left"><span class="proj-block-icon">🎬</span><h2 class="proj-block-label">影视混剪</h2><span class="proj-block-count">'+clipWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-clipCat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body" id="proj-body-clipCat">';
+  html += clipWorks.length===0 ? '<p class="section-empty">暂无作品</p>' : clipWorks.map(w => renderCard(w)).join('');
+  html += '</div></div>';
 
   document.getElementById('category-sections').innerHTML = html;
   setupObservers();
@@ -257,6 +275,20 @@ function toggleProject(proj) {
     sub.classList.toggle('hidden');
     arrow.textContent = sub.classList.contains('hidden') ? '▶' : '▼';
   }
+}
+
+function toggleCategory(cat) {
+  const sub = document.getElementById('cat-sub-'+cat);
+  const arrow = document.getElementById('cat-arrow-'+cat);
+  if (sub) {
+    sub.classList.toggle('hidden');
+    arrow.textContent = sub.classList.contains('hidden') ? '▶' : '▼';
+  }
+  // 同时展开/折叠对应的内容区块
+  const body = document.getElementById('cat-body-'+cat);
+  const toggle = document.getElementById('cat-toggle-'+cat);
+  if (body) body.classList.toggle('collapsed', sub?.classList.contains('hidden'));
+  if (toggle) toggle.classList.toggle('collapsed', sub?.classList.contains('hidden'));
 }
 
 // ===== 侧边栏点击（自由模式：只展开目标，不动其他）=====
