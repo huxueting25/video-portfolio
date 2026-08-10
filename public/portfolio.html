@@ -82,6 +82,17 @@
         <a class="side-link sub" href="#section-clip" data-proj="clip" onclick="scrollToSection('clip')"> 全部视频 <span class="side-count" id="proj-count-clip">0</span></a>
       </div>
     </div>
+    <!-- AIGC作品 -->
+    <div class="side-category">
+      <div class="side-cat-header" onclick="toggleCategory('aigc')">
+        <svg class="cat-arrow" id="cat-arrow-aigc" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        <span class="cat-label">AIGC作品</span>
+        <span class="side-count" id="cat-count-aigc">0</span>
+      </div>
+      <div class="side-sub-items" id="cat-sub-aigc">
+        <a class="side-link sub" href="#section-aigc" data-proj="aigc" onclick="scrollToSection('aigc')"> 全部作品 <span class="side-count" id="proj-count-aigc">0</span></a>
+      </div>
+    </div>
   </nav>
 </aside>
 
@@ -123,7 +134,8 @@ const projConfig = {
   shaonian: { label: '少年三国志', icon: '🏯', subs: null },
   zomline: { label: 'Zomline Survival', icon: '🧟', subs: null },
   gr: { label: '代号GR', icon: '⚔️', subs: null },
-  clip: { label: '影视混剪', icon: '🎬', subs: null }
+  clip: { label: '影视混剪', icon: '🎬', subs: null },
+  aigc: { label: 'AIGC作品', icon: '🤖', subs: null }
 };
 const catConfig = { EN:{label:'欧美EN',icon:'🌍'}, JP:{label:'日本JP',icon:'🎌'}, CN:{label:'简中CN',icon:'🇨🇳'}, KR:{label:'韩国KR',icon:'🇰🇷'} };
 
@@ -172,7 +184,8 @@ function renderAll() {
   const buyAdTotal = countProj('echocalypse')+countProj('shaonian')+countProj('zomline')+countProj('gr');
   document.getElementById('cat-count-buyAd').textContent = buyAdTotal;
   document.getElementById('cat-count-clip').textContent = countProj('clip');
-  ['echocalypse','shaonian','zomline','gr','clip'].forEach(p => {
+  document.getElementById('cat-count-aigc').textContent = countProj('aigc');
+  ['echocalypse','shaonian','zomline','gr','clip','aigc'].forEach(p => {
     document.getElementById('proj-count-'+p).textContent = countProj(p);
     const cfg = projConfig[p];
     if (cfg.subs) cfg.subs.forEach(c => { document.getElementById('side-count-'+p+'-'+c).textContent = countProjCat(p, c); });
@@ -212,6 +225,12 @@ function renderAll() {
   const clipWorks = allWorks.filter(w => (w.project||'echocalypse')==='clip' && (!searchQuery || w.title.toLowerCase().includes(searchQuery))).sort((a,b)=>a.order-b.order);
   html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'clipCat\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">影视混剪</h2><span class="proj-block-count">'+clipWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-clipCat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body" id="proj-body-clipCat">';
   html += clipWorks.length===0 ? '<p class="section-empty">暂无作品</p>' : clipWorks.map(w => renderCard(w)).join('');
+  html += '</div></div>';
+
+  // ===== AIGC作品 =====
+  const aigcWorks = allWorks.filter(w => (w.project||'echocalypse')==='aigc' && (!searchQuery || w.title.toLowerCase().includes(searchQuery))).sort((a,b)=>a.order-b.order);
+  html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'aigcCat\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">AIGC作品</h2><span class="proj-block-count">'+aigcWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-aigcCat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body" id="proj-body-aigcCat">';
+  html += aigcWorks.length===0 ? '<p class="section-empty">暂无作品</p>' : aigcWorks.map(w => renderCard(w)).join('');
   html += '</div></div>';
 
   document.getElementById('category-sections').innerHTML = html;
