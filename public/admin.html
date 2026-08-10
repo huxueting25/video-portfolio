@@ -467,19 +467,12 @@ function uploadToCloudinary(file, sign, onProgress) {
 
 async function uploadVideo(file) {
   document.getElementById('upload-hint').style.display='none'; document.getElementById('upload-progress').style.display='block';
-  document.getElementById('upload-status').textContent='正在准备上传...';
-  try {
-    const sign = await getCloudSign();
-    const d = await uploadToCloudinary(file, sign, e=>{
-      if(e.lengthComputable){const pct=Math.round(e.loaded/e.total*100);document.getElementById('progress-fill').style.width=pct+'%';document.getElementById('upload-status').textContent='上传中... '+pct+'%';}
-    });
-    uploadedFile={filename:d.public_id,originalName:file.name,videoUrl:d.secure_url,size:file.size};
-    document.getElementById('upload-progress').style.display='none'; document.getElementById('upload-done').style.display='block';
-    document.getElementById('uploaded-name').textContent=file.name;
-    if(!document.getElementById('work-title').value)document.getElementById('work-title').value=file.name.replace(/\.\w+$/,'');
-  } catch (err) {
-    document.getElementById('upload-status').textContent='上传失败: '+err.message;
-  }
+  const fd=new FormData(); fd.append('video',file);
+  const xhr=new XMLHttpRequest(); xhr.open('POST','/api/upload'); xhr.setRequestHeader('X-Admin-Token',adminToken);
+  xhr.upload.onprogress=e=>{if(e.lengthComputable){const pct=Math.round(e.loaded/e.total*100);document.getElementById('progress-fill').style.width=pct+'%';document.getElementById('upload-status').textContent='上传中... '+pct+'%';}};
+  xhr.onload=()=>{try{const d=JSON.parse(xhr.responseText);if(d.success){uploadedFile=d;document.getElementById('upload-progress').style.display='none';document.getElementById('upload-done').style.display='block';document.getElementById('uploaded-name').textContent=d.originalName;if(!document.getElementById('work-title').value)document.getElementById('work-title').value=d.originalName.replace(/\.\w+$/,'');}else{document.getElementById('upload-status').textContent='上传失败: '+d.error;}}catch(e){document.getElementById('upload-status').textContent='上传失败: 服务器响应异常';}};
+  xhr.onerror=()=>{document.getElementById('upload-status').textContent='上传失败，网络错误';};
+  xhr.send(fd);
 }
 function clearUpload() { uploadedFile=null; fileInput.value=''; document.getElementById('upload-hint').style.display='flex'; document.getElementById('upload-progress').style.display='none'; document.getElementById('upload-done').style.display='none'; }
 
@@ -593,24 +586,12 @@ rfi.addEventListener('change',()=>{if(rfi.files.length)replaceVideo(rfi.files[0]
 async function replaceVideo(file) {
   const eid=document.getElementById('edit-id').value;if(!eid)return;
   document.getElementById('replace-upload-hint').style.display='none';document.getElementById('replace-upload-progress').style.display='block';
-  document.getElementById('replace-upload-status').textContent='正在准备上传...';
-  try {
-    const sign = await getCloudSign();
-    const d = await uploadToCloudinary(file, sign, e=>{
-      if(e.lengthComputable){const pct=Math.round(e.loaded/e.total*100);document.getElementById('replace-progress-fill').style.width=pct+'%';document.getElementById('replace-upload-status').textContent='替换中... '+pct+'%';}
-    });
-    // 用新视频信息更新作品记录（后端会异步清理旧视频）
-    const w=currentWorks.find(x=>x.id===eid)||{};
-    const r=await fetch('/api/works',{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Token':adminToken},body:JSON.stringify({id:eid,title:w.title,description:w.description||'',category:w.category||'EN',project:w.project||'echocalypse',filename:d.public_id,originalName:file.name,videoUrl:d.secure_url})});
-    const rd=await r.json();
-    if(!rd.success)throw new Error(rd.error||'保存失败');
-    document.getElementById('replace-upload-progress').style.display='none';document.getElementById('replace-upload-done').style.display='block';
-    document.getElementById('replace-uploaded-name').textContent=file.name;
-    document.getElementById('current-video-name').textContent=file.name;
-    showToast('✅ 已替换'); loadWorks();
-  } catch (err) {
-    document.getElementById('replace-upload-status').textContent='替换失败: '+err.message;
-  }
+  const fd=new FormData();fd.append('video',file);
+  const xhr=new XMLHttpRequest();xhr.open('POST','/api/replace-video/'+eid);xhr.setRequestHeader('X-Admin-Token',adminToken);
+  xhr.upload.onprogress=e=>{if(e.lengthComputable){const pct=Math.round(e.loaded/e.total*100);document.getElementById('replace-progress-fill').style.width=pct+'%';document.getElementById('replace-upload-status').textContent='替换中... '+pct+'%';}};
+  xhr.onload=()=>{try{const d=JSON.parse(xhr.responseText);if(d.success){document.getElementById('replace-upload-progress').style.display='none';document.getElementById('replace-upload-done').style.display='block';document.getElementById('replace-uploaded-name').textContent=d.work.originalName;document.getElementById('current-video-name').textContent=d.work.originalName;const idx=currentWorks.findIndex(w=>w.id===eid);if(idx!==-1)currentWorks[idx]=d.work;showToast('✅ 已替换');}else{document.getElementById('replace-upload-status').textContent='替换失败: '+d.error;}}catch(e){document.getElementById('replace-upload-status').textContent='替换失败: 服务器响应异常';}};
+  xhr.onerror=()=>{document.getElementById('replace-upload-status').textContent='替换失败';};
+  xhr.send(fd);
 }
 
 // ===== 回到顶端 =====
