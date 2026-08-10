@@ -18,25 +18,28 @@
   <div class="badge-private">🔒 私密分享</div>
 </nav>
 
-<aside class="sidebar" id="sidebar">
+<aside class="sidebar">
   <div class="sidebar-title">买量广告</div>
   <nav class="sidebar-nav">
-    <a class="side-link active" href="#section-EN" data-cat="EN" onclick="scrollToCat('EN')">
-      <span class="side-dot side-dot-EN"></span>欧美EN
-      <span class="side-count" id="side-count-EN">0</span>
-    </a>
-    <a class="side-link" href="#section-JP" data-cat="JP" onclick="scrollToCat('JP')">
-      <span class="side-dot side-dot-JP"></span>日本JP
-      <span class="side-count" id="side-count-JP">0</span>
-    </a>
-    <a class="side-link" href="#section-CN" data-cat="CN" onclick="scrollToCat('CN')">
-      <span class="side-dot side-dot-CN"></span>简中CN
-      <span class="side-count" id="side-count-CN">0</span>
-    </a>
-    <a class="side-link" href="#section-KR" data-cat="KR" onclick="scrollToCat('KR')">
-      <span class="side-dot side-dot-KR"></span>韩国KR
-      <span class="side-count" id="side-count-KR">0</span>
-    </a>
+    <!-- 绯色回响（有子类） -->
+    <div class="side-project">
+      <div class="side-proj-header" onclick="toggleProject('echocalypse')">
+        <span class="proj-arrow" id="proj-arrow-echocalypse">▼</span>
+        <span class="proj-dot proj-dot-echo"></span>
+        绯色回响
+        <span class="side-count" id="proj-count-echocalypse">0</span>
+      </div>
+      <div class="side-sub-items" id="proj-sub-echocalypse">
+        <a class="side-link sub active" href="#section-echocalypse-EN" data-proj="echocalypse" data-cat="EN" onclick="scrollToSection('echocalypse','EN')"> 欧美EN <span class="side-count" id="side-count-echocalypse-EN">0</span></a>
+        <a class="side-link sub" href="#section-echocalypse-JP" data-proj="echocalypse" data-cat="JP" onclick="scrollToSection('echocalypse','JP')"> 日本JP <span class="side-count" id="side-count-echocalypse-JP">0</span></a>
+        <a class="side-link sub" href="#section-echocalypse-CN" data-proj="echocalypse" data-cat="CN" onclick="scrollToSection('echocalypse','CN')"> 简中CN <span class="side-count" id="side-count-echocalypse-CN">0</span></a>
+        <a class="side-link sub" href="#section-echocalypse-KR" data-proj="echocalypse" data-cat="KR" onclick="scrollToSection('echocalypse','KR')"> 韩国KR <span class="side-count" id="side-count-echocalypse-KR">0</span></a>
+      </div>
+    </div>
+    <!-- 其他项目（无子类） -->
+    <a class="side-link proj" href="#section-shaonian" data-proj="shaonian" onclick="scrollToSection('shaonian')"> <span class="side-dot side-dot-shaonian"></span> 少年三国志 <span class="side-count" id="proj-count-shaonian">0</span></a>
+    <a class="side-link proj" href="#section-zomline" data-proj="zomline" onclick="scrollToSection('zomline')"> <span class="side-dot side-dot-zomline"></span> Zomline Survival <span class="side-count" id="proj-count-zomline">0</span></a>
+    <a class="side-link proj" href="#section-gr" data-proj="gr" onclick="scrollToSection('gr')"> <span class="side-dot side-dot-gr"></span> 代号GR <span class="side-count" id="proj-count-gr">0</span></a>
   </nav>
 </aside>
 
@@ -70,16 +73,21 @@ const tokenKey = params.get('p') ? 'p' : 's';
 let allWorks = [];
 let searchQuery = '';
 let vidCounter = 0;
+let activeProj = 'echocalypse', activeCat = 'EN';
 
-const catConfig = {
-  EN: { label: '欧美EN', icon: '🌍', color: '#4ecca3' },
-  JP: { label: '日本JP', icon: '🎌', color: '#ff9800' },
-  CN: { label: '简中CN', icon: '🇨🇳', color: '#e94560' },
-  KR: { label: '韩国KR', icon: '🇰🇷', color: '#6495ed' }
+const projConfig = {
+  echocalypse: { label: '绯色回响', icon: '🎮', subs: ['EN','JP','CN','KR'] },
+  shaonian: { label: '少年三国志', icon: '🏯', subs: null },
+  zomline: { label: 'Zomline Survival', icon: '🧟', subs: null },
+  gr: { label: '代号GR', icon: '⚔️', subs: null }
 };
+const catConfig = { EN:{label:'欧美EN',icon:'🌍'}, JP:{label:'日本JP',icon:'🎌'}, CN:{label:'简中CN',icon:'🇨🇳'}, KR:{label:'韩国KR',icon:'🇰🇷'} };
 
-// 每个分类独立折叠状态
-const collapsed = { EN: false, JP: false, CN: true, KR: true };
+const collapsed = {}; // { 'echocalypse': {EN:false,JP:false,...}, 'shaonian': false, ... }
+Object.keys(projConfig).forEach(p => {
+  const cfg = projConfig[p];
+  collapsed[p] = cfg.subs ? Object.fromEntries(cfg.subs.map(c => [c, false])) : false;
+});
 
 function showErr(msg) {
   document.getElementById('loading-overlay').innerHTML = '<div style="text-align:center;padding-top:40vh;">'+msg+'</div>';
@@ -92,7 +100,7 @@ if (!tokenParam) {
     .then(r => { if (!r.ok) throw new Error(); return r.json(); })
     .then(works => {
       allWorks = works;
-      allWorks.forEach(w => { if (!w.category) w.category = 'EN'; });
+      allWorks.forEach(w => { if (!w.project) w.project = 'echocalypse'; if (!w.category) w.category = 'EN'; });
       renderAll();
       document.getElementById('loading-overlay').style.display = 'none';
     })
@@ -105,51 +113,80 @@ function posterUrl(w) {
   return w.videoUrl.replace('/upload/','/upload/so_0,w_640/').replace('.mp4','.jpg');
 }
 
+function countProj(proj) {
+  return allWorks.filter(w => (w.project||'echocalypse')===proj && (!searchQuery || w.title.toLowerCase().includes(searchQuery))).length;
+}
+
+function countProjCat(proj, cat) {
+  return allWorks.filter(w => (w.project||'echocalypse')===proj && (w.category||'EN')===cat && (!searchQuery || w.title.toLowerCase().includes(searchQuery))).length;
+}
+
 function renderAll() {
   document.getElementById('search-bar').style.display = allWorks.length > 0 ? 'block' : 'none';
-  const counts = { EN:0, JP:0, CN:0, KR:0 };
-  allWorks.forEach(w => {
-    const cat = w.category || 'EN';
-    if ((!searchQuery || w.title.toLowerCase().includes(searchQuery)) && counts[cat]!==undefined) counts[cat]++;
-  });
-  document.getElementById('search-result').textContent = searchQuery ? '找到 '+Object.values(counts).reduce((a,b)=>a+b,0)+' 个结果' : '';
-  ['EN','JP','CN','KR'].forEach(c => document.getElementById('side-count-'+c).textContent = counts[c]);
+  let totalV = 0;
 
-  const order = ['EN','JP','CN','KR'];
-  let html = '';
-  order.forEach(cat => {
-    const cfg = catConfig[cat];
-    const items = allWorks
-      .filter(w => (w.category||'EN')===cat)
-      .filter(w => !searchQuery || w.title.toLowerCase().includes(searchQuery))
-      .sort((a,b)=>a.order-b.order);
-    const isCollapsed = collapsed[cat];
-
-    html += '<section class="cat-section" id="section-'+cat+'" data-cat="'+cat+'">';
-    html += '<div class="section-header" onclick="toggleCat(\''+cat+'\')">';
-    html += '<div class="section-header-left"><span class="section-icon">'+cfg.icon+'</span><h2 class="section-label">'+cfg.label+'</h2><span class="section-count">'+items.length+' 个作品</span></div>';
-    html += '<div class="section-toggle'+(isCollapsed?' collapsed':'')+'" id="toggle-'+cat+'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div>';
-    html += '</div>';
-    html += '<div class="section-body'+(isCollapsed?' collapsed':'')+'" id="body-'+cat+'">';
-    if (items.length===0) {
-      html += '<p class="section-empty">暂无作品</p>';
-    } else {
-      html += items.map(w => {
-        const idx = vidCounter++;
-        const pUrl = posterUrl(w);
-        return '<div class="work-card"><div class="work-video-wrap">'
-        +'<video id="video-'+idx+'" controls playsinline preload="none" class="work-video" data-src="'+ (w.videoUrl||'') +'" poster="'+pUrl+'"></video>'
-        +'<div class="video-placeholder" id="placeholder-'+idx+'" onclick="playVideo('+idx+')">'
-        +(pUrl?'<img class="cover-img" src="'+pUrl+'" alt="" loading="lazy">':'')
-        +'<div class="play-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg></div></div></div>'
-        +'<div class="work-info"><h3 class="work-title">'+w.title+'</h3>'+(w.description?'<p class="work-desc">'+w.description+'</p>':'')+'</div></div>';
-      }).join('');
+  // 更新计数
+  ['echocalypse','shaonian','zomline','gr'].forEach(p => {
+    const n = countProj(p);
+    document.getElementById('proj-count-'+p).textContent = n;
+    if (n > 0) totalV += n;
+    const cfg = projConfig[p];
+    if (cfg.subs) {
+      cfg.subs.forEach(c => {
+        document.getElementById('side-count-'+p+'-'+c).textContent = countProjCat(p, c);
+      });
     }
-    html += '</div></section>';
+  });
+  document.getElementById('search-result').textContent = searchQuery ? '找到 '+totalV+' 个结果' : '';
+
+  // 渲染
+  let html = '';
+  ['echocalypse','shaonian','zomline','gr'].forEach(proj => {
+    const pcfg = projConfig[proj];
+    const projWorks = allWorks.filter(w => (w.project||'echocalypse')===proj && (!searchQuery || w.title.toLowerCase().includes(searchQuery)));
+
+    html += '<div class="proj-block">';
+    html += '<div class="proj-block-header"><span class="proj-block-icon">'+pcfg.icon+'</span><h2 class="proj-block-label">'+pcfg.label+'</h2><span class="proj-block-count">'+projWorks.length+' 个作品</span></div>';
+
+    if (pcfg.subs) {
+      // 有子类：按 EN/JP/CN/KR 分组
+      pcfg.subs.forEach(cat => {
+        const items = projWorks.filter(w => (w.category||'EN')===cat).sort((a,b)=>a.order-b.order);
+        const isC = collapsed[proj] && collapsed[proj][cat] !== undefined ? collapsed[proj][cat] : false;
+        const ccfg = catConfig[cat];
+        const secId = 'section-'+proj+'-'+cat;
+        html += '<section class="cat-section" id="'+secId+'" data-proj="'+proj+'" data-cat="'+cat+'">';
+        html += '<div class="section-header" onclick="toggleSub(\''+proj+'\',\''+cat+'\')"><div class="section-header-left"><span class="section-icon">'+ccfg.icon+'</span><h3 class="section-label">'+ccfg.label+'</h3><span class="section-count">'+items.length+' 个作品</span></div>';
+        html += '<div class="section-toggle'+(isC?' collapsed':'')+'" id="toggle-'+proj+'-'+cat+'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>';
+        html += '<div class="section-body'+(isC?' collapsed':'')+'" id="body-'+proj+'-'+cat+'">';
+        html += items.length===0 ? '<p class="section-empty">暂无作品</p>' : items.map(w => renderCard(w)).join('');
+        html += '</div></section>';
+      });
+    } else {
+      // 无子类：直接展示作品
+      const items = projWorks.sort((a,b)=>a.order-b.order);
+      const secId = 'section-'+proj;
+      html += '<section class="cat-section" id="'+secId+'" data-proj="'+proj+'">';
+      html += '<div class="section-body">';
+      html += items.length===0 ? '<p class="section-empty">暂无作品</p>' : items.map(w => renderCard(w)).join('');
+      html += '</div></section>';
+    }
+    html += '</div>';
   });
 
   document.getElementById('category-sections').innerHTML = html;
   setupObservers();
+}
+
+function renderCard(w) {
+  const idx = vidCounter++;
+  const pUrl = posterUrl(w);
+  return '<div class="work-card"><div class="work-video-wrap">'
+    +'<video id="video-'+idx+'" controls playsinline preload="none" class="work-video" data-src="'+ (w.videoUrl||'') +'" poster="'+pUrl+'"></video>'
+    +'<div class="video-placeholder" id="placeholder-'+idx+'" onclick="playVideo('+idx+')">'
+    +(pUrl?'<img class="cover-img" src="'+pUrl+'" alt="" loading="lazy">':'')
+    +'<div class="play-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg></div></div></div>'
+    +'<div class="work-info"><h3 class="work-title">'+w.title+'</h3>'+(w.description?'<p class="work-desc">'+w.description+'</p>':'')+'</div></div>';
 }
 
 function setupObservers() {
@@ -179,47 +216,77 @@ function playVideo(idx) {
   p.style.display = 'none';
   if (!v.querySelector('source') && v.dataset.src) {
     const s = document.createElement('source'); s.src = v.dataset.src; s.type = 'video/mp4';
-    v.appendChild(s);
-    v.load();
-    // 移动端需要等视频准备好再播放
+    v.appendChild(s); v.load();
     v.addEventListener('canplay', function h() { v.play().catch(()=>{}); v.removeEventListener('canplay', h); }, {once: true});
   } else {
     v.play().catch(()=>{});
   }
 }
 
-function toggleCat(cat) {
-  if (!collapsed[cat]) {
-    // 当前展开 → 折叠它
-    collapsed[cat] = true;
-    document.getElementById('body-'+cat).classList.add('collapsed');
-    document.getElementById('toggle-'+cat).classList.add('collapsed');
-  } else {
-    // 当前折叠 → 展开它，折叠其他
-    ['EN','JP','CN','KR'].forEach(c => {
-      collapsed[c] = (c !== cat);
+// ===== 折叠 =====
+function toggleSub(proj, cat) {
+  const state = collapsed[proj];
+  if (!state[cat]) {
+    // 展开当前，折叠其他子类
+    Object.keys(state).forEach(c => {
+      state[c] = (c !== cat);
       ['body-','toggle-'].forEach(p => {
-        const el = document.getElementById(p+c);
+        const el = document.getElementById(p+proj+'-'+c);
+        if (el) el.classList.toggle('collapsed', c !== cat);
+      });
+    });
+  } else {
+    state[cat] = false;
+    document.getElementById('body-'+proj+'-'+cat).classList.remove('collapsed');
+    document.getElementById('toggle-'+proj+'-'+cat).classList.remove('collapsed');
+  }
+}
+
+function toggleProject(proj) {
+  const sub = document.getElementById('proj-sub-'+proj);
+  const arrow = document.getElementById('proj-arrow-'+proj);
+  if (sub) {
+    sub.classList.toggle('hidden');
+    arrow.textContent = sub.classList.contains('hidden') ? '▶' : '▼';
+  }
+}
+
+// ===== 侧边栏点击 =====
+function scrollToSection(proj, cat) {
+  activeProj = proj;
+  if (cat) activeCat = cat;
+  else activeCat = null;
+
+  // 确保项目子导航展开
+  const sub = document.getElementById('proj-sub-'+proj);
+  if (sub && sub.classList.contains('hidden')) toggleProject(proj);
+
+  // 折叠/展开子类
+  const cfg = projConfig[proj];
+  if (cfg.subs && cat) {
+    const state = collapsed[proj];
+    Object.keys(state).forEach(c => {
+      state[c] = (c !== cat);
+      ['body-','toggle-'].forEach(p => {
+        const el = document.getElementById(p+proj+'-'+c);
         if (el) el.classList.toggle('collapsed', c !== cat);
       });
     });
   }
-}
 
-function scrollToCat(cat) {
-  ['EN','JP','CN','KR'].forEach(c => {
-    collapsed[c] = (c !== cat);
-    ['body-','toggle-'].forEach(p => {
-      const el = document.getElementById(p+c);
-      if (el) el.classList.toggle('collapsed', c !== cat);
-    });
-  });
-  const sec = document.getElementById('section-'+cat);
+  // 滚动
+  const secId = cat ? 'section-'+proj+'-'+cat : 'section-'+proj;
+  const sec = document.getElementById(secId);
   if (sec) {
     const h = document.querySelector('.top-nav').offsetHeight;
     window.scrollTo({ top: sec.getBoundingClientRect().top + window.scrollY - h - 16, behavior: 'smooth' });
   }
-  document.querySelectorAll('.side-link').forEach(l => l.classList.toggle('active', l.dataset.cat===cat));
+
+  // 高亮侧边栏
+  document.querySelectorAll('.side-link').forEach(l => {
+    const match = (cat ? (l.dataset.proj===proj && l.dataset.cat===cat) : (l.dataset.proj===proj && !l.dataset.cat));
+    l.classList.toggle('active', match);
+  });
 }
 
 // 滚动高亮
@@ -229,9 +296,20 @@ window.addEventListener('scroll', () => {
   sd = setTimeout(() => {
     const secs = document.querySelectorAll('.cat-section');
     const hh = document.querySelector('.top-nav').offsetHeight;
-    let cur = 'EN';
-    secs.forEach(s => { if (s.getBoundingClientRect().top <= hh+100) cur = s.dataset.cat; });
-    document.querySelectorAll('.side-link').forEach(l => l.classList.toggle('active', l.dataset.cat===cur));
+    let curProj = 'echocalypse', curCat = 'EN';
+    secs.forEach(s => {
+      if (s.getBoundingClientRect().top <= hh+200) {
+        curProj = s.dataset.proj;
+        if (s.dataset.cat) curCat = s.dataset.cat;
+      }
+    });
+    if (curProj !== activeProj || curCat !== (activeCat||'')) {
+      activeProj = curProj; activeCat = curCat;
+      document.querySelectorAll('.side-link').forEach(l => {
+        const match = l.dataset.cat ? (l.dataset.proj===curProj && l.dataset.cat===curCat) : (l.dataset.proj===curProj && !l.dataset.cat);
+        l.classList.toggle('active', match);
+      });
+    }
   }, 100);
 });
 
@@ -249,7 +327,6 @@ function clearSearch() {
   renderAll();
 }
 
-// 回到顶端
 const stb = document.getElementById('scroll-to-top');
 window.addEventListener('scroll', () => { stb.style.display = window.scrollY > 400 ? 'flex' : 'none'; });
 function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
