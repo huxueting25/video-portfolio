@@ -26,28 +26,27 @@
     <!-- 买量广告（游戏项目组） -->
     <div class="side-category">
       <div class="side-cat-header" onclick="toggleCategory('buyAd')">
-        <svg class="cat-arrow" id="cat-arrow-buyAd" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
-        <span class="cat-dot cat-dot-buyAd"></span>
+        <svg class="cat-arrow" id="cat-arrow-buyAd" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
         <span class="cat-label">买量广告</span>
         <span class="side-count" id="cat-count-buyAd">0</span>
       </div>
       <div class="side-sub-items" id="cat-sub-buyAd">
         <div class="side-project">
-          <div class="side-proj-header" onclick="toggleProject('echocalypse')">
+          <div class="side-proj-header" onclick="toggleAndScroll('echocalypse')">
             <svg class="proj-arrow" id="proj-arrow-echocalypse" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
             <span class="proj-dot proj-dot-echo"></span>
             绯色回响
             <span class="side-count" id="proj-count-echocalypse">0</span>
           </div>
           <div class="side-sub-items" id="proj-sub-echocalypse">
-            <a class="side-link sub active" href="#section-echocalypse-EN" data-proj="echocalypse" data-cat="EN" onclick="scrollToSection('echocalypse','EN')"> 欧美EN <span class="side-count" id="side-count-echocalypse-EN">0</span></a>
+            <a class="side-link sub" href="#section-echocalypse-EN" data-proj="echocalypse" data-cat="EN" onclick="scrollToSection('echocalypse','EN')"> 欧美EN <span class="side-count" id="side-count-echocalypse-EN">0</span></a>
             <a class="side-link sub" href="#section-echocalypse-JP" data-proj="echocalypse" data-cat="JP" onclick="scrollToSection('echocalypse','JP')"> 日本JP <span class="side-count" id="side-count-echocalypse-JP">0</span></a>
             <a class="side-link sub" href="#section-echocalypse-CN" data-proj="echocalypse" data-cat="CN" onclick="scrollToSection('echocalypse','CN')"> 简中CN <span class="side-count" id="side-count-echocalypse-CN">0</span></a>
             <a class="side-link sub" href="#section-echocalypse-KR" data-proj="echocalypse" data-cat="KR" onclick="scrollToSection('echocalypse','KR')"> 韩国KR <span class="side-count" id="side-count-echocalypse-KR">0</span></a>
           </div>
         </div>
         <div class="side-project">
-          <div class="side-proj-header" onclick="toggleProject('shaonian')">
+          <div class="side-proj-header" onclick="toggleAndScroll('shaonian')">
             <svg class="proj-arrow" id="proj-arrow-shaonian" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
             <span class="proj-dot proj-dot-shaonian"></span>
             少年三国志
@@ -55,7 +54,7 @@
           </div>
         </div>
         <div class="side-project">
-          <div class="side-proj-header" onclick="toggleProject('zomline')">
+          <div class="side-proj-header" onclick="toggleAndScroll('zomline')">
             <svg class="proj-arrow" id="proj-arrow-zomline" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
             <span class="proj-dot proj-dot-zomline"></span>
             Zomline Survival
@@ -63,7 +62,7 @@
           </div>
         </div>
         <div class="side-project">
-          <div class="side-proj-header" onclick="toggleProject('gr')">
+          <div class="side-proj-header" onclick="toggleAndScroll('gr')">
             <svg class="proj-arrow" id="proj-arrow-gr" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
             <span class="proj-dot proj-dot-gr"></span>
             代号GR
@@ -75,9 +74,8 @@
     <!-- 影视混剪 -->
     <div class="side-category">
       <div class="side-cat-header" onclick="toggleCategory('clip')">
-        <svg class="cat-arrow" id="cat-arrow-clip" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
-        <span class="cat-dot cat-dot-clip"></span>
-        影视混剪
+        <svg class="cat-arrow" id="cat-arrow-clip" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        <span class="cat-label">影视混剪</span>
         <span class="side-count" id="cat-count-clip">0</span>
       </div>
       <div class="side-sub-items" id="cat-sub-clip">
@@ -292,12 +290,39 @@ function toggleProjBlock(proj) {
   }
 }
 
+function toggleAndScroll(proj) {
+  // 折叠其他项目
+  ['echocalypse','shaonian','zomline','gr'].forEach(p => {
+    if (p !== proj) {
+      const b = document.getElementById('proj-body-'+p);
+      const t = document.getElementById('proj-toggle-'+p);
+      if (b) b.classList.add('collapsed');
+      if (t) t.classList.add('collapsed');
+    }
+  });
+  // 展开/折叠目标项目
+  toggleProject(proj);
+  // 滚动到目标项目
+  const sec = document.getElementById('section-'+proj);
+  if (sec) {
+    const h = document.querySelector('.top-nav').offsetHeight;
+    window.scrollTo({ top: sec.getBoundingClientRect().top + window.scrollY - h - 16, behavior: 'smooth' });
+  }
+}
+
 function toggleProject(proj) {
   const sub = document.getElementById('proj-sub-'+proj);
   const arrow = document.getElementById('proj-arrow-'+proj);
   if (sub) {
     sub.classList.toggle('hidden');
     if (arrow) arrow.classList.toggle('collapsed');
+  }
+  // 同时切换主区域项目块
+  const body = document.getElementById('proj-body-'+proj);
+  const tog = document.getElementById('proj-toggle-'+proj);
+  if (body && tog) {
+    body.classList.toggle('collapsed');
+    tog.classList.toggle('collapsed');
   }
 }
 
