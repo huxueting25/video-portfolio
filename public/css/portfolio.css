@@ -72,12 +72,13 @@ body {
 /* 项目头 */
 .side-project { margin-bottom: 2px; }
 .side-proj-header {
-  display: flex; align-items: center; gap: 8px;
-  padding: 8px 10px;
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px;
   border-radius: 6px;
   color: var(--text-2);
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 500;
+  letter-spacing: 0.02em;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -85,7 +86,7 @@ body {
 .proj-arrow {
   flex-shrink: 0;
   color: var(--text-muted);
-  transition: transform 0.25s ease;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .proj-arrow.collapsed { transform: rotate(-90deg); }
 .proj-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; opacity: 0.9; }
@@ -94,26 +95,28 @@ body {
 
 /* 分类头（买量广告/影视混剪） */
 .side-category {
-  margin-bottom: 10px;
-  padding-bottom: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--border-soft);
 }
 .side-cat-header {
-  display: flex; align-items: center; gap: 8px;
-  padding: 10px 8px;
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 12px;
+  margin-bottom: 4px;
   border-radius: 6px;
   color: var(--text);
-  font-size: 15px;
+  font-family: var(--font-serif);
+  font-size: 17px;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.08em;
   cursor: pointer;
   transition: all 0.2s;
 }
 .side-cat-header:hover { background: var(--bg-hover); }
 .cat-arrow {
   flex-shrink: 0;
-  color: var(--text-muted);
-  transition: transform 0.25s ease;
+  color: var(--accent);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .cat-arrow.collapsed { transform: rotate(-90deg); }
 .cat-dot {
