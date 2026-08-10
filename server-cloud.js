@@ -217,6 +217,30 @@ app.post('/api/upload', authAdmin, async (req, res) => {
   }
 });
 
+// ========== 前端直传 Cloudinary 的一次性签名 ==========
+// 视频直接由浏览器上传到 Cloudinary，不经过本服务（避免大文件 OOM）
+app.get('/api/cloudinary-sign', authAdmin, (req, res) => {
+  try {
+    const timestamp = Math.round(Date.now() / 1000);
+    const expires_at = timestamp + 600; // 签名 10 分钟有效
+    const folder = 'portfolio/videos';
+    const params = { timestamp, expires_at, folder, resource_type: 'video' };
+    const signature = cloudinary.utils.api_sign_request(params, process.env.CLOUDINARY_API_SECRET);
+    res.json({
+      success: true,
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+      apiKey: process.env.CLOUDINARY_API_KEY,
+      timestamp,
+      expires_at,
+      signature,
+      folder,
+    });
+  } catch (e) {
+    console.error('cloudinary-sign error:', e);
+    res.json({ success: false, error: '签名失败: ' + e.message });
+  }
+});
+
 // 上传封面图到 Cloudinary
 app.post('/api/upload-cover', authAdmin, coverUpload.single('cover'), async (req, res) => {
   if (!req.file) return res.json({ success: false, error: '未收到文件' });
@@ -264,8 +288,13 @@ app.post('/api/works', authAdmin, (req, res) => {
   if (id) {
     const idx = works.findIndex(w => w.id === id);
     if (idx === -1) return res.json({ success: false, error: '作品不存在' });
+    const oldWork = works[idx];
     works[idx] = { ...works[idx], ...req.body };
     saveWorksToCloudinary(); // 异步保存
+    // 替换视频时异步清理 Cloudinary 上的旧视频文件
+    if (req.body.filename && oldWork.filename && oldWork.filename !== req.body.filename) {
+      cloudinary.uploader.destroy(oldWork.filename, { resource_type: 'video' }).catch(() => {});
+    }
     res.json({ success: true, work: works[idx] });
   } else {
     const shareToken = crypto.randomBytes(12).toString('hex');
