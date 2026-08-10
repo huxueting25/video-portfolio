@@ -30,7 +30,7 @@
         <span class="cat-label">买量广告</span>
         <span class="side-count" id="cat-count-buyAd">0</span>
       </div>
-      <div class="side-sub-items" id="cat-sub-buyAd">
+      <div class="side-sub-items hidden" id="cat-sub-buyAd">
         <div class="side-project">
           <div class="side-proj-header" onclick="toggleAndScroll('echocalypse')">
             <svg class="proj-arrow" id="proj-arrow-echocalypse" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
@@ -38,7 +38,7 @@
             绯色回响
             <span class="side-count" id="proj-count-echocalypse">0</span>
           </div>
-          <div class="side-sub-items" id="proj-sub-echocalypse">
+          <div class="side-sub-items hidden" id="proj-sub-echocalypse">
             <a class="side-link sub" href="#section-echocalypse-EN" data-proj="echocalypse" data-cat="EN" onclick="scrollToSection('echocalypse','EN')"> 欧美EN <span class="side-count" id="side-count-echocalypse-EN">0</span></a>
             <a class="side-link sub" href="#section-echocalypse-JP" data-proj="echocalypse" data-cat="JP" onclick="scrollToSection('echocalypse','JP')"> 日本JP <span class="side-count" id="side-count-echocalypse-JP">0</span></a>
             <a class="side-link sub" href="#section-echocalypse-CN" data-proj="echocalypse" data-cat="CN" onclick="scrollToSection('echocalypse','CN')"> 简中CN <span class="side-count" id="side-count-echocalypse-CN">0</span></a>
@@ -78,7 +78,7 @@
         <span class="cat-label">影视混剪</span>
         <span class="side-count" id="cat-count-clip">0</span>
       </div>
-      <div class="side-sub-items" id="cat-sub-clip">
+      <div class="side-sub-items hidden" id="cat-sub-clip">
         <a class="side-link sub" href="#section-clip" data-proj="clip" onclick="scrollToSection('clip')"> 全部视频 <span class="side-count" id="proj-count-clip">0</span></a>
       </div>
     </div>
@@ -89,7 +89,7 @@
         <span class="cat-label">AIGC作品</span>
         <span class="side-count" id="cat-count-aigc">0</span>
       </div>
-      <div class="side-sub-items" id="cat-sub-aigc">
+      <div class="side-sub-items hidden" id="cat-sub-aigc">
         <a class="side-link sub" href="#section-aigc" data-proj="aigc" onclick="scrollToSection('aigc')"> 全部作品 <span class="side-count" id="proj-count-aigc">0</span></a>
       </div>
     </div>
@@ -139,10 +139,12 @@ const projConfig = {
 };
 const catConfig = { EN:{label:'欧美EN',icon:'🌍'}, JP:{label:'日本JP',icon:'🎌'}, CN:{label:'简中CN',icon:'🇨🇳'}, KR:{label:'韩国KR',icon:'🇰🇷'} };
 
-const collapsed = {}; // { 'echocalypse': {EN:false,JP:false,...}, 'shaonian': false, ... }
+// 折叠状态：默认全部折叠，访客自行点开
+const collapsed = {}; // { 'echocalypse': {EN:true,JP:true,...}, 'shaonian': false, ... }
+const blockCollapsed = { buyAd: true, echocalypse: true, shaonian: true, zomline: true, gr: true, clipCat: true, aigcCat: true };
 Object.keys(projConfig).forEach(p => {
   const cfg = projConfig[p];
-  collapsed[p] = cfg.subs ? Object.fromEntries(cfg.subs.map(c => [c, false])) : false;
+  collapsed[p] = cfg.subs ? Object.fromEntries(cfg.subs.map(c => [c, true])) : false;
 });
 
 function showErr(msg) {
@@ -195,13 +197,13 @@ function renderAll() {
   let html = '';
 
   // ===== 买量广告 =====
-  html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'buyAd\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">买量广告</h2><span class="proj-block-count">'+buyAdTotal+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-buyAd"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body" id="proj-body-buyAd">';
+  html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'buyAd\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">买量广告</h2><span class="proj-block-count">'+buyAdTotal+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-buyAd"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body'+(blockCollapsed.buyAd?' collapsed':'')+'" id="proj-body-buyAd">';
   ['echocalypse','shaonian','zomline','gr'].forEach(proj => {
     const pcfg = projConfig[proj];
     const projWorks = allWorks.filter(w => (w.project||'echocalypse')===proj && (!searchQuery || w.title.toLowerCase().includes(searchQuery)));
     html += '<div class="proj-block" data-proj="'+proj+'">';
     html += '<div class="proj-block-header" onclick="toggleProjBlock(\''+proj+'\')"><div class="section-header-left"><span class="proj-block-icon">'+pcfg.icon+'</span><h2 class="proj-block-label">'+pcfg.label+'</h2><span class="proj-block-count">'+projWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-'+proj+'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>';
-    html += '<div class="proj-block-body" id="proj-body-'+proj+'">';
+    html += '<div class="proj-block-body'+(blockCollapsed[proj]?' collapsed':'')+'" id="proj-body-'+proj+'">';
     if (pcfg.subs) {
       pcfg.subs.forEach(cat => {
         const items = projWorks.filter(w => (w.category||'EN')===cat).sort((a,b)=>a.order-b.order);
@@ -223,13 +225,13 @@ function renderAll() {
 
   // ===== 影视混剪 =====
   const clipWorks = allWorks.filter(w => (w.project||'echocalypse')==='clip' && (!searchQuery || w.title.toLowerCase().includes(searchQuery))).sort((a,b)=>a.order-b.order);
-  html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'clipCat\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">影视混剪</h2><span class="proj-block-count">'+clipWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-clipCat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body" id="proj-body-clipCat">';
+  html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'clipCat\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">影视混剪</h2><span class="proj-block-count">'+clipWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-clipCat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body'+(blockCollapsed.clipCat?' collapsed':'')+'" id="proj-body-clipCat">';
   html += clipWorks.length===0 ? '<p class="section-empty">暂无作品</p>' : clipWorks.map(w => renderCard(w)).join('');
   html += '</div></div>';
 
   // ===== AIGC作品 =====
   const aigcWorks = allWorks.filter(w => (w.project||'echocalypse')==='aigc' && (!searchQuery || w.title.toLowerCase().includes(searchQuery))).sort((a,b)=>a.order-b.order);
-  html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'aigcCat\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">AIGC作品</h2><span class="proj-block-count">'+aigcWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-aigcCat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body" id="proj-body-aigcCat">';
+  html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'aigcCat\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">AIGC作品</h2><span class="proj-block-count">'+aigcWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-aigcCat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body'+(blockCollapsed.aigcCat?' collapsed':'')+'" id="proj-body-aigcCat">';
   html += aigcWorks.length===0 ? '<p class="section-empty">暂无作品</p>' : aigcWorks.map(w => renderCard(w)).join('');
   html += '</div></div>';
 
@@ -282,14 +284,42 @@ function playVideo(idx) {
   }
 }
 
-// ===== 折叠（自由模式：每个独立切换）=====
+// ===== 折叠（默认全折叠；手风琴：展开一个即折叠同层其他）=====
+function applyBlock(proj, isCollapsed) {
+  const body = document.getElementById('proj-body-'+proj);
+  const toggle = document.getElementById('proj-toggle-'+proj);
+  if (body) body.classList.toggle('collapsed', isCollapsed);
+  if (toggle) toggle.classList.toggle('collapsed', isCollapsed);
+  blockCollapsed[proj] = isCollapsed;
+}
+
+function applyCat(proj, cat, isCollapsed) {
+  const body = document.getElementById('body-'+proj+'-'+cat);
+  const toggle = document.getElementById('toggle-'+proj+'-'+cat);
+  if (body) body.classList.toggle('collapsed', isCollapsed);
+  if (toggle) toggle.classList.toggle('collapsed', isCollapsed);
+  collapsed[proj][cat] = isCollapsed;
+}
+
+function getTopBlock(proj) {
+  if (proj === 'clip') return 'clipCat';
+  if (proj === 'aigc') return 'aigcCat';
+  return 'buyAd';
+}
+
 function toggleSub(proj, cat) {
   const state = collapsed[proj];
   state[cat] = !state[cat];
-  const body = document.getElementById('body-'+proj+'-'+cat);
-  const toggle = document.getElementById('toggle-'+proj+'-'+cat);
-  if (body) body.classList.toggle('collapsed', state[cat]);
-  if (toggle) toggle.classList.toggle('collapsed', state[cat]);
+  // 手风琴：展开某分类时，同项目其他分类同步折叠（保留标题）
+  if (!state[cat]) {
+    Object.keys(state).forEach(c => { if (c !== cat) state[c] = true; });
+  }
+  Object.keys(state).forEach(c => {
+    const body = document.getElementById('body-'+proj+'-'+c);
+    const toggle = document.getElementById('toggle-'+proj+'-'+c);
+    if (body) body.classList.toggle('collapsed', state[c]);
+    if (toggle) toggle.classList.toggle('collapsed', state[c]);
+  });
 }
 
 function toggleProjBlock(proj) {
@@ -298,29 +328,34 @@ function toggleProjBlock(proj) {
   const toggle = document.getElementById('proj-toggle-'+proj);
   if (!body || !toggle) return;
   const isCollapsed = body.classList.contains('collapsed');
-  body.classList.toggle('collapsed', !isCollapsed);
-  toggle.classList.toggle('collapsed', !isCollapsed);
-  // 同步所有子类状态
+  applyBlock(proj, !isCollapsed);
+  // 折叠整块时其下分类全部折叠；展开时保持各分类自身状态
   const pcfg = projConfig[proj];
-  if (pcfg && pcfg.subs) {
-    pcfg.subs.forEach(c => {
-      collapsed[proj][c] = !isCollapsed;
-    });
+  if (pcfg && pcfg.subs && !isCollapsed) {
+    pcfg.subs.forEach(c => applyCat(proj, c, true));
   }
 }
 
 function toggleAndScroll(proj) {
-  // 折叠其他项目
+  // 确保所属顶层分类块展开（默认全折叠）
+  const topBlock = getTopBlock(proj);
+  const tb = document.getElementById('proj-body-'+topBlock);
+  if (tb && tb.classList.contains('collapsed')) applyBlock(topBlock, false);
+  // 折叠其他项目块（保留标题，内容收起）
   ['echocalypse','shaonian','zomline','gr'].forEach(p => {
-    if (p !== proj) {
-      const b = document.getElementById('proj-body-'+p);
-      const t = document.getElementById('proj-toggle-'+p);
-      if (b) b.classList.add('collapsed');
-      if (t) t.classList.add('collapsed');
-    }
+    if (p !== proj && document.getElementById('proj-body-'+p)) applyBlock(p, true);
   });
-  // 展开/折叠目标项目
-  toggleProject(proj);
+  // 切换目标项目块：展开 ⇄ 折叠
+  const body = document.getElementById('proj-body-'+proj);
+  const willCollapse = body ? !body.classList.contains('collapsed') : false;
+  applyBlock(proj, willCollapse);
+  // 侧边栏项目子导航同步
+  const sub = document.getElementById('proj-sub-'+proj);
+  const arrow = document.getElementById('proj-arrow-'+proj);
+  if (sub) {
+    sub.classList.toggle('hidden', willCollapse);
+    if (arrow) arrow.classList.toggle('collapsed', willCollapse);
+  }
   // 滚动到目标项目
   const sec = document.getElementById('section-'+proj);
   if (sec) {
@@ -330,18 +365,12 @@ function toggleAndScroll(proj) {
 }
 
 function toggleProject(proj) {
+  // 仅切换侧边栏项目子导航；主区域项目块由 toggleAndScroll / scrollToSection 统一处理
   const sub = document.getElementById('proj-sub-'+proj);
   const arrow = document.getElementById('proj-arrow-'+proj);
   if (sub) {
     sub.classList.toggle('hidden');
     if (arrow) arrow.classList.toggle('collapsed');
-  }
-  // 同时切换主区域项目块
-  const body = document.getElementById('proj-body-'+proj);
-  const tog = document.getElementById('proj-toggle-'+proj);
-  if (body && tog) {
-    body.classList.toggle('collapsed');
-    tog.classList.toggle('collapsed');
   }
 }
 
@@ -358,24 +387,31 @@ function toggleCategory(cat) {
   if (toggle) toggle.classList.toggle('collapsed', sub?.classList.contains('hidden'));
 }
 
-// ===== 侧边栏点击（自由模式：只展开目标，不动其他）=====
+// ===== 侧边栏点击分类 =====
 function scrollToSection(proj, cat) {
   activeProj = proj;
   if (cat) activeCat = cat;
   else activeCat = null;
 
-  // 确保项目子导航展开
+  // 确保侧边栏项目子导航展开
   const sub = document.getElementById('proj-sub-'+proj);
-  if (sub && sub.classList.contains('hidden')) toggleProject(proj);
+  if (sub && sub.classList.contains('hidden')) {
+    sub.classList.remove('hidden');
+    const arrow = document.getElementById('proj-arrow-'+proj);
+    if (arrow) arrow.classList.remove('collapsed');
+  }
 
-  // 只展开目标分类，不动其他
+  // 确保主区域可见：所属顶层块 + 项目块展开
+  const topBlock = getTopBlock(proj);
+  const tb = document.getElementById('proj-body-'+topBlock);
+  if (tb && tb.classList.contains('collapsed')) applyBlock(topBlock, false);
+  const body = document.getElementById('proj-body-'+proj);
+  if (body && body.classList.contains('collapsed')) applyBlock(proj, false);
+
+  // 手风琴：只展开目标分类，同项目其他分类折叠
   const cfg = projConfig[proj];
   if (cfg.subs && cat) {
-    collapsed[proj][cat] = false;
-    const body = document.getElementById('body-'+proj+'-'+cat);
-    const toggle = document.getElementById('toggle-'+proj+'-'+cat);
-    if (body) body.classList.remove('collapsed');
-    if (toggle) toggle.classList.remove('collapsed');
+    Object.keys(collapsed[proj]).forEach(c => applyCat(proj, c, c !== cat));
   }
 
   // 滚动
