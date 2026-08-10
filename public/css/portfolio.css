@@ -216,7 +216,12 @@ body {
 .proj-block-icon { display: none; }
 .proj-block-label {
   font-family: var(--font-sans);
-  font-size: 26px;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.proj-block-label.cat-label {
+  font-size: 22px;
   font-weight: 800;
   letter-spacing: 0.06em;
 }
@@ -328,8 +333,10 @@ body {
 }
 .section-icon { font-size: 20px; line-height: 1; }
 .section-label {
-  font-size: 17px;
+  font-family: var(--font-sans);
+  font-size: 15px;
   font-weight: 600;
+  letter-spacing: 0.04em;
 }
 .section-count {
   font-size: 13px;
