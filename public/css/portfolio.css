@@ -70,22 +70,59 @@ body {
 .sidebar-nav { display: flex; flex-direction: column; gap: 2px; }
 
 /* 项目头 */
-.side-project { margin-bottom: 4px; }
+.side-project { margin-bottom: 2px; }
 .side-proj-header {
   display: flex; align-items: center; gap: 8px;
-  padding: 9px 8px;
-  border-radius: 8px;
-  color: var(--text);
-  font-size: 14px;
-  font-weight: 600;
+  padding: 8px 10px;
+  border-radius: 6px;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
 }
-.side-proj-header:hover { background: var(--bg-hover); }
-.proj-arrow { font-size: 10px; color: var(--text-muted); transition: transform 0.2s; width: 12px; text-align: center; }
-.proj-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; opacity: 0.9; }
-.proj-dot-echo { background: #e94560; }
+.side-proj-header:hover { color: var(--text); background: var(--bg-hover); }
+.proj-arrow {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: transform 0.25s ease;
+}
+.proj-arrow.collapsed { transform: rotate(-90deg); }
+.proj-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; opacity: 0.9; }
+.proj-dot-echo { background: var(--accent); }
 .proj-dot-shaonian { background: #4ecca3; }
+
+/* 分类头（买量广告/影视混剪） */
+.side-category {
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.side-cat-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 8px;
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.side-cat-header:hover { background: var(--bg-hover); }
+.cat-arrow {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: transform 0.25s ease;
+}
+.cat-arrow.collapsed { transform: rotate(-90deg); }
+.cat-dot {
+  width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0;
+  opacity: 0.9;
+}
+.cat-dot-buyAd { background: var(--accent); }
+.cat-dot-clip { background: var(--accent); }
+.cat-label { flex: 1; }
 
 /* 子项 */
 .side-sub-items { padding-left: 16px; display: flex; flex-direction: column; gap: 2px; }
