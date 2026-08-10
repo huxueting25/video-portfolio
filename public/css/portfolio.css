@@ -50,11 +50,11 @@ body {
   top: var(--topnav-h);
   left: 0;
   bottom: 0;
-  width: var(--sidebar-w);
+  width: 230px;
   background: rgba(14, 14, 28, 0.95);
   backdrop-filter: blur(8px);
   border-right: 1px solid var(--border);
-  padding: 28px 16px;
+  padding: 24px 12px;
   overflow-y: auto;
   z-index: 100;
 }
@@ -63,56 +63,65 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-muted);
-  margin-bottom: 20px;
-  padding-left: 12px;
+  margin-bottom: 16px;
+  padding-left: 8px;
 }
-.sidebar-nav {
-  display: flex; flex-direction: column; gap: 4px;
+.sidebar-nav { display: flex; flex-direction: column; gap: 2px; }
+
+/* 项目头 */
+.side-project { margin-bottom: 4px; }
+.side-proj-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 8px;
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
 }
+.side-proj-header:hover { background: var(--bg-hover); }
+.proj-arrow { font-size: 10px; color: var(--text-muted); transition: transform 0.2s; width: 12px; text-align: center; }
+.proj-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; opacity: 0.9; }
+.proj-dot-echo { background: #e94560; }
+.proj-dot-shaonian { background: #4ecca3; }
+
+/* 子项 */
+.side-sub-items { padding-left: 16px; display: flex; flex-direction: column; gap: 2px; }
+.side-sub-items.hidden { display: none; }
+
+/* 通用链接 */
 .side-link {
-  display: flex; align-items: center; gap: 10px;
-  padding: 11px 12px;
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px;
   border-radius: 8px;
   color: var(--text-muted);
   text-decoration: none;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
+  cursor: pointer;
   transition: all 0.2s;
-  position: relative;
 }
-.side-link:hover {
-  color: var(--text);
-  background: var(--bg-hover);
-}
-.side-link.active {
-  color: #fff;
-  background: rgba(233, 69, 96, 0.2);
-  border: 1px solid rgba(233, 69, 96, 0.3);
-}
-.side-dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  opacity: 0.8;
-}
-.side-dot-EN { background: #4ecca3; }
-.side-dot-JP { background: #ff9800; }
-.side-dot-CN { background: #e94560; }
-.side-dot-KR { background: #6495ed; }
+.side-link.sub { padding-left: 22px; font-size: 12px; }
+.side-link.proj { font-size: 14px; font-weight: 600; }
+.side-link:hover { color: var(--text); background: var(--bg-hover); }
+.side-link.active { color: #fff; background: rgba(233, 69, 96, 0.2); border: 1px solid rgba(233, 69, 96, 0.3); }
+
+.side-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; opacity: 0.8; }
+.side-dot-shaonian { background: #4ecca3; }
+.side-dot-zomline { background: #ff9800; }
+.side-dot-gr { background: #6495ed; }
+
 .side-count {
   margin-left: auto;
   font-size: 11px;
   background: rgba(255,255,255,0.08);
-  padding: 2px 8px;
+  padding: 2px 7px;
   border-radius: 10px;
-  min-width: 24px;
+  min-width: 22px;
   text-align: center;
-  color: var(--text-muted);
 }
-.side-link.active .side-count {
-  background: rgba(255,255,255,0.2);
-  color: #fff;
-}
+.side-link.active .side-count { background: rgba(255,255,255,0.2); color: #fff; }
 
 /* ========== 主内容区 ========== */
 .main-content {
@@ -134,6 +143,24 @@ body {
 .hero-sub {
   color: var(--text-muted);
   font-size: 15px;
+}
+
+/* ========== 项目块 ========== */
+.proj-block {
+  margin-bottom: 40px;
+}
+.proj-block-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--accent);
+}
+.proj-block-icon { font-size: 22px; }
+.proj-block-label { font-size: 20px; font-weight: 700; }
+.proj-block-count {
+  font-size: 13px; color: var(--text-muted);
+  background: rgba(255,255,255,0.05);
+  padding: 2px 10px; border-radius: 10px;
 }
 
 /* ========== 搜索框 ========== */
