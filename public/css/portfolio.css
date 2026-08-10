@@ -213,8 +213,13 @@ body {
   user-select: none;
 }
 .proj-block-header:hover { border-color: var(--accent); }
-.proj-block-icon { font-size: 20px; }
-.proj-block-label { font-size: 17px; font-weight: 700; }
+.proj-block-icon { display: none; }
+.proj-block-label {
+  font-family: var(--font-sans);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
 .proj-block-count {
   font-size: 12px; color: var(--text-muted);
   background: rgba(255,255,255,0.05);
