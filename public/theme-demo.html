@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>配色方案对比 Demo</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, 'PingFang SC', sans-serif; }
+:root { --radius: 14px; }
+
+body { padding: 24px; background: #1a1a1a; }
+.demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 1600px; margin: 0 auto; }
+.demo { padding: 60px 40px; min-height: 540px; border-radius: var(--radius); position: relative; overflow: hidden; }
+.demo-label { position: absolute; top: 12px; left: 16px; font-size: 11px; letter-spacing: 0.2em; padding: 4px 10px; border-radius: 4px; z-index: 99; font-weight: 600; }
+button { position: absolute; bottom: 16px; right: 16px; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; border: none; z-index: 99; }
+h1 { font-size: 14px; letter-spacing: 0.18em; margin-bottom: 16px; }
+h2 { font-size: 36px; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.06em; }
+h3 { font-size: 14px; font-weight: 500; margin-bottom: 16px; letter-spacing: 0.1em; }
+.bar { height: 1px; margin: 24px 0; }
+.btn { display: inline-block; padding: 10px 24px; border-radius: 50px; font-size: 13px; font-weight: 500; margin: 8px 8px 0 0; cursor: pointer; }
+.cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-top: 32px; }
+.card { padding: 18px 12px; border-radius: 8px; text-align: center; font-size: 12px; font-weight: 500; }
+
+/* ===== 方案 A：纯黑 + 纯红（套 PDF）===== */
+.demo-a { background: #ffffff; color: #000000; }
+.demo-a .demo-label { background: #E60012; color: #fff; }
+.demo-a h2 { color: #000; }
+.demo-a h2 span { color: #E60012; }
+.demo-a h3 { color: #666; }
+.demo-a .bar { background: #000; }
+.demo-a .btn { background: #fff; color: #000; border: 1.5px solid #000; }
+.demo-a .btn.primary { background: #E60012; color: #fff; border-color: #E60012; }
+.demo-a button { background: #000; color: #fff; }
+.demo-a .card { background: #f5f5f5; color: #000; border: 1px solid #ddd; }
+.demo-a .card.featured { background: #E60012; color: #fff; }
+.demo-a::before { content: 'HU XUETING PORTFOLIO'; position: absolute; top: 16px; right: 24px; font-size: 10px; letter-spacing: 0.2em; color: #000; font-weight: 600; }
+
+/* ===== 方案 B：深色 + 纯红 + 极粗字 ===== */
+.demo-b { background: #0d0d14; color: #f0f0f0; }
+.demo-b .demo-label { background: #E60012; color: #fff; }
+.demo-b h2 { color: #f0f0f0; font-size: 42px; font-weight: 900; letter-spacing: 0.1em; }
+.demo-b h2 span { color: #E60012; }
+.demo-b h3 { color: #999; }
+.demo-b .bar { background: #E60012; height: 2px; }
+.demo-b .btn { background: #1a1a26; color: #fff; border: 1px solid #333; }
+.demo-b .btn.primary { background: #E60012; color: #fff; border-color: #E60012; }
+.demo-b button { background: #E60012; color: #fff; }
+.demo-b .card { background: #1a1a26; color: #ddd; border: 1px solid #2a2a3a; }
+.demo-b .card.featured { background: #E60012; color: #fff; border-color: #E60012; }
+
+/* ===== 方案 C：纸感米色 + 砖红 ===== */
+.demo-c { background: #f5f0e8; color: #2a2620; }
+.demo-c .demo-label { background: #B5462A; color: #f5f0e8; }
+.demo-c h2 { color: #2a2620; font-family: 'Songti SC', 'Source Han Serif SC', serif; font-weight: 700; }
+.demo-c h2 span { color: #B5462A; }
+.demo-c h3 { color: #6a665e; font-family: 'Songti SC', serif; letter-spacing: 0.15em; }
+.demo-c .bar { background: #B5462A; }
+.demo-c .btn { background: #f5f0e8; color: #2a2620; border: 1px solid #2a2620; }
+.demo-c .btn.primary { background: #B5462A; color: #f5f0e8; border-color: #B5462A; }
+.demo-c button { background: #2a2620; color: #f5f0e8; }
+.demo-c .card { background: #ede5d2; color: #2a2620; border: 1px solid #c9bfa6; }
+.demo-c .card.featured { background: #B5462A; color: #f5f0e8; border-color: #B5462A; }
+
+/* ===== 方案 D：极简黑 + 电蓝 ===== */
+.demo-d { background: #ffffff; color: #0a0a0a; }
+.demo-d .demo-label { background: #2A4FFF; color: #fff; }
+.demo-d h2 { color: #0a0a0a; font-weight: 800; letter-spacing: -0.02em; }
+.demo-d h2 span { color: #2A4FFF; }
+.demo-d h3 { color: #888; letter-spacing: 0.04em; }
+.demo-d .bar { background: #2A4FFF; }
+.demo-d .btn { background: #fff; color: #000; border: 1px solid #ddd; }
+.demo-d .btn.primary { background: #2A4FFF; color: #fff; border-color: #2A4FFF; }
+.demo-d button { background: #2A4FFF; color: #fff; }
+.demo-d .card { background: #f7f7f7; color: #000; border: 1px solid #eee; }
+.demo-d .card.featured { background: #2A4FFF; color: #fff; border-color: #2A4FFF; }
+</style>
+</head>
+<body>
+<div class="demo-grid">
+
+  <div class="demo demo-a">
+    <span class="demo-label">A · 纯黑 + 纯红</span>
+    <h1>HU XUETING PORTFOLIO</h1>
+    <h2>POR<span>TFOLIO</span></h2>
+    <h3>胡雪婷 · 作品集</h3>
+    <div class="bar"></div>
+    <h3>南京师范大学(211) · 跨媒体与动画艺术 · 硕士</h3>
+    <div>
+      <button class="btn">买量广告</button>
+      <button class="btn primary">交互设计</button>
+      <button class="btn">3D建模</button>
+    </div>
+    <div class="cards">
+      <div class="card featured">绯色回响</div>
+      <div class="card">少年三国志</div>
+      <div class="card">Zomline</div>
+    </div>
+  </div>
+
+  <div class="demo demo-b">
+    <span class="demo-label">B · 深色 + 纯红</span>
+    <h1>HU XUETING PORTFOLIO</h1>
+    <h2>POR<span>TFOLIO</span></h2>
+    <h3>胡雪婷 · 作品集</h3>
+    <div class="bar"></div>
+    <h3>南京师范大学(211) · 跨媒体与动画艺术 · 硕士</h3>
+    <div>
+      <button class="btn">买量广告</button>
+      <button class="btn primary">交互设计</button>
+      <button class="btn">3D建模</button>
+    </div>
+    <div class="cards">
+      <div class="card featured">绯色回响</div>
+      <div class="card">少年三国志</div>
+      <div class="card">Zomline</div>
+    </div>
+  </div>
+
+  <div class="demo demo-c">
+    <span class="demo-label">C · 米色 + 砖红</span>
+    <h1>HU XUETING PORTFOLIO</h1>
+    <h2>胡雪<span>婷</span></h2>
+    <h3>胡雪婷 · 作品集</h3>
+    <div class="bar"></div>
+    <h3>南京师范大学(211) · 跨媒体与动画艺术 · 硕士</h3>
+    <div>
+      <button class="btn">买量广告</button>
+      <button class="btn primary">交互设计</button>
+      <button class="btn">3D建模</button>
+    </div>
+    <div class="cards">
+      <div class="card featured">绯色回响</div>
+      <div class="card">少年三国志</div>
+      <div class="card">Zomline</div>
+    </div>
+  </div>
+
+  <div class="demo demo-d">
+    <span class="demo-label">D · 极简黑 + 电蓝</span>
+    <h1>HU XUETING PORTFOLIO</h1>
+    <h2>POR<span>TFOLIO</span></h2>
+    <h3>胡雪婷 · 作品集</h3>
+    <div class="bar"></div>
+    <h3>南京师范大学(211) · 跨媒体与动画艺术 · 硕士</h3>
+    <div>
+      <button class="btn">买量广告</button>
+      <button class="btn primary">交互设计</button>
+      <button class="btn">3D建模</button>
+    </div>
+    <div class="cards">
+      <div class="card featured">绯色回响</div>
+      <div class="card">少年三国志</div>
+      <div class="card">Zomline</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
