@@ -136,11 +136,12 @@ body {
   padding: 32px 0;
 }
 .hero-name-en {
-  font-size: 42px;
+  font-size: 36px;
   font-weight: 700;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.08em;
   color: var(--text);
   margin-bottom: 16px;
+  display: inline-block;
 }
 .hero-text h1 {
   font-size: 28px;
