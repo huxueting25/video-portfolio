@@ -43,13 +43,25 @@
   </header>
 
   <div class="admin-layout">
-    <aside class="admin-sidebar" id="admin-sidebar">
+    <aside class="admin-sidebar">
       <div class="sidebar-title">买量广告</div>
       <nav class="sidebar-nav">
-        <a class="side-link active" href="#admin-section-EN" data-cat="EN" onclick="scrollToAdminCat('EN')"><span class="side-dot side-dot-EN"></span>欧美EN<span class="side-count" id="admin-side-count-EN">0</span></a>
-        <a class="side-link" href="#admin-section-JP" data-cat="JP" onclick="scrollToAdminCat('JP')"><span class="side-dot side-dot-JP"></span>日本JP<span class="side-count" id="admin-side-count-JP">0</span></a>
-        <a class="side-link" href="#admin-section-CN" data-cat="CN" onclick="scrollToAdminCat('CN')"><span class="side-dot side-dot-CN"></span>简中CN<span class="side-count" id="admin-side-count-CN">0</span></a>
-        <a class="side-link" href="#admin-section-KR" data-cat="KR" onclick="scrollToAdminCat('KR')"><span class="side-dot side-dot-KR"></span>韩国KR<span class="side-count" id="admin-side-count-KR">0</span></a>
+        <div class="side-project">
+          <div class="side-proj-header" onclick="toggleProj('echocalypse')">
+            <span class="proj-arrow" id="proj-arrow-echocalypse">▼</span>
+            <span class="proj-dot proj-dot-echo"></span>绯色回响
+            <span class="side-count" id="admin-proj-count-echocalypse">0</span>
+          </div>
+          <div class="side-sub-items" id="proj-sub-echocalypse">
+            <a class="side-link sub active" href="#admin-section-echocalypse-EN" data-proj="echocalypse" data-cat="EN" onclick="scrollToAdmin('echocalypse','EN')"> 欧美EN <span class="side-count" id="admin-count-echocalypse-EN">0</span></a>
+            <a class="side-link sub" href="#admin-section-echocalypse-JP" data-proj="echocalypse" data-cat="JP" onclick="scrollToAdmin('echocalypse','JP')"> 日本JP <span class="side-count" id="admin-count-echocalypse-JP">0</span></a>
+            <a class="side-link sub" href="#admin-section-echocalypse-CN" data-proj="echocalypse" data-cat="CN" onclick="scrollToAdmin('echocalypse','CN')"> 简中CN <span class="side-count" id="admin-count-echocalypse-CN">0</span></a>
+            <a class="side-link sub" href="#admin-section-echocalypse-KR" data-proj="echocalypse" data-cat="KR" onclick="scrollToAdmin('echocalypse','KR')"> 韩国KR <span class="side-count" id="admin-count-echocalypse-KR">0</span></a>
+          </div>
+        </div>
+        <a class="side-link proj" href="#admin-section-shaonian" data-proj="shaonian" onclick="scrollToAdmin('shaonian')"><span class="side-dot side-dot-shaonian"></span>少年三国志 <span class="side-count" id="admin-proj-count-shaonian">0</span></a>
+        <a class="side-link proj" href="#admin-section-zomline" data-proj="zomline" onclick="scrollToAdmin('zomline')"><span class="side-dot side-dot-zomline"></span>Zomline Survival <span class="side-count" id="admin-proj-count-zomline">0</span></a>
+        <a class="side-link proj" href="#admin-section-gr" data-proj="gr" onclick="scrollToAdmin('gr')"><span class="side-dot side-dot-gr"></span>代号GR <span class="side-count" id="admin-proj-count-gr">0</span></a>
       </nav>
     </aside>
 
@@ -90,6 +102,7 @@
       <div class="modal-body">
         <div class="form-group"><label>作品标题</label><input type="text" id="work-title" placeholder="例如：色轮转场动画" required></div>
         <div class="form-group"><label>作品描述</label><textarea id="work-description" rows="3" placeholder="简短描述作品内容、技术手段..."></textarea></div>
+        <div class="form-group"><label>所属项目</label><select id="work-project" style="width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;"><option value="echocalypse">🎮 绯色回响</option><option value="shaonian">🏯 少年三国志</option><option value="zomline">🧟 Zomline Survival</option><option value="gr">⚔️ 代号GR</option></select></div>
         <div class="form-group"><label>市场分类</label><select id="work-category" style="width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;"><option value="EN">🌍 欧美EN</option><option value="JP">🎌 日本JP</option><option value="CN">🇨🇳 简中CN</option><option value="KR">🇰🇷 韩国KR</option></select></div>
         <div class="form-group" id="upload-area"><label>视频文件</label>
           <div class="upload-drop" id="drop-zone">
@@ -155,8 +168,13 @@
 
 <script>
 let adminToken = '', currentWorks = [], uploadedFile = null, portfolioToken = '', adminSearchQuery = '';
-const adminCollapsed = { EN: false, JP: false, CN: true, KR: true };
+const projConfig = { echocalypse:{label:'绯色回响',icon:'🎮',subs:['EN','JP','CN','KR']}, shaonian:{label:'少年三国志',icon:'🏯',subs:null}, zomline:{label:'Zomline Survival',icon:'🧟',subs:null}, gr:{label:'代号GR',icon:'⚔️',subs:null} };
 const catConfig = { EN:{label:'欧美EN',icon:'🌍'}, JP:{label:'日本JP',icon:'🎌'}, CN:{label:'简中CN',icon:'🇨🇳'}, KR:{label:'韩国KR',icon:'🇰🇷'} };
+const adminCollapsed = {};
+Object.keys(projConfig).forEach(p => {
+  adminCollapsed[p] = projConfig[p].subs ? Object.fromEntries(projConfig[p].subs.map(c => [c, false])) : false;
+});
+let adminActiveProj = 'echocalypse', adminActiveCat = 'EN';
 
 // ===== 登录 =====
 document.getElementById('login-form').addEventListener('submit', async e => {
@@ -199,46 +217,61 @@ function catLabel(cat) { const m={EN:'欧美EN',JP:'日本JP',CN:'简中CN',KR:'
 function fmtDate(d) { if(!d) return ''; return new Date(d).toLocaleDateString('zh-CN',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); }
 function adminPoster(w) { if(w.coverUrl) return w.coverUrl; if(!w.videoUrl) return ''; return w.videoUrl.replace('/upload/','/upload/so_0,w_640/').replace('.mp4','.jpg'); }
 
+function renderWorkItem(w) {
+  const p = adminPoster(w);
+  return '<div class="work-item" data-id="'+w.id+'" draggable="true">'
+  +'<div class="drag-handle" title="拖拽排序"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="4" cy="3" r="1.5"/><circle cx="12" cy="3" r="1.5"/><circle cx="4" cy="8" r="1.5"/><circle cx="12" cy="8" r="1.5"/><circle cx="4" cy="13" r="1.5"/><circle cx="12" cy="13" r="1.5"/></svg></div>'
+  +'<div class="work-preview" onmouseenter="pvEnter(\''+w.id+'\',this)" onmouseleave="pvLeave(\''+w.id+'\',this)">'
+  +(w.coverUrl?'<img src="'+w.coverUrl+'" class="preview-cover" style="width:100%;height:100%;object-fit:contain;border-radius:8px;">':'')
+  +'<video src="'+ (w.videoUrl||'') +'" poster="'+ p +'" preload="metadata" muted playsinline onclick="this.paused?this.play():this.pause()" class="preview-video" style="width:100%;height:100%;object-fit:contain;border-radius:8px;cursor:pointer;'+(w.coverUrl?'display:none;':'')+'"></video>'
+  +'<div class="play-overlay" onclick="pvFull(\''+w.id+'\')">🔍</div></div>'
+  +'<div class="work-detail"><div class="work-title-row"><h4 class="work-title-text">'+w.title+'</h4><span class="cat-badge cat-badge-'+(w.category||'EN')+'">'+catLabel(w.category)+'</span></div>'
+  +'<p class="work-desc-text">'+(w.description||'暂无描述')+'</p><p class="work-date">'+fmtDate(w.createdAt)+'</p>'
+  +'<div class="work-btns"><button class="btn-primary btn-xs" onclick="editWork(\''+w.id+'\')">✏️ 编辑</button><button class="btn-secondary btn-xs" onclick="copyShareLink(\''+w.shareToken+'\')">📋 链接</button><button class="btn-danger btn-xs" onclick="deleteWork(\''+w.id+'\')">🗑 删除</button></div></div></div>';
+}
+
 function renderWorks() {
   const container = document.getElementById('category-sections');
-  const counts = { EN:0, JP:0, CN:0, KR:0 };
-  let totalV = 0;
-  currentWorks.forEach(w => {
-    const cat = w.category||'EN';
-    const match = !adminSearchQuery || w.title.toLowerCase().includes(adminSearchQuery);
-    if (match && counts[cat]!==undefined) counts[cat]++;
-    if (match) totalV++;
-  });
+  let totalV = currentWorks.filter(w => !adminSearchQuery || w.title.toLowerCase().includes(adminSearchQuery)).length;
   document.getElementById('work-count').textContent = adminSearchQuery ? totalV : currentWorks.length;
-  ['EN','JP','CN','KR'].forEach(c => document.getElementById('admin-side-count-'+c).textContent = counts[c]);
 
-  const order = ['EN','JP','CN','KR'];
-  let html = '';
-  order.forEach(cat => {
-    const cfg = catConfig[cat];
-    const items = currentWorks.filter(w=>(w.category||'EN')===cat).filter(w=>!adminSearchQuery||w.title.toLowerCase().includes(adminSearchQuery)).sort((a,b)=>a.order-b.order);
-    const isC = adminCollapsed[cat];
-    html += '<section class="cat-section" id="admin-section-'+cat+'" data-cat="'+cat+'">';
-    html += '<div class="section-header" onclick="toggleAdminCat(\''+cat+'\')"><div class="section-header-left"><span class="section-icon">'+cfg.icon+'</span><h2 class="section-label">'+cfg.label+'</h2><span class="section-count">'+items.length+' 个作品</span></div><div class="section-toggle'+(isC?' collapsed':'')+'" id="admin-toggle-'+cat+'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>';
-    html += '<div class="section-body'+(isC?' collapsed':'')+'" id="admin-body-'+cat+'">';
-    if (items.length===0) {
-      html += '<p class="section-empty">暂无作品</p>';
-    } else {
-      html += items.map(w => {
-        const p = adminPoster(w);
-        return '<div class="work-item" data-id="'+w.id+'" draggable="true">'
-        +'<div class="drag-handle" title="拖拽排序"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="4" cy="3" r="1.5"/><circle cx="12" cy="3" r="1.5"/><circle cx="4" cy="8" r="1.5"/><circle cx="12" cy="8" r="1.5"/><circle cx="4" cy="13" r="1.5"/><circle cx="12" cy="13" r="1.5"/></svg></div>'
-        +'<div class="work-preview" onmouseenter="pvEnter(\''+w.id+'\',this)" onmouseleave="pvLeave(\''+w.id+'\',this)">'
-        +(w.coverUrl?'<img src="'+w.coverUrl+'" class="preview-cover" style="width:100%;height:100%;object-fit:contain;border-radius:8px;">':'')
-        +'<video src="'+ (w.videoUrl||'') +'" poster="'+ p +'" preload="metadata" muted playsinline onclick="this.paused?this.play():this.pause()" class="preview-video" style="width:100%;height:100%;object-fit:contain;border-radius:8px;cursor:pointer;'+(w.coverUrl?'display:none;':'')+'"></video>'
-        +'<div class="play-overlay" onclick="pvFull(\''+w.id+'\')">🔍</div></div>'
-        +'<div class="work-detail"><div class="work-title-row"><h4 class="work-title-text">'+w.title+'</h4><span class="cat-badge cat-badge-'+(w.category||'EN')+'">'+catLabel(w.category)+'</span></div>'
-        +'<p class="work-desc-text">'+(w.description||'暂无描述')+'</p><p class="work-date">'+fmtDate(w.createdAt)+'</p>'
-        +'<div class="work-btns"><button class="btn-primary btn-xs" onclick="editWork(\''+w.id+'\')">✏️ 编辑</button><button class="btn-secondary btn-xs" onclick="copyShareLink(\''+w.shareToken+'\')">📋 链接</button><button class="btn-danger btn-xs" onclick="deleteWork(\''+w.id+'\')">🗑 删除</button></div></div></div>';
-      }).join('');
-    }
-    html += '</div></section>';
+  ['echocalypse','shaonian','zomline','gr'].forEach(p => {
+    const n = currentWorks.filter(w=>(w.project||'echocalypse')===p&&(!adminSearchQuery||w.title.toLowerCase().includes(adminSearchQuery))).length;
+    const el = document.getElementById('admin-proj-count-'+p); if (el) el.textContent = n;
+    const pcfg = projConfig[p];
+    if (pcfg.subs) { pcfg.subs.forEach(c => {
+      const cn = currentWorks.filter(w=>(w.project||'echocalypse')===p&&(w.category||'EN')===c&&(!adminSearchQuery||w.title.toLowerCase().includes(adminSearchQuery))).length;
+      const cel = document.getElementById('admin-count-'+p+'-'+c); if (cel) cel.textContent = cn;
+    });}
   });
+
+  let html = '';
+  ['echocalypse','shaonian','zomline','gr'].forEach(proj => {
+    const pcfg = projConfig[proj];
+    const projWorks = currentWorks.filter(w=>(w.project||'echocalypse')===proj&&(!adminSearchQuery||w.title.toLowerCase().includes(adminSearchQuery)));
+
+    html += '<div style="margin-bottom:32px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid var(--accent);"><span style="font-size:20px;">'+pcfg.icon+'</span><h2 style="font-size:18px;font-weight:700;">'+pcfg.label+'</h2><span style="font-size:12px;color:var(--text-muted);background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:10px;">'+projWorks.length+' 个</span></div>';
+
+    if (pcfg.subs) {
+      pcfg.subs.forEach(cat => {
+        const items = projWorks.filter(w=>(w.category||'EN')===cat).sort((a,b)=>a.order-b.order);
+        const isC = adminCollapsed[proj][cat];
+        const ccfg = catConfig[cat];
+        html += '<section class="cat-section" id="admin-section-'+proj+'-'+cat+'" data-proj="'+proj+'" data-cat="'+cat+'">';
+        html += '<div class="section-header" onclick="toggleAdminSub(\''+proj+'\',\''+cat+'\')"><div class="section-header-left"><span class="section-icon">'+ccfg.icon+'</span><h2 class="section-label">'+ccfg.label+'</h2><span class="section-count">'+items.length+' 个</span></div><div class="section-toggle'+(isC?' collapsed':'')+'" id="admin-toggle-'+proj+'-'+cat+'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>';
+        html += '<div class="section-body'+(isC?' collapsed':'')+'" id="admin-body-'+proj+'-'+cat+'">';
+        html += items.length===0 ? '<p class="section-empty">暂无作品</p>' : items.map(w => renderWorkItem(w)).join('');
+        html += '</div></section>';
+      });
+    } else {
+      const items = projWorks.sort((a,b)=>a.order-b.order);
+      html += '<section class="cat-section" id="admin-section-'+proj+'" data-proj="'+proj+'"><div class="section-body">';
+      html += items.length===0 ? '<p class="section-empty">暂无作品</p>' : items.map(w => renderWorkItem(w)).join('');
+      html += '</div></section>';
+    }
+    html += '</div>';
+  });
+
   container.innerHTML = html;
   initDrag();
 }
@@ -249,37 +282,75 @@ function pvFull(id) { const w=currentWorks.find(x=>x.id===id); if(w) window.open
 function copyShareLink(token) { const url=location.origin+'/share?s='+token; navigator.clipboard.writeText(url).then(()=>showToast('✅ 已复制')).catch(()=>prompt('手动复制:',url)); }
 
 // ===== 折叠 =====
-function toggleAdminCat(cat) {
-  if (!adminCollapsed[cat]) {
-    adminCollapsed[cat] = true;
-    document.getElementById('admin-body-'+cat).classList.add('collapsed');
-    document.getElementById('admin-toggle-'+cat).classList.add('collapsed');
-  } else {
-    ['EN','JP','CN','KR'].forEach(c => {
-      adminCollapsed[c] = (c !== cat);
-      const body = document.getElementById('admin-body-'+c);
-      const toggle = document.getElementById('admin-toggle-'+c);
-      if (body) body.classList.toggle('collapsed', c !== cat);
-      if (toggle) toggle.classList.toggle('collapsed', c !== cat);
-    });
+function toggleProj(proj) {
+  const sub = document.getElementById('proj-sub-'+proj);
+  const arrow = document.getElementById('proj-arrow-'+proj);
+  if (sub) {
+    sub.classList.toggle('hidden');
+    arrow.textContent = sub.classList.contains('hidden') ? '▶' : '▼';
   }
 }
-function scrollToAdminCat(cat) {
-  ['EN','JP','CN','KR'].forEach(c => {
-    adminCollapsed[c] = (c !== cat);
-    const body = document.getElementById('admin-body-'+c), toggle = document.getElementById('admin-toggle-'+c);
-    if (body) body.classList.toggle('collapsed', c !== cat);
-    if (toggle) toggle.classList.toggle('collapsed', c !== cat);
-  });
-  const sec = document.getElementById('admin-section-'+cat);
-  if (sec) { const h = document.querySelector('.admin-header').offsetHeight; window.scrollTo({top:sec.getBoundingClientRect().top+window.scrollY-h-12,behavior:'smooth'}); }
-  document.querySelectorAll('.admin-sidebar .side-link').forEach(l=>l.classList.toggle('active',l.dataset.cat===cat));
+
+function toggleAdminSub(proj, cat) {
+  const state = adminCollapsed[proj];
+  if (!state[cat]) {
+    Object.keys(state).forEach(c => {
+      state[c] = (c !== cat);
+      ['body-','toggle-'].forEach(p => {
+        const el = document.getElementById('admin-'+p+proj+'-'+c);
+        if (el) el.classList.toggle('collapsed', c !== cat);
+      });
+    });
+  } else {
+    state[cat] = false;
+    document.getElementById('admin-body-'+proj+'-'+cat).classList.remove('collapsed');
+    document.getElementById('admin-toggle-'+proj+'-'+cat).classList.remove('collapsed');
+  }
 }
+
+function scrollToAdmin(proj, cat) {
+  adminActiveProj = proj;
+  adminActiveCat = cat || null;
+
+  // 确保项目子导航展开
+  const sub = document.getElementById('proj-sub-'+proj);
+  if (sub && sub.classList.contains('hidden')) toggleProj(proj);
+
+  // 折叠/展开子类
+  const pcfg = projConfig[proj];
+  if (pcfg.subs && cat) {
+    const state = adminCollapsed[proj];
+    Object.keys(state).forEach(c => {
+      state[c] = (c !== cat);
+      ['body-','toggle-'].forEach(p => {
+        const el = document.getElementById('admin-'+p+proj+'-'+c);
+        if (el) el.classList.toggle('collapsed', c !== cat);
+      });
+    });
+  }
+
+  const secId = cat ? 'admin-section-'+proj+'-'+cat : 'admin-section-'+proj;
+  const sec = document.getElementById(secId);
+  if (sec) { const h = document.querySelector('.admin-header').offsetHeight; window.scrollTo({top:sec.getBoundingClientRect().top+window.scrollY-h-12,behavior:'smooth'}); }
+
+  document.querySelectorAll('.admin-sidebar .side-link').forEach(l => {
+    const match = cat ? (l.dataset.proj===proj && l.dataset.cat===cat) : (l.dataset.proj===proj && !l.dataset.cat);
+    l.classList.toggle('active', match);
+  });
+}
+
 let admSd;
 window.addEventListener('scroll',()=>{clearTimeout(admSd);admSd=setTimeout(()=>{
   const secs=document.querySelectorAll('#category-sections .cat-section'), hh=document.querySelector('.admin-header').offsetHeight;
-  let cur='EN'; secs.forEach(s=>{if(s.getBoundingClientRect().top<=hh+100)cur=s.dataset.cat;});
-  document.querySelectorAll('.admin-sidebar .side-link').forEach(l=>l.classList.toggle('active',l.dataset.cat===cur));
+  let curProj='echocalypse', curCat='EN';
+  secs.forEach(s=>{ if(s.getBoundingClientRect().top<=hh+200){ curProj=s.dataset.proj; if(s.dataset.cat)curCat=s.dataset.cat; } });
+  if (curProj!==adminActiveProj || curCat!==(adminActiveCat||'')) {
+    adminActiveProj=curProj; adminActiveCat=curCat;
+    document.querySelectorAll('.admin-sidebar .side-link').forEach(l => {
+      const match = l.dataset.cat ? (l.dataset.proj===curProj && l.dataset.cat===curCat) : (l.dataset.proj===curProj && !l.dataset.cat);
+      l.classList.toggle('active', match);
+    });
+  }
 },100);});
 
 // ===== 搜索 =====
@@ -289,7 +360,7 @@ function clearAdminSearch() { document.getElementById('admin-search-input').valu
 // ===== 上传弹窗 =====
 document.getElementById('btn-add').addEventListener('click',()=>{uploadedFile=null;resetForm();document.getElementById('modal-upload').style.display='flex';});
 function resetForm() {
-  document.getElementById('edit-id').value=''; document.getElementById('work-title').value=''; document.getElementById('work-description').value=''; document.getElementById('work-category').value='EN';
+  document.getElementById('edit-id').value=''; document.getElementById('work-title').value=''; document.getElementById('work-description').value=''; document.getElementById('work-category').value='EN'; document.getElementById('work-project').value='echocalypse';
   document.getElementById('work-cover').value=''; document.getElementById('work-cover-filename').value=''; document.getElementById('work-video-url').value='';
   document.getElementById('cover-preview-empty').style.display='block'; document.getElementById('cover-preview-img').style.display='none';
   document.getElementById('upload-area').style.display='block'; document.getElementById('replace-video-area').style.display='none';
@@ -319,7 +390,7 @@ function clearUpload() { uploadedFile=null; fileInput.value=''; document.getElem
 document.getElementById('upload-form').addEventListener('submit',async e=>{
   e.preventDefault();
   const editId=document.getElementById('edit-id').value;
-  const payload={title:document.getElementById('work-title').value,description:document.getElementById('work-description').value,category:document.getElementById('work-category').value,coverUrl:document.getElementById('work-cover').value,coverFilename:document.getElementById('work-cover-filename').value};
+  const payload={title:document.getElementById('work-title').value,description:document.getElementById('work-description').value,category:document.getElementById('work-category').value,project:document.getElementById('work-project').value,coverUrl:document.getElementById('work-cover').value,coverFilename:document.getElementById('work-cover-filename').value};
   if(!editId){if(!uploadedFile){showToast('⚠️ 请先上传视频文件');return;}payload.filename=uploadedFile.filename;payload.originalName=uploadedFile.originalName;payload.videoUrl=uploadedFile.videoUrl;}
   if(editId)payload.id=editId;
   const r=await fetch('/api/works',{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Token':adminToken},body:JSON.stringify(payload)});
@@ -329,7 +400,7 @@ document.getElementById('upload-form').addEventListener('submit',async e=>{
 
 function editWork(id) {
   const w=currentWorks.find(x=>x.id===id); if(!w)return;
-  document.getElementById('edit-id').value=w.id; document.getElementById('work-title').value=w.title; document.getElementById('work-description').value=w.description||''; document.getElementById('work-category').value=w.category||'EN'; document.getElementById('work-video-url').value=w.videoUrl||'';
+  document.getElementById('edit-id').value=w.id; document.getElementById('work-title').value=w.title; document.getElementById('work-description').value=w.description||''; document.getElementById('work-category').value=w.category||'EN'; document.getElementById('work-project').value=w.project||'echocalypse'; document.getElementById('work-video-url').value=w.videoUrl||'';
   document.getElementById('modal-title').textContent='编辑：'+w.title; document.getElementById('upload-area').style.display='none'; document.getElementById('replace-video-area').style.display='block';
   document.getElementById('current-video-name').textContent=w.originalName||w.filename; uploadedFile=null; restoreCover(w);
   document.getElementById('modal-upload').style.display='flex';
@@ -406,7 +477,7 @@ async function confirmFrame() {
   document.getElementById('cover-preview-empty').style.display='none';document.getElementById('cover-preview-img').style.display='block';document.getElementById('cover-img').src=d.coverUrl;
   closeFramePicker();
   const eid=document.getElementById('edit-id').value;
-  if(eid){const w=currentWorks.find(x=>x.id===eid);await fetch('/api/works',{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Token':adminToken},body:JSON.stringify({id:eid,title:w.title,description:w.description||'',category:w.category||'EN',coverUrl:d.coverUrl,coverFilename:d.coverFilename})});closeUploadModal();loadWorks();showToast('✅ 封面已保存');}
+  if(eid){const w=currentWorks.find(x=>x.id===eid);await fetch('/api/works',{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Token':adminToken},body:JSON.stringify({id:eid,title:w.title,description:w.description||'',category:w.category||'EN',project:w.project||'echocalypse',coverUrl:d.coverUrl,coverFilename:d.coverFilename})});closeUploadModal();loadWorks();showToast('✅ 封面已保存');}
   else{showToast('✅ 封面已截取，请点保存');}
 }
 function clearCover(){document.getElementById('work-cover').value='';document.getElementById('work-cover-filename').value='';document.getElementById('cover-preview-empty').style.display='block';document.getElementById('cover-preview-img').style.display='none';}
