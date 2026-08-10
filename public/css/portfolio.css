@@ -1,15 +1,16 @@
-/* ========== 作品集展示页面 — 侧边栏布局 ========== */
+/* ========== 胡雪婷 · HUXUETING PORTFOLIO ========== */
 :root {
-  --bg: #0a0a14;
-  --bg-card: #141428;
-  --bg-hover: #222240;
-  --border: #2a2a44;
-  --text: #e8e8e8;
-  --text-muted: #777;
-  --accent: #e94560;
-  --accent-soft: rgba(233, 69, 96, 0.15);
-  --radius: 16px;
-  --shadow: 0 8px 32px rgba(0,0,0,0.4);
+  --bg: #0d0d14;
+  --bg-card: #14141e;
+  --bg-hover: #1e1e2e;
+  --border: #222232;
+  --text: #f0f0f0;
+  --text-2: #aaa;
+  --text-muted: #666;
+  --accent: #E60012;
+  --accent-soft: rgba(230, 0, 18, 0.18);
+  --radius: 14px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.5);
   --sidebar-w: 220px;
   --topnav-h: 56px;
 }
@@ -40,8 +41,8 @@ body {
 .badge-private {
   background: var(--accent-soft); color: var(--accent);
   padding: 5px 12px; border-radius: 20px;
-  font-size: 12px; font-weight: 500;
-  border: 1px solid rgba(233, 69, 96, 0.3);
+  font-size: 12px; font-weight: 600;
+  border: 1px solid rgba(230, 0, 18, 0.35);
 }
 
 /* ========== 侧边栏 ========== */
@@ -136,24 +137,24 @@ body {
   padding: 32px 0;
 }
 .hero-name-en {
-  font-size: 36px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-size: 48px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   color: var(--text);
   margin-bottom: 16px;
   display: inline-block;
 }
 .hero-text h1 {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 500;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.16em;
   color: var(--text-2);
   margin-bottom: 18px;
 }
 .hero-sub {
   color: var(--text-muted);
-  font-size: 14px;
-  letter-spacing: 0.05em;
+  font-size: 13px;
+  letter-spacing: 0.06em;
 }
 
 /* ========== 项目块 ========== */
