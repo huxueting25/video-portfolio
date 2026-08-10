@@ -216,14 +216,14 @@ body {
 .proj-block-icon { display: none; }
 .proj-block-label {
   font-family: var(--font-sans);
-  font-size: 19px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
 }
 .proj-block-label.cat-label {
   font-size: 22px;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
 }
 .proj-block-count {
   font-size: 12px; color: var(--text-muted);
