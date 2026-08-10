@@ -62,6 +62,7 @@
         <a class="side-link proj" href="#admin-section-shaonian" data-proj="shaonian" onclick="scrollToAdmin('shaonian')"><span class="side-dot side-dot-shaonian"></span>少年三国志 <span class="side-count" id="admin-proj-count-shaonian">0</span></a>
         <a class="side-link proj" href="#admin-section-zomline" data-proj="zomline" onclick="scrollToAdmin('zomline')"><span class="side-dot side-dot-zomline"></span>Zomline Survival <span class="side-count" id="admin-proj-count-zomline">0</span></a>
         <a class="side-link proj" href="#admin-section-gr" data-proj="gr" onclick="scrollToAdmin('gr')"><span class="side-dot side-dot-gr"></span>代号GR <span class="side-count" id="admin-proj-count-gr">0</span></a>
+        <a class="side-link proj" href="#admin-section-clip" data-proj="clip" onclick="scrollToAdmin('clip')"><span class="side-dot side-dot-clip"></span>影视混剪 <span class="side-count" id="admin-proj-count-clip">0</span></a>
       </nav>
     </aside>
 
@@ -102,7 +103,7 @@
       <div class="modal-body">
         <div class="form-group"><label>作品标题</label><input type="text" id="work-title" placeholder="例如：色轮转场动画" required></div>
         <div class="form-group"><label>作品描述</label><textarea id="work-description" rows="3" placeholder="简短描述作品内容、技术手段..."></textarea></div>
-        <div class="form-group"><label>所属项目</label><select id="work-project" style="width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;"><option value="echocalypse">🎮 绯色回响</option><option value="shaonian">🏯 少年三国志</option><option value="zomline">🧟 Zomline Survival</option><option value="gr">⚔️ 代号GR</option></select></div>
+        <div class="form-group"><label>所属项目</label><select id="work-project" style="width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;"><option value="echocalypse">🎮 绯色回响</option><option value="shaonian">🏯 少年三国志</option><option value="zomline">🧟 Zomline Survival</option><option value="gr">⚔️ 代号GR</option><option value="clip">🎬 影视混剪</option></select></div>
         <div class="form-group"><label>市场分类</label><select id="work-category" style="width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;"><option value="EN">🌍 欧美EN</option><option value="JP">🎌 日本JP</option><option value="CN">🇨🇳 简中CN</option><option value="KR">🇰🇷 韩国KR</option></select></div>
         <div class="form-group" id="upload-area"><label>视频文件</label>
           <div class="upload-drop" id="drop-zone">
@@ -168,7 +169,7 @@
 
 <script>
 let adminToken = '', currentWorks = [], uploadedFile = null, portfolioToken = '', adminSearchQuery = '';
-const projConfig = { echocalypse:{label:'绯色回响',icon:'🎮',subs:['EN','JP','CN','KR']}, shaonian:{label:'少年三国志',icon:'🏯',subs:null}, zomline:{label:'Zomline Survival',icon:'🧟',subs:null}, gr:{label:'代号GR',icon:'⚔️',subs:null} };
+const projConfig = { echocalypse:{label:'绯色回响',icon:'🎮',subs:['EN','JP','CN','KR']}, shaonian:{label:'少年三国志',icon:'🏯',subs:null}, zomline:{label:'Zomline Survival',icon:'🧟',subs:null}, gr:{label:'代号GR',icon:'⚔️',subs:null}, clip:{label:'影视混剪',icon:'🎬',subs:null} };
 const catConfig = { EN:{label:'欧美EN',icon:'🌍'}, JP:{label:'日本JP',icon:'🎌'}, CN:{label:'简中CN',icon:'🇨🇳'}, KR:{label:'韩国KR',icon:'🇰🇷'} };
 const adminCollapsed = {};
 Object.keys(projConfig).forEach(p => {
@@ -235,7 +236,7 @@ function renderWorks() {
   let totalV = currentWorks.filter(w => !adminSearchQuery || w.title.toLowerCase().includes(adminSearchQuery)).length;
   document.getElementById('work-count').textContent = adminSearchQuery ? totalV : currentWorks.length;
 
-  ['echocalypse','shaonian','zomline','gr'].forEach(p => {
+  ['echocalypse','shaonian','zomline','gr','clip'].forEach(p => {
     const n = currentWorks.filter(w=>(w.project||'echocalypse')===p&&(!adminSearchQuery||w.title.toLowerCase().includes(adminSearchQuery))).length;
     const el = document.getElementById('admin-proj-count-'+p); if (el) el.textContent = n;
     const pcfg = projConfig[p];
