@@ -4,7 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow, noarchive">
-  <title>作品集</title>
+  <title>胡雪婷 · HUXUETING PORTFOLIO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/portfolio.css">
 </head>
 <body>
@@ -14,7 +17,7 @@
 </button>
 
 <nav class="top-nav">
-  <div class="nav-brand">胡雪婷 · 作品集</div>
+  <div class="nav-brand">HUXUETING PORTFOLIO</div>
   <div class="badge-private">🔒 私密分享</div>
 </nav>
 
@@ -44,10 +47,48 @@
 </aside>
 
 <main class="main-content">
-  <div class="hero-text">
-    <h1>买量广告作品集</h1>
-    <p class="hero-sub">跨媒体与动画艺术 · 数字化交互表达</p>
-  </div>
+  <!-- 顶部分类标签 -->
+  <nav class="top-cats">
+    <a class="top-cat active" href="#" onclick="filterTopCat('all')">全部作品</a>
+    <a class="top-cat" href="#" onclick="filterTopCat('buyAd')">买量广告</a>
+    <a class="top-cat" href="#" onclick="filterTopCat('interactive')">交互设计</a>
+    <a class="top-cat" href="#" onclick="filterTopCat('3d')">3D建模</a>
+    <a class="top-cat" href="#" onclick="filterTopCat('animation')">动画</a>
+    <a class="top-cat" href="#" onclick="filterTopCat('other')">其他</a>
+  </nav>
+
+  <!-- Hero 大幅简介 -->
+  <section class="hero">
+    <div class="hero-ornament">東 · 南 · 西 · 北</div>
+    <h1 class="hero-name">胡雪婷</h1>
+    <p class="hero-name-en">HUXUETING&nbsp;·&nbsp;PORTFOLIO</p>
+    <div class="hero-divider"></div>
+    <p class="hero-school">南京师范大学 · 跨媒体与动画艺术 · 硕士在读</p>
+    <p class="hero-tagline">3D建模 · 数字交互 · 买量广告 · 动画</p>
+  </section>
+
+  <!-- 关于我 -->
+  <section class="about-block">
+    <div class="about-title">
+      <span class="about-no">01</span>
+      <span>关于我 · ABOUT</span>
+    </div>
+    <div class="about-grid">
+      <div class="about-item">
+        <h3>教育背景</h3>
+        <p>南京师范大学 · 跨媒体与动画艺术 · 硕士在读<br>导师：曹洋</p>
+      </div>
+      <div class="about-item">
+        <h3>专业技能</h3>
+        <p>Maya · ZBrush · Substance Painter · C4D<br>Unity · 数字交互设计</p>
+      </div>
+      <div class="about-item">
+        <h3>实习经历</h3>
+        <p>游族网络 · 买量广告视频创作<br>负责角色展示 / 角色解说 / 卡点混剪</p>
+      </div>
+    </div>
+  </section>
+
   <div class="search-bar" id="search-bar" style="display:none">
     <div class="search-input-wrap">
       <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -312,6 +353,12 @@ window.addEventListener('scroll', () => {
     }
   }, 100);
 });
+
+function filterTopCat(cat) {
+  document.querySelectorAll('.top-cat').forEach(el => {
+    el.classList.toggle('active', el.textContent.trim() === (cat === 'all' ? '全部作品' : ({buyAd:'买量广告',interactive:'交互设计','3d':'3D建模',animation:'动画',other:'其他'})[cat] || el.textContent.trim()));
+  });
+}
 
 function onSearch(q) {
   document.getElementById('search-clear').style.display = q ? 'flex' : 'none';
