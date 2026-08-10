@@ -103,8 +103,8 @@
       <div class="modal-body">
         <div class="form-group"><label>作品标题</label><input type="text" id="work-title" placeholder="例如：色轮转场动画" required></div>
         <div class="form-group"><label>作品描述</label><textarea id="work-description" rows="3" placeholder="简短描述作品内容、技术手段..."></textarea></div>
-        <div class="form-group"><label>所属项目</label><select id="work-project" style="width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;"><option value="echocalypse">🎮 绯色回响</option><option value="shaonian">🏯 少年三国志</option><option value="zomline">🧟 Zomline Survival</option><option value="gr">⚔️ 代号GR</option><option value="clip">🎬 影视混剪</option></select></div>
-        <div class="form-group"><label>市场分类</label><select id="work-category" style="width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;"><option value="EN">🌍 欧美EN</option><option value="JP">🎌 日本JP</option><option value="CN">🇨🇳 简中CN</option><option value="KR">🇰🇷 韩国KR</option></select></div>
+        <div class="form-group"><label>所属项目</label><select id="work-project" onchange="onProjectChange()" style="width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;"><option value="echocalypse">🎮 绯色回响</option><option value="shaonian">🏯 少年三国志</option><option value="zomline">🧟 Zomline Survival</option><option value="gr">⚔️ 代号GR</option><option value="clip">🎬 影视混剪（无市场分类）</option></select></div>
+        <div class="form-group" id="work-category-group"><label>市场分类</label><select id="work-category" style="width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;"><option value="EN">🌍 欧美EN</option><option value="JP">🎌 日本JP</option><option value="CN">🇨🇳 简中CN</option><option value="KR">🇰🇷 韩国KR</option></select></div>
         <div class="form-group" id="upload-area"><label>视频文件</label>
           <div class="upload-drop" id="drop-zone">
             <input type="file" id="video-file" accept=".mp4,.webm,.mov,.avi,.mkv" style="display:none">
@@ -273,8 +273,30 @@ function renderWorks() {
     html += '</div>';
   });
 
+  // 影视混剪 独立模块
+  const clipWorks = currentWorks.filter(w=>(w.project||'echocalypse')==='clip' && (!adminSearchQuery||w.title.toLowerCase().includes(adminSearchQuery))).sort((a,b)=>a.order-b.order);
+  html += '<div style="margin-bottom:32px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid var(--accent);"><span style="font-size:20px;">🎬</span><h2 style="font-size:18px;font-weight:700;">影视混剪</h2><span style="font-size:12px;color:var(--text-muted);background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:10px;">'+clipWorks.length+' 个</span>';
+  html += '<button class="btn-primary btn-sm" style="margin-left:auto;" onclick="quickUploadClip()">+ 上传影视混剪</button>';
+  html += '</div>';
+  if (clipWorks.length===0) {
+    html += '<div style="text-align:center;padding:40px;border:2px dashed var(--border);border-radius:14px;color:var(--text-muted);"><p style="margin-bottom:16px;">还没有影视混剪作品</p><button class="btn-primary" onclick="quickUploadClip()">+ 上传第一个作品</button></div>';
+  } else {
+    html += '<div class="cat-section" id="admin-section-clip" data-proj="clip"><div class="section-body">';
+    html += clipWorks.map(w => renderWorkItem(w)).join('');
+    html += '</div></div>';
+  }
+  html += '</div>';
+
   container.innerHTML = html;
   initDrag();
+}
+
+function quickUploadClip() {
+  uploadedFile=null;
+  resetForm();
+  document.getElementById('work-project').value = 'clip';
+  onProjectChange();
+  document.getElementById('modal-upload').style.display='flex';
 }
 
 function pvEnter(id,el) { const w=currentWorks.find(x=>x.id===id); if(!w||!w.coverUrl)return; const cv=el.querySelector('.preview-cover'), vid=el.querySelector('.preview-video'); if(cv)cv.style.display='none'; if(vid){vid.style.display='block';vid.play();} }
@@ -360,6 +382,16 @@ function clearAdminSearch() { document.getElementById('admin-search-input').valu
 
 // ===== 上传弹窗 =====
 document.getElementById('btn-add').addEventListener('click',()=>{uploadedFile=null;resetForm();document.getElementById('modal-upload').style.display='flex';});
+function onProjectChange() {
+  const p = document.getElementById('work-project').value;
+  const grp = document.getElementById('work-category-group');
+  // 影视混剪无子类，自动隐藏市场分类
+  if (p === 'clip') {
+    grp.style.display = 'none';
+  } else {
+    grp.style.display = '';
+  }
+}
 function resetForm() {
   document.getElementById('edit-id').value=''; document.getElementById('work-title').value=''; document.getElementById('work-description').value=''; document.getElementById('work-category').value='EN'; document.getElementById('work-project').value='echocalypse';
   document.getElementById('work-cover').value=''; document.getElementById('work-cover-filename').value=''; document.getElementById('work-video-url').value='';
@@ -367,6 +399,7 @@ function resetForm() {
   document.getElementById('upload-area').style.display='block'; document.getElementById('replace-video-area').style.display='none';
   document.getElementById('upload-hint').style.display='flex'; document.getElementById('upload-progress').style.display='none'; document.getElementById('upload-done').style.display='none';
   document.getElementById('modal-title').textContent='上传新作品';
+  onProjectChange();
 }
 function closeUploadModal() { document.getElementById('modal-upload').style.display='none'; }
 
