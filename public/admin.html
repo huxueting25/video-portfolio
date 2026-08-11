@@ -535,25 +535,24 @@ function uploadVideoChunked(file, eid, onProgress) {
 
 async function uploadVideo(file) {
   document.getElementById('upload-hint').style.display='none'; document.getElementById('upload-progress').style.display='block';
+  document.getElementById('upload-status').textContent='正在准备...';
   try {
-    let d;
-    if (file.size > CHUNK_THRESHOLD) {
-      d = await uploadVideoChunked(file, null, (pct, seq, totalChunks) => {
-        document.getElementById('progress-fill').style.width = pct + '%';
-        document.getElementById('upload-status').textContent = '上传中... ' + pct + '%（第 ' + (seq + 1) + '/' + totalChunks + ' 片）';
-      });
-    } else {
-      d = await uploadViaApi(file, '/api/upload', pct => {
-        document.getElementById('progress-fill').style.width = pct + '%';
-        document.getElementById('upload-status').textContent = '上传中... ' + pct + '%';
-      });
-    }
-    uploadedFile={filename:d.filename,originalName:d.originalName||file.name,videoUrl:d.videoUrl,size:file.size};
+    const signR = await fetch('/api/r2-sign-upload', { method:'POST', headers:{'Content-Type':'application/json','X-Admin-Token':adminToken}, body:JSON.stringify({filename:file.name,contentType:file.type||'video/mp4'}) });
+    const sign = await signR.json();
+    if (!sign.success) throw new Error(sign.error || '获取签名失败');
+    await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest(); xhr.open('PUT', sign.url); xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+      xhr.upload.onprogress = e => { if(e.lengthComputable){ const pct = Math.round(e.loaded/e.total*100); document.getElementById('progress-fill').style.width = pct+'%'; document.getElementById('upload-status').textContent = '上传中... '+pct+'%'; } };
+      xhr.onload = () => { if (xhr.status === 200 || xhr.status === 201) resolve(); else reject(new Error('HTTP ' + xhr.status)); };
+      xhr.onerror = () => reject(new Error('网络错误'));
+      xhr.send(file);
+    });
+    uploadedFile = { filename: sign.key, originalName: file.name, videoUrl: '/v/' + sign.key, size: file.size };
     document.getElementById('upload-progress').style.display='none'; document.getElementById('upload-done').style.display='block';
-    document.getElementById('uploaded-name').textContent=file.name;
+    document.getElementById('uploaded-name').textContent = file.name;
     if(!document.getElementById('work-title').value)document.getElementById('work-title').value=file.name.replace(/\.\w+$/,'');
   } catch (err) {
-    document.getElementById('upload-status').textContent='上传失败: '+err.message;
+    document.getElementById('upload-status').textContent = '上传失败: ' + err.message;
   }
 }
 function clearUpload() { uploadedFile=null; fileInput.value=''; document.getElementById('upload-hint').style.display='flex'; document.getElementById('upload-progress').style.display='none'; document.getElementById('upload-done').style.display='none'; }
@@ -668,19 +667,23 @@ rfi.addEventListener('change',()=>{if(rfi.files.length)replaceVideo(rfi.files[0]
 async function replaceVideo(file) {
   const eid=document.getElementById('edit-id').value;if(!eid)return;
   document.getElementById('replace-upload-hint').style.display='none';document.getElementById('replace-upload-progress').style.display='block';
+  document.getElementById('replace-upload-status').textContent='正在准备...';
   try {
-    let d;
-    if (file.size > CHUNK_THRESHOLD) {
-      d = await uploadVideoChunked(file, eid, (pct, seq, totalChunks) => {
-        document.getElementById('replace-progress-fill').style.width=pct+'%';
-        document.getElementById('replace-upload-status').textContent='替换中... '+pct+'%（第 '+(seq+1)+'/'+totalChunks+' 片）';
-      });
-    } else {
-      d = await uploadViaApi(file, '/api/replace-video/'+eid, pct => {
-        document.getElementById('replace-progress-fill').style.width=pct+'%';
-        document.getElementById('replace-upload-status').textContent='替换中... '+pct+'%';
-      });
-    }
+    const signR = await fetch('/api/r2-sign-upload', { method:'POST', headers:{'Content-Type':'application/json','X-Admin-Token':adminToken}, body:JSON.stringify({filename:file.name,contentType:file.type||'video/mp4'}) });
+    const sign = await signR.json();
+    if (!sign.success) throw new Error(sign.error || '获取签名失败');
+    await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest(); xhr.open('PUT', sign.url); xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+      xhr.upload.onprogress = e => { if(e.lengthComputable){ const pct = Math.round(e.loaded/e.total*100); document.getElementById('replace-progress-fill').style.width=pct+'%'; document.getElementById('replace-upload-status').textContent='替换中... '+pct+'%'; } };
+      xhr.onload = () => { if (xhr.status === 200 || xhr.status === 201) resolve(); else reject(new Error('HTTP ' + xhr.status)); };
+      xhr.onerror = () => reject(new Error('网络错误'));
+      xhr.send(file);
+    });
+    // 更新作品记录（后端异步清理旧 R2 文件）
+    const w = currentWorks.find(x => x.id === eid) || {};
+    const r = await fetch('/api/works', { method:'POST', headers:{'Content-Type':'application/json','X-Admin-Token':adminToken}, body:JSON.stringify({id:eid,title:w.title,description:w.description||'',category:w.category||'EN',project:w.project||'echocalypse',filename:sign.key,originalName:file.name,videoUrl:'/v/'+sign.key}) });
+    const rd = await r.json();
+    if (!rd.success) throw new Error(rd.error || '保存失败');
     document.getElementById('replace-upload-progress').style.display='none';document.getElementById('replace-upload-done').style.display='block';
     document.getElementById('replace-uploaded-name').textContent=file.name;
     document.getElementById('current-video-name').textContent=file.name;
