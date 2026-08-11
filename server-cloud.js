@@ -1,11 +1,13 @@
 const express = require('express');
 const multer = require('multer');
-const Busboy = require('busboy'); // 流式解析 multipart，视频不占内存
+const Busboy = require('busboy');
 const crypto = require('crypto');
-const compression = require('compression'); // gzip 压缩中间件
+const compression = require('compression');
 const { Readable } = require('stream');
 const path = require('path');
-
+const fs = require('fs');
+const os = require('os');
+const https = require('https');
 // ========== Cloudinary 配置（保留，用于旧数据兼容） ==========
 const cloudinary = require('cloudinary').v2;
 cloudinary.config({
@@ -165,11 +167,6 @@ function uploadToCloudinary(buffer, options) {
   });
 }
 
-// ========== 视频流式直传 Cloudinary（自写 multipart，绕开 SDK 内存缓冲） ==========
-// 之前用 cloudinary.uploader.upload_stream 时，SDK 会把整个视频 buffer 在内存里（170MB 视频在 512MB 免费实例上 OOM）。
-// 这里改为：busboy 流式接收 → 手动拼 multipart/form-data → 直接 pipe 到 Cloudinary HTTPS 上传接口。
-// 全程内存占用恒定（几 MB），512MB 免费实例也能传 500MB+ 大视频。
-const https = require('https');
 const VIDEO_MAX_SIZE = 500 * 1024 * 1024; // 500MB
 const VIDEO_EXT = ['.mp4', '.webm', '.mov', '.avi', '.mkv'];
 
@@ -416,32 +413,48 @@ app.post('/api/upload-chunk', authAdmin, async (req, res) => {
 });
 
 // 上传视频到 Cloudinary（用 SDK upload_chunked_stream 真正流式分片，绕开 100MB 免费限制）
+// ========== R2 中转上传（浏览器→Render 磁盘→ R2 PUT，绕过国内网络限制） ==========
 app.post('/api/upload', authAdmin, async (req, res) => {
+  if (!R2_ENABLED) return res.json({ success: false, error: 'R2 未配置' });
+  const tmpPath = path.join(os.tmpdir(), 'r2up_' + crypto.randomBytes(8).toString('hex'));
   try {
     const result = await new Promise((resolve, reject) => {
-      const bb = Busboy({ headers: req.headers, limits: { fileSize: 500 * 1024 * 1024, files: 1 } });
+      const bb = Busboy({ headers: req.headers, limits: { fileSize: 2 * 1024 * 1024 * 1024, files: 1 } });
       bb.on('file', (fieldname, file, info) => {
         if (fieldname !== 'video') { file.resume(); return; }
         const ext = '.' + (info.filename || '').split('.').pop().toLowerCase();
         if (!VIDEO_EXT.includes(ext)) { file.resume(); reject(new Error('仅支持视频文件格式')); return; }
-        try {
-          const chunker = cloudinary.uploader.upload_chunked_stream((cloudRes) => {
-            if (cloudRes.error) { reject(new Error(cloudRes.error.message || 'Cloudinary 上传失败')); return; }
-            resolve({ result: cloudRes, originalname: info.filename, size: file.bytesRead || 0 });
-          }, { resource_type: 'video', folder: 'portfolio/videos', chunk_size: 6000000, filename: info.filename });
-          file.on('limit', () => { chunker.destroy(); reject(new Error('文件超过 500MB 限制')); });
-          file.on('error', () => { chunker.destroy(); reject(new Error('读取上传文件失败')); });
-          file.pipe(chunker); // busboy file 流 → Chunkable → 自动按 6MB 切片 → Cloudinary
-        } catch (e) { file.resume(); reject(e); }
+        const ws = fs.createWriteStream(tmpPath);
+        file.pipe(ws);
+        file.on('limit', () => { ws.destroy(); reject(new Error('文件超过 2GB 限制')); });
+        ws.on('error', reject);
+        ws.on('finish', async () => {
+          try {
+            const r2Key = `videos/${crypto.randomBytes(12).toString('hex')}/${info.filename}`;
+            const fileSize = fs.statSync(tmpPath).size;
+            const putUrl = r2PresignedUrl('PUT', r2Key, 'video/mp4', 600);
+            await new Promise((r, rj) => {
+              const upReq = https.request(putUrl, { method: 'PUT', headers: { 'Content-Type': 'video/mp4', 'Content-Length': fileSize } }, (upRes) => {
+                if (upRes.statusCode >= 200 && upRes.statusCode < 300) r();
+                else { let b = ''; upRes.on('data', c => b += c); upRes.on('end', () => rj(new Error(`R2 ${upRes.statusCode}: ${b}`))); }
+              });
+              upReq.on('error', rj);
+              fs.createReadStream(tmpPath).pipe(upReq);
+            });
+            resolve({ key: r2Key, filename: info.filename, size: fileSize });
+          } catch (e) { reject(e); }
+        });
       });
       bb.on('error', reject);
       bb.on('filesLimit', () => reject(new Error('一次只能上传一个文件')));
       req.pipe(bb);
     });
-    res.json({ success: true, filename: result.result.public_id, originalName: result.originalname, videoUrl: result.result.secure_url, size: result.size });
+    res.json({ success: true, filename: result.key, originalName: result.filename, videoUrl: '/v/' + result.key, size: result.size });
   } catch (err) {
-    console.error('Cloudinary upload error:', err);
+    console.error('R2 upload error:', err);
     res.json({ success: false, error: '上传失败: ' + err.message });
+  } finally {
+    try { fs.unlinkSync(tmpPath); } catch (e) {}
   }
 });
 
@@ -598,46 +611,61 @@ app.delete('/api/works/:id', authAdmin, async (req, res) => {
   res.json({ success: true });
 });
 
-// 替换视频（SDK upload_chunked_stream 真正流式分片）
+// 替换视频（R2 中转：磁盘临时文件→ R2 PUT）
 app.post('/api/replace-video/:id', authAdmin, async (req, res) => {
+  if (!R2_ENABLED) return res.json({ success: false, error: 'R2 未配置' });
   const idx = works.findIndex(w => w.id === req.params.id);
   if (idx === -1) return res.json({ success: false, error: '作品不存在' });
 
   const work = works[idx];
-  if (work.filename) {
-    try { await cloudinary.uploader.destroy(work.filename, { resource_type: 'video' }); }
-    catch (e) { console.error('删除旧视频失败:', e); }
+  // 删除旧 R2 文件（如存的是 R2 key）
+  if (work.filename && work.filename.startsWith('videos/')) {
+    try { await new Promise(r => { const req = https.request(`https://${R2_HOST}/${R2_BUCKET}/${work.filename}`, { method: 'DELETE' }, res => r()); req.on('error', () => r()); req.end(); }); } catch(e){}
   }
 
+  const tmpPath = path.join(os.tmpdir(), 'r2rp_' + crypto.randomBytes(8).toString('hex'));
   try {
     const result = await new Promise((resolve, reject) => {
-      const bb = Busboy({ headers: req.headers, limits: { fileSize: 500 * 1024 * 1024, files: 1 } });
+      const bb = Busboy({ headers: req.headers, limits: { fileSize: 2 * 1024 * 1024 * 1024, files: 1 } });
       bb.on('file', (fieldname, file, info) => {
         if (fieldname !== 'video') { file.resume(); return; }
         const ext = '.' + (info.filename || '').split('.').pop().toLowerCase();
         if (!VIDEO_EXT.includes(ext)) { file.resume(); reject(new Error('仅支持视频文件格式')); return; }
-        try {
-          const chunker = cloudinary.uploader.upload_chunked_stream((cloudRes) => {
-            if (cloudRes.error) { reject(new Error(cloudRes.error.message || 'Cloudinary 上传失败')); return; }
-            resolve({ result: cloudRes, originalname: info.filename });
-          }, { resource_type: 'video', folder: 'portfolio/videos', chunk_size: 6000000, filename: info.filename });
-          file.on('limit', () => { chunker.destroy(); reject(new Error('文件超过 500MB 限制')); });
-          file.on('error', () => { chunker.destroy(); reject(new Error('读取上传文件失败')); });
-          file.pipe(chunker);
-        } catch (e) { file.resume(); reject(e); }
+        const ws = fs.createWriteStream(tmpPath);
+        file.pipe(ws);
+        file.on('limit', () => { ws.destroy(); reject(new Error('文件超过 2GB 限制')); });
+        ws.on('error', reject);
+        ws.on('finish', async () => {
+          try {
+            const r2Key = `videos/${crypto.randomBytes(12).toString('hex')}/${info.filename}`;
+            const fileSize = fs.statSync(tmpPath).size;
+            const putUrl = r2PresignedUrl('PUT', r2Key, 'video/mp4', 600);
+            await new Promise((r, rj) => {
+              const upReq = https.request(putUrl, { method: 'PUT', headers: { 'Content-Type': 'video/mp4', 'Content-Length': fileSize } }, (upRes) => {
+                if (upRes.statusCode >= 200 && upRes.statusCode < 300) r();
+                else { let b = ''; upRes.on('data', c => b += c); upRes.on('end', () => rj(new Error(`R2 ${upRes.statusCode}: ${b}`))); }
+              });
+              upReq.on('error', rj);
+              fs.createReadStream(tmpPath).pipe(upReq);
+            });
+            resolve({ key: r2Key, filename: info.filename, size: fileSize });
+          } catch (e) { reject(e); }
+        });
       });
       bb.on('error', reject);
       bb.on('filesLimit', () => reject(new Error('一次只能上传一个文件')));
       req.pipe(bb);
     });
-    works[idx].filename = result.result.public_id;
-    works[idx].originalName = result.originalname;
-    works[idx].videoUrl = result.result.secure_url;
+    works[idx].filename = result.key;
+    works[idx].originalName = result.filename;
+    works[idx].videoUrl = '/v/' + result.key;
     saveWorksToCloudinary();
     res.json({ success: true, work: works[idx] });
   } catch (err) {
     console.error('替换视频上传失败:', err);
     res.json({ success: false, error: '替换失败: ' + err.message });
+  } finally {
+    try { fs.unlinkSync(tmpPath); } catch (e) {}
   }
 });
 
