@@ -467,7 +467,7 @@ function uploadToCloudinary(file, sign, onProgress) {
 
 // ===== 大视频分片上传（绕过 Cloudinary 免费版 100MB 限制） =====
 const CHUNK_SIZE = 6 * 1024 * 1024; // 每片 6MB
-const CHUNK_THRESHOLD = 80 * 1024 * 1024; // 超过 80MB 走分片
+const CHUNK_THRESHOLD = 0; // 临时强制所有文件走分片（排查前端 if 阈值问题）
 
 function uploadViaApi(file, url, onProgress) {
   return new Promise((resolve, reject) => {
