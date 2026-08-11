@@ -14,20 +14,46 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// ========== Cloudflare R2 配置（新存储，替换 Cloudinary） ==========
-const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
-const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
-const r2Client = new S3Client({
-  region: 'auto',
-  endpoint: `https://${process.env.R2_ACCOUNT_ID || ''}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
-  },
-});
+// ========== Cloudflare R2 配置（零依赖 S3 兼容签名，不需要 @aws-sdk） ==========
+const R2_ACCOUNT = process.env.R2_ACCOUNT_ID || '';
+const R2_ACCESS_KEY = process.env.R2_ACCESS_KEY_ID || '';
+const R2_SECRET_KEY = process.env.R2_SECRET_ACCESS_KEY || '';
 const R2_BUCKET = process.env.R2_BUCKET || 'portfolio-videos';
-const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL || ''; // 自定义域名（如有）
-const R2_ENABLED = !!(process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID);
+const R2_ENABLED = !!(R2_ACCOUNT && R2_ACCESS_KEY);
+const R2_HOST = R2_ACCOUNT ? `${R2_ACCOUNT}.r2.cloudflarestorage.com` : '';
+
+function hmacSha256(key, data) {
+  return crypto.createHmac('sha256', key).update(data).digest();
+}
+function sha256hex(data) {
+  return crypto.createHash('sha256').update(data).digest('hex');
+}
+function getSigningKey(secret, date, region, service) {
+  const kDate = hmacSha256('AWS4' + secret, date);
+  const kRegion = hmacSha256(kDate, region);
+  const kService = hmacSha256(kRegion, service);
+  return hmacSha256(kService, 'aws4_request');
+}
+function r2PresignedUrl(method, key, contentType, expires) {
+  const region = 'auto', service = 's3';
+  const now = new Date();
+  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '');
+  const dateStamp = amzDate.substring(0, 8);
+  const credScope = `${dateStamp}/${region}/${service}/aws4_request`;
+  const params = new URLSearchParams();
+  params.set('X-Amz-Algorithm', 'AWS4-HMAC-SHA256');
+  params.set('X-Amz-Credential', `${R2_ACCESS_KEY}/${credScope}`);
+  params.set('X-Amz-Date', amzDate);
+  params.set('X-Amz-Expires', String(expires));
+  params.set('X-Amz-SignedHeaders', 'host');
+  const canonicalUri = '/' + R2_BUCKET + '/' + key;
+  const canonicalQuery = params.toString();
+  const canonicalReq = [method, canonicalUri, canonicalQuery, `host:${R2_HOST}`, '', 'host', 'UNSIGNED-PAYLOAD'].join('\n');
+  const stringToSign = ['AWS4-HMAC-SHA256', amzDate, credScope, sha256hex(canonicalReq)].join('\n');
+  const sig = crypto.createHmac('sha256', getSigningKey(R2_SECRET_KEY, dateStamp, region, service)).update(stringToSign).digest('hex');
+  params.set('X-Amz-Signature', sig);
+  return `https://${R2_HOST}/${R2_BUCKET}/${key}?${params.toString()}`;
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -427,9 +453,7 @@ app.post('/api/r2-sign-upload', authAdmin, async (req, res) => {
     const filename = (req.body && req.body.filename) || 'video.mp4';
     const contentType = (req.body && req.body.contentType) || 'video/mp4';
     const key = `videos/${crypto.randomBytes(12).toString('hex')}/${filename}`;
-    const url = await getSignedUrl(r2Client, new PutObjectCommand({
-      Bucket: R2_BUCKET, Key: key, ContentType: contentType
-    }), { expiresIn: 600 });
+    const url = r2PresignedUrl('PUT', key, contentType, 600);
     res.json({ success: true, url, key, filename });
   } catch (e) {
     console.error('R2 sign error:', e);
@@ -441,7 +465,7 @@ app.post('/api/r2-sign-upload', authAdmin, async (req, res) => {
 app.get('/v/:key(*)', async (req, res) => {
   if (!R2_ENABLED) return res.status(503).send('R2 未配置');
   try {
-    const url = await getSignedUrl(r2Client, new (require('@aws-sdk/client-s3').GetObjectCommand)({ Bucket: R2_BUCKET, Key: req.params.key }), { expiresIn: 86400 });
+    const url = r2PresignedUrl('GET', req.params.key, null, 86400);
     res.redirect(302, url);
   } catch (e) {
     console.error('R2 video proxy error:', e);
