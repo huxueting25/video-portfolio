@@ -124,7 +124,11 @@ function uploadToCloudinary(buffer, options) {
   });
 }
 
-// ========== 视频流式直传（不占内存，512MB 免费实例也能传大视频） ==========
+// ========== 视频流式直传 Cloudinary（自写 multipart，绕开 SDK 内存缓冲） ==========
+// 之前用 cloudinary.uploader.upload_stream 时，SDK 会把整个视频 buffer 在内存里（170MB 视频在 512MB 免费实例上 OOM）。
+// 这里改为：busboy 流式接收 → 手动拼 multipart/form-data → 直接 pipe 到 Cloudinary HTTPS 上传接口。
+// 全程内存占用恒定（几 MB），512MB 免费实例也能传 500MB+ 大视频。
+const https = require('https');
 const VIDEO_MAX_SIZE = 500 * 1024 * 1024; // 500MB
 const VIDEO_EXT = ['.mp4', '.webm', '.mov', '.avi', '.mkv'];
 
@@ -137,6 +141,13 @@ function streamVideoUpload(req, folder) {
     let settled = false;
     const fail = err => { if (!settled) { settled = true; reject(err); } };
 
+    // 服务端签名（API secret 只在服务端，不暴露给前端）
+    const timestamp = Math.round(Date.now() / 1000);
+    const signature = cloudinary.utils.api_sign_request(
+      { timestamp, folder, resource_type: 'video' },
+      process.env.CLOUDINARY_API_SECRET
+    );
+
     bb.on('file', (fieldname, file, info) => {
       if (fieldname !== 'video') { file.resume(); return; }
       try {
@@ -145,20 +156,62 @@ function streamVideoUpload(req, folder) {
           file.resume();
           return fail(new Error('仅支持视频文件格式'));
         }
-        const upStream = cloudinary.uploader.upload_stream({
-          resource_type: 'video',
-          folder,
-          public_id: crypto.randomBytes(8).toString('hex'),
-          chunk_size: 6000000,
-        }, (error, result) => {
-          if (error) return fail(error);
-          if (!settled) {
-            settled = true;
-            resolve({ result, originalname: info.filename, size: file.bytesRead || 0 });
-          }
+
+        const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+        const apiKey = process.env.CLOUDINARY_API_KEY;
+        if (!cloudName || !apiKey) return fail(new Error('Cloudinary 未配置'));
+
+        const boundary = '----PortfolioBoundary' + crypto.randomBytes(8).toString('hex');
+        const CRLF = '\r\n';
+        const safeName = String(info.filename || 'video.mp4').replace(/["\r\n]/g, '');
+
+        // multipart 头部：字段 + 文件头（固定，很小）
+        let headStr = '';
+        const fields = [
+          ['api_key', apiKey],
+          ['timestamp', String(timestamp)],
+          ['signature', signature],
+          ['folder', folder],
+        ];
+        for (const [k, v] of fields) {
+          headStr += `--${boundary}${CRLF}Content-Disposition: form-data; name="${k}"${CRLF}${CRLF}${v}${CRLF}`;
+        }
+        headStr += `--${boundary}${CRLF}Content-Disposition: form-data; name="file"; filename="${safeName}"${CRLF}Content-Type: ${info.mimeType || 'video/mp4'}${CRLF}${CRLF}`;
+        const head = Buffer.from(headStr, 'utf8');
+        const tail = Buffer.from(`${CRLF}--${boundary}--${CRLF}`, 'utf8');
+
+        const upReq = https.request({
+          hostname: 'api.cloudinary.com',
+          path: `/v1_1/${cloudName}/video/upload`,
+          method: 'POST',
+          headers: {
+            'Content-Type': `multipart/form-data; boundary=${boundary}`,
+          },
+        }, (res) => {
+          let body = '';
+          res.setEncoding('utf8');
+          res.on('data', c => { body += c; });
+          res.on('end', () => {
+            let d = null;
+            try { d = JSON.parse(body); } catch (e) { return fail(new Error('Cloudinary 响应异常')); }
+            if (res.statusCode >= 400 || d.error) {
+              return fail(new Error((d.error && (d.error.message || JSON.stringify(d.error))) || `Cloudinary 错误 ${res.statusCode}`));
+            }
+            if (!settled) {
+              settled = true;
+              resolve({ result: d, originalname: info.filename, size: file.bytesRead || 0 });
+            }
+          });
         });
-        file.on('limit', () => { upStream.destroy(); fail(new Error('文件超过 500MB 限制')); });
-        file.pipe(upStream); // 边收边传，内存占用恒定在几 MB
+        upReq.on('error', fail);
+        upReq.setTimeout(120000, () => { upReq.destroy(); fail(new Error('Cloudinary 连接超时')); });
+
+        // 流式：写头部 → pipe 文件 → 文件结束写尾部
+        upReq.write(head);
+        file.on('limit', () => { upReq.destroy(); fail(new Error('文件超过 500MB 限制')); });
+        file.on('error', () => { upReq.destroy(); fail(new Error('读取上传文件失败')); });
+        file.pipe(upReq, { end: false });
+        file.on('end', () => { upReq.end(tail); });
       } catch (e) {
         file.resume();
         fail(e);
