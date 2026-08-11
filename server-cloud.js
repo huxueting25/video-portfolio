@@ -6,13 +6,28 @@ const compression = require('compression'); // gzip 压缩中间件
 const { Readable } = require('stream');
 const path = require('path');
 
-// ========== Cloudinary 配置 ==========
+// ========== Cloudinary 配置（保留，用于旧数据兼容） ==========
 const cloudinary = require('cloudinary').v2;
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+// ========== Cloudflare R2 配置（新存储，替换 Cloudinary） ==========
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+const r2Client = new S3Client({
+  region: 'auto',
+  endpoint: `https://${process.env.R2_ACCOUNT_ID || ''}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
+  },
+});
+const R2_BUCKET = process.env.R2_BUCKET || 'portfolio-videos';
+const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL || ''; // 自定义域名（如有）
+const R2_ENABLED = !!(process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -404,8 +419,37 @@ app.post('/api/upload', authAdmin, async (req, res) => {
   }
 });
 
-// ========== 前端直传 Cloudinary 的一次性签名 ==========
-// 视频直接由浏览器上传到 Cloudinary，不经过本服务（避免大文件 OOM）
+// ========== R2 直传签名 + 视频代理 ==========
+// POST: 浏览器拿 presigned PUT URL，直传到 R2（不经过 Render）
+app.post('/api/r2-sign-upload', authAdmin, async (req, res) => {
+  if (!R2_ENABLED) return res.json({ success: false, error: 'R2 未配置' });
+  try {
+    const filename = (req.body && req.body.filename) || 'video.mp4';
+    const contentType = (req.body && req.body.contentType) || 'video/mp4';
+    const key = `videos/${crypto.randomBytes(12).toString('hex')}/${filename}`;
+    const url = await getSignedUrl(r2Client, new PutObjectCommand({
+      Bucket: R2_BUCKET, Key: key, ContentType: contentType
+    }), { expiresIn: 600 });
+    res.json({ success: true, url, key, filename });
+  } catch (e) {
+    console.error('R2 sign error:', e);
+    res.json({ success: false, error: '签名失败: ' + e.message });
+  }
+});
+
+// GET /v/:key: 302 重定向到 R2 presigned GET URL（访客播放视频用）
+app.get('/v/:key(*)', async (req, res) => {
+  if (!R2_ENABLED) return res.status(503).send('R2 未配置');
+  try {
+    const url = await getSignedUrl(r2Client, new (require('@aws-sdk/client-s3').GetObjectCommand)({ Bucket: R2_BUCKET, Key: req.params.key }), { expiresIn: 86400 });
+    res.redirect(302, url);
+  } catch (e) {
+    console.error('R2 video proxy error:', e);
+    res.status(500).send('视频加载失败');
+  }
+});
+
+// ========== 前端直传 Cloudinary 的一次性签名（弃用，保留兼容） ==========
 app.get('/api/cloudinary-sign', authAdmin, (req, res) => {
   try {
     const timestamp = Math.round(Date.now() / 1000);
