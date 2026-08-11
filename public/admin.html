@@ -465,14 +465,96 @@ function uploadToCloudinary(file, sign, onProgress) {
   });
 }
 
+// ===== 大视频分片上传（绕过 Cloudinary 免费版 100MB 限制） =====
+const CHUNK_SIZE = 6 * 1024 * 1024; // 每片 6MB
+const CHUNK_THRESHOLD = 80 * 1024 * 1024; // 超过 80MB 走分片
+
+function uploadViaApi(file, url, onProgress) {
+  return new Promise((resolve, reject) => {
+    const fd = new FormData(); fd.append('video', file);
+    const xhr = new XMLHttpRequest(); xhr.open('POST', url); xhr.setRequestHeader('X-Admin-Token', adminToken);
+    xhr.upload.onprogress = e => { if (e.lengthComputable && onProgress) onProgress(Math.round(e.loaded / e.total * 100)); };
+    xhr.onload = () => {
+      let d;
+      try { d = JSON.parse(xhr.responseText); } catch (e) { return reject(new Error('服务器响应异常')); }
+      if (d.success) resolve(d);
+      else reject(new Error(d.error || '上传失败'));
+    };
+    xhr.onerror = () => reject(new Error('网络错误，请重试'));
+    xhr.send(fd);
+  });
+}
+
+function uploadVideoChunked(file, eid, onProgress) {
+  return new Promise((resolve, reject) => {
+    const total = file.size;
+    const uniqueUploadId = 'up_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+    let offset = 0;
+    let seq = 0;
+
+    function sendNext() {
+      const start = offset;
+      const end = Math.min(start + CHUNK_SIZE, total) - 1;
+      const isLast = end === total - 1;
+      const fd = new FormData();
+      // 字段先发，文件最后（busboy 按顺序解析，file 事件触发时字段已就绪）
+      fd.append('uniqueUploadId', uniqueUploadId);
+      fd.append('start', String(start));
+      fd.append('end', String(end));
+      fd.append('totalSize', String(total));
+      fd.append('isLast', isLast ? 'true' : 'false');
+      fd.append('filename', file.name);
+      if (eid) fd.append('eid', eid);
+      fd.append('chunk', file.slice(start, end + 1), file.name);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/upload-chunk');
+      xhr.setRequestHeader('X-Admin-Token', adminToken);
+      xhr.upload.onprogress = e => {
+        if (e.lengthComputable) {
+          const done = offset + e.loaded;
+          const pct = Math.round(done / total * 100);
+          if (onProgress) onProgress(pct, seq, Math.ceil(total / CHUNK_SIZE));
+        }
+      };
+      xhr.onload = () => {
+        let d;
+        try { d = JSON.parse(xhr.responseText); } catch (e) { return reject(new Error('服务器响应异常')); }
+        if (!d.success) return reject(new Error(d.error || '上传失败'));
+        if (d.completed) return resolve(d);
+        offset = end + 1;
+        seq++;
+        sendNext();
+      };
+      xhr.onerror = () => reject(new Error('网络错误，请重试'));
+      xhr.send(fd);
+    }
+    sendNext();
+  });
+}
+
 async function uploadVideo(file) {
   document.getElementById('upload-hint').style.display='none'; document.getElementById('upload-progress').style.display='block';
-  const fd=new FormData(); fd.append('video',file);
-  const xhr=new XMLHttpRequest(); xhr.open('POST','/api/upload'); xhr.setRequestHeader('X-Admin-Token',adminToken);
-  xhr.upload.onprogress=e=>{if(e.lengthComputable){const pct=Math.round(e.loaded/e.total*100);document.getElementById('progress-fill').style.width=pct+'%';document.getElementById('upload-status').textContent='上传中... '+pct+'%';}};
-  xhr.onload=()=>{try{const d=JSON.parse(xhr.responseText);if(d.success){uploadedFile=d;document.getElementById('upload-progress').style.display='none';document.getElementById('upload-done').style.display='block';document.getElementById('uploaded-name').textContent=d.originalName;if(!document.getElementById('work-title').value)document.getElementById('work-title').value=d.originalName.replace(/\.\w+$/,'');}else{document.getElementById('upload-status').textContent='上传失败: '+d.error;}}catch(e){document.getElementById('upload-status').textContent='上传失败: 服务器响应异常';}};
-  xhr.onerror=()=>{document.getElementById('upload-status').textContent='上传失败，网络错误';};
-  xhr.send(fd);
+  try {
+    let d;
+    if (file.size > CHUNK_THRESHOLD) {
+      d = await uploadVideoChunked(file, null, (pct, seq, totalChunks) => {
+        document.getElementById('progress-fill').style.width = pct + '%';
+        document.getElementById('upload-status').textContent = '上传中... ' + pct + '%（第 ' + (seq + 1) + '/' + totalChunks + ' 片）';
+      });
+    } else {
+      d = await uploadViaApi(file, '/api/upload', pct => {
+        document.getElementById('progress-fill').style.width = pct + '%';
+        document.getElementById('upload-status').textContent = '上传中... ' + pct + '%';
+      });
+    }
+    uploadedFile={filename:d.filename,originalName:d.originalName||file.name,videoUrl:d.videoUrl,size:file.size};
+    document.getElementById('upload-progress').style.display='none'; document.getElementById('upload-done').style.display='block';
+    document.getElementById('uploaded-name').textContent=file.name;
+    if(!document.getElementById('work-title').value)document.getElementById('work-title').value=file.name.replace(/\.\w+$/,'');
+  } catch (err) {
+    document.getElementById('upload-status').textContent='上传失败: '+err.message;
+  }
 }
 function clearUpload() { uploadedFile=null; fileInput.value=''; document.getElementById('upload-hint').style.display='flex'; document.getElementById('upload-progress').style.display='none'; document.getElementById('upload-done').style.display='none'; }
 
@@ -586,12 +668,26 @@ rfi.addEventListener('change',()=>{if(rfi.files.length)replaceVideo(rfi.files[0]
 async function replaceVideo(file) {
   const eid=document.getElementById('edit-id').value;if(!eid)return;
   document.getElementById('replace-upload-hint').style.display='none';document.getElementById('replace-upload-progress').style.display='block';
-  const fd=new FormData();fd.append('video',file);
-  const xhr=new XMLHttpRequest();xhr.open('POST','/api/replace-video/'+eid);xhr.setRequestHeader('X-Admin-Token',adminToken);
-  xhr.upload.onprogress=e=>{if(e.lengthComputable){const pct=Math.round(e.loaded/e.total*100);document.getElementById('replace-progress-fill').style.width=pct+'%';document.getElementById('replace-upload-status').textContent='替换中... '+pct+'%';}};
-  xhr.onload=()=>{try{const d=JSON.parse(xhr.responseText);if(d.success){document.getElementById('replace-upload-progress').style.display='none';document.getElementById('replace-upload-done').style.display='block';document.getElementById('replace-uploaded-name').textContent=d.work.originalName;document.getElementById('current-video-name').textContent=d.work.originalName;const idx=currentWorks.findIndex(w=>w.id===eid);if(idx!==-1)currentWorks[idx]=d.work;showToast('✅ 已替换');}else{document.getElementById('replace-upload-status').textContent='替换失败: '+d.error;}}catch(e){document.getElementById('replace-upload-status').textContent='替换失败: 服务器响应异常';}};
-  xhr.onerror=()=>{document.getElementById('replace-upload-status').textContent='替换失败';};
-  xhr.send(fd);
+  try {
+    let d;
+    if (file.size > CHUNK_THRESHOLD) {
+      d = await uploadVideoChunked(file, eid, (pct, seq, totalChunks) => {
+        document.getElementById('replace-progress-fill').style.width=pct+'%';
+        document.getElementById('replace-upload-status').textContent='替换中... '+pct+'%（第 '+(seq+1)+'/'+totalChunks+' 片）';
+      });
+    } else {
+      d = await uploadViaApi(file, '/api/replace-video/'+eid, pct => {
+        document.getElementById('replace-progress-fill').style.width=pct+'%';
+        document.getElementById('replace-upload-status').textContent='替换中... '+pct+'%';
+      });
+    }
+    document.getElementById('replace-upload-progress').style.display='none';document.getElementById('replace-upload-done').style.display='block';
+    document.getElementById('replace-uploaded-name').textContent=file.name;
+    document.getElementById('current-video-name').textContent=file.name;
+    showToast('✅ 已替换'); loadWorks();
+  } catch (err) {
+    document.getElementById('replace-upload-status').textContent='替换失败: '+err.message;
+  }
 }
 
 // ===== 回到顶端 =====
