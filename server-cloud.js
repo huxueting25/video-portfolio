@@ -374,17 +374,25 @@ app.post('/api/upload-chunk', authAdmin, async (req, res) => {
   }
 });
 
-// 上传视频到 Cloudinary（流式直传，不占内存）
+// 上传视频到 Cloudinary（SDK 内置分片：自动绕过 100MB 免费限制）
 app.post('/api/upload', authAdmin, async (req, res) => {
   try {
-    const { result, originalname, size } = await streamVideoUpload(req, 'portfolio/videos');
-    res.json({
-      success: true,
-      filename: result.public_id,
-      originalName: originalname,
-      videoUrl: result.secure_url,
-      size,
+    const result = await new Promise((resolve, reject) => {
+      const bb = Busboy({ headers: req.headers, limits: { fileSize: 500 * 1024 * 1024, files: 1 } });
+      bb.on('file', (fieldname, file, info) => {
+        if (fieldname !== 'video') { file.resume(); return; }
+        const ext = '.' + (info.filename || '').split('.').pop().toLowerCase();
+        if (!VIDEO_EXT.includes(ext)) { file.resume(); reject(new Error('仅支持视频文件格式')); return; }
+        cloudinary.uploader.upload_large(file, (cloudRes) => {
+          if (cloudRes.error) { reject(new Error(cloudRes.error.message || '上传失败')); return; }
+          resolve({ result: cloudRes, originalname: info.filename, size: file.bytesRead || 0 });
+        }, { resource_type: 'video', folder: 'portfolio/videos', chunk_size: 6000000 });
+      });
+      bb.on('error', reject);
+      bb.on('filesLimit', () => reject(new Error('一次只能上传一个文件')));
+      req.pipe(bb);
     });
+    res.json({ success: true, filename: result.result.public_id, originalName: result.originalname, videoUrl: result.result.secure_url, size: result.size });
   } catch (err) {
     console.error('Cloudinary upload error:', err);
     res.json({ success: false, error: '上传失败: ' + err.message });
@@ -517,25 +525,37 @@ app.delete('/api/works/:id', authAdmin, async (req, res) => {
   res.json({ success: true });
 });
 
-// 替换视频（流式直传）
+// 替换视频（SDK 内置分片）
 app.post('/api/replace-video/:id', authAdmin, async (req, res) => {
   const idx = works.findIndex(w => w.id === req.params.id);
   if (idx === -1) return res.json({ success: false, error: '作品不存在' });
 
   const work = works[idx];
-  // 删除旧视频
   if (work.filename) {
-    try {
-      await cloudinary.uploader.destroy(work.filename, { resource_type: 'video' });
-    } catch (e) { console.error('删除旧视频失败:', e); }
+    try { await cloudinary.uploader.destroy(work.filename, { resource_type: 'video' }); }
+    catch (e) { console.error('删除旧视频失败:', e); }
   }
 
   try {
-    const { result, originalname, size } = await streamVideoUpload(req, 'portfolio/videos');
-    works[idx].filename = result.public_id;
-    works[idx].originalName = originalname;
-    works[idx].videoUrl = result.secure_url;
-    saveWorksToCloudinary(); // 异步保存
+    const result = await new Promise((resolve, reject) => {
+      const bb = Busboy({ headers: req.headers, limits: { fileSize: 500 * 1024 * 1024, files: 1 } });
+      bb.on('file', (fieldname, file, info) => {
+        if (fieldname !== 'video') { file.resume(); return; }
+        const ext = '.' + (info.filename || '').split('.').pop().toLowerCase();
+        if (!VIDEO_EXT.includes(ext)) { file.resume(); reject(new Error('仅支持视频文件格式')); return; }
+        cloudinary.uploader.upload_large(file, (cloudRes) => {
+          if (cloudRes.error) { reject(new Error(cloudRes.error.message || '上传失败')); return; }
+          resolve({ result: cloudRes, originalname: info.filename });
+        }, { resource_type: 'video', folder: 'portfolio/videos', chunk_size: 6000000 });
+      });
+      bb.on('error', reject);
+      bb.on('filesLimit', () => reject(new Error('一次只能上传一个文件')));
+      req.pipe(bb);
+    });
+    works[idx].filename = result.result.public_id;
+    works[idx].originalName = result.originalname;
+    works[idx].videoUrl = result.result.secure_url;
+    saveWorksToCloudinary();
     res.json({ success: true, work: works[idx] });
   } catch (err) {
     console.error('替换视频上传失败:', err);
