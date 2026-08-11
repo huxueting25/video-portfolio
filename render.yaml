@@ -21,3 +21,11 @@ services:
         sync: false
       - key: DEPLOY_TS
         value: "202511"
+      - key: R2_ACCOUNT_ID
+        value: cea91be51724719fbf903ae543d7c24b
+      - key: R2_ACCESS_KEY_ID
+        value: 70513182c8ecd5ae603af42c6ce2d659
+      - key: R2_SECRET_ACCESS_KEY
+        value: edc81d0c4e3fa7da520607272ad3cb41cc0b67e4a8710806b32de65716396f64
+      - key: R2_BUCKET
+        value: portfolio-videos
