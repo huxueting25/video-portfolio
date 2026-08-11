@@ -488,6 +488,27 @@ app.get('/v/:key(*)', async (req, res) => {
   }
 });
 
+// POST /api/recover: 强制从 Cloudinary 拉回 works 数据（临时恢复端点）
+app.post('/api/recover', async (req, res) => {
+  if (req.body?.pw !== 'recover2026') return res.status(403).json({ error: 'invalid password' });
+  for (let i = 0; i < 10; i++) {
+    try {
+      const result = await cloudinary.api.resource(DATA_PUBLIC_ID, { resource_type: 'raw' });
+      const resp = await fetch(result.secure_url);
+      const data = await resp.json();
+      if (data.works && Array.isArray(data.works) && data.works.length > 0) {
+        works = data.works;
+        console.log(`✅ Recovered ${works.length} works from Cloudinary`);
+        return res.json({ success: true, recovered: works.length });
+      }
+    } catch (e) {
+      console.log(`Recover attempt ${i+1} failed: ${e.message}`);
+    }
+    await new Promise(r => setTimeout(r, 5000 * (i + 1)));
+  }
+  res.json({ success: false, recovered: 0, msg: 'Cloudinary 数据文件访问失败，请稍后重试' });
+});
+
 // ========== 前端直传 Cloudinary 的一次性签名（弃用，保留兼容） ==========
 app.get('/api/cloudinary-sign', authAdmin, (req, res) => {
   try {
