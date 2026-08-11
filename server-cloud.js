@@ -48,7 +48,9 @@ function r2PresignedUrl(method, key, contentType, expires) {
   params.set('X-Amz-Date', amzDate);
   params.set('X-Amz-Expires', String(expires));
   params.set('X-Amz-SignedHeaders', 'host');
-  const canonicalUri = '/' + R2_BUCKET + '/' + key;
+  // canonical URI 必须对路径段做 RFC 3986 编码（空格→%20，中文→%E7%89%88）
+  const uriEncode = s => encodeURIComponent(s).replace(/[!'()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
+  const canonicalUri = '/' + R2_BUCKET + '/' + key.split('/').map(uriEncode).join('/');
   const canonicalQuery = params.toString();
   const canonicalReq = [method, canonicalUri, canonicalQuery, `host:${R2_HOST}`, '', 'host', 'UNSIGNED-PAYLOAD'].join('\n');
   const stringToSign = ['AWS4-HMAC-SHA256', amzDate, credScope, sha256hex(canonicalReq)].join('\n');
