@@ -253,6 +253,127 @@ app.post('/api/change-password', authAdmin, (req, res) => {
   res.json({ success: true, hint: '密码已修改并保存到云端。' });
 });
 
+// ========== Cloudinary chunked upload（分片上传，绕过免费版 100MB 单文件限制） ==========
+// 协议（参照官方 SDK upload_chunked_stream）：
+//   每片 POST 到 /video/upload，headers 带 Content-Range 和 X-Unique-Upload-Id；
+//   最后一片（isLast=true, total=完整大小）时 Cloudinary 返回完整结果(public_id/secure_url)。
+const CHUNK_MAX = 12 * 1024 * 1024; // 单片上限（前端按 6MB 切）
+
+function cloudinaryChunkPipe(file, meta, folder) {
+  return new Promise((resolve, reject) => {
+    try {
+      const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+      const apiKey = process.env.CLOUDINARY_API_KEY;
+      if (!cloudName || !apiKey) return reject(new Error('Cloudinary 未配置'));
+      const timestamp = Math.round(Date.now() / 1000);
+      const signature = cloudinary.utils.api_sign_request({ timestamp, folder }, process.env.CLOUDINARY_API_SECRET);
+      const boundary = '----PortfolioBoundary' + crypto.randomBytes(8).toString('hex');
+      const CRLF = '\r\n';
+      const safeName = String(meta.filename || 'video.mp4').replace(/["\r\n]/g, '');
+      let headStr = '';
+      const fields = [
+        ['api_key', apiKey],
+        ['timestamp', String(timestamp)],
+        ['signature', signature],
+        ['folder', folder],
+      ];
+      for (const [k, v] of fields) {
+        headStr += `--${boundary}${CRLF}Content-Disposition: form-data; name="${k}"${CRLF}${CRLF}${v}${CRLF}`;
+      }
+      headStr += `--${boundary}${CRLF}Content-Disposition: form-data; name="file"; filename="${safeName}"${CRLF}Content-Type: video/mp4${CRLF}${CRLF}`;
+      const head = Buffer.from(headStr, 'utf8');
+      const tail = Buffer.from(`${CRLF}--${boundary}--${CRLF}`, 'utf8');
+      const isLast = meta.isLast === 'true';
+      const contentRange = `bytes ${meta.start}-${meta.end}/${isLast ? meta.totalSize : -1}`;
+
+      const upReq = https.request({
+        hostname: 'api.cloudinary.com',
+        path: `/v1_1/${cloudName}/video/upload`,
+        method: 'POST',
+        headers: {
+          'Content-Type': `multipart/form-data; boundary=${boundary}`,
+          'Content-Range': contentRange,
+          'X-Unique-Upload-Id': meta.uniqueUploadId,
+        },
+      }, (res) => {
+        let body = '';
+        res.setEncoding('utf8');
+        res.on('data', c => { body += c; });
+        res.on('end', () => {
+          if (res.statusCode >= 400) {
+            let em = `Cloudinary 错误 ${res.statusCode}`;
+            try { const d = JSON.parse(body); em = (d.error && (d.error.message || JSON.stringify(d.error))) || em; } catch (e) {}
+            return reject(new Error(em));
+          }
+          if (!body.trim()) return resolve({ ok: true }); // 非最后一片可能无内容
+          let d;
+          try { d = JSON.parse(body); } catch (e) { return resolve({ ok: true }); }
+          if (d.error) return reject(new Error(d.error.message || JSON.stringify(d.error)));
+          resolve(d);
+        });
+        res.on('aborted', () => { upReq.destroy(); reject(new Error('Cloudinary 连接中断')); });
+      });
+      upReq.on('error', reject);
+      upReq.setTimeout(120000, () => { upReq.destroy(); reject(new Error('Cloudinary 连接超时')); });
+      upReq.write(head);
+      file.pipe(upReq, { end: false });
+      file.on('end', () => upReq.end(tail));
+    } catch (e) { reject(e); }
+  });
+}
+
+// 分片上传（含替换视频：传 eid 时完成后自动更新作品并清理旧视频）
+app.post('/api/upload-chunk', authAdmin, async (req, res) => {
+  try {
+    const meta = {};
+    const chunkResult = await new Promise((resolve, reject) => {
+      let settled = false;
+      const fail = err => { if (!settled) { settled = true; reject(err); } };
+      const bb = Busboy({ headers: req.headers, limits: { fileSize: CHUNK_MAX, files: 1 } });
+      bb.on('field', (n, v) => { meta[n] = v; });
+      bb.on('file', (n, file, info) => {
+        if (n !== 'chunk') { file.resume(); return; }
+        cloudinaryChunkPipe(file, meta, 'portfolio/videos')
+          .then(d => { if (!settled) { settled = true; resolve(d); } })
+          .catch(err => { file.resume(); fail(err); });
+      });
+      bb.on('error', fail);
+      bb.on('filesLimit', () => fail(new Error('一次只能上传一个分片')));
+      req.pipe(bb);
+      req.on('error', fail);
+    });
+
+    const isLast = meta.isLast === 'true';
+    if (isLast && chunkResult.public_id) {
+      const out = {
+        success: true,
+        completed: true,
+        filename: chunkResult.public_id,
+        originalName: meta.filename || '',
+        videoUrl: chunkResult.secure_url,
+        size: parseInt(meta.totalSize || '0', 10),
+      };
+      if (meta.eid) {
+        const idx = works.findIndex(w => w.id === meta.eid);
+        if (idx !== -1) {
+          const old = works[idx];
+          works[idx] = { ...old, filename: out.filename, originalName: out.originalName, videoUrl: out.videoUrl };
+          saveWorksToCloudinary();
+          if (old.filename && old.filename !== out.filename) {
+            cloudinary.uploader.destroy(old.filename, { resource_type: 'video' }).catch(() => {});
+          }
+          out.work = works[idx];
+        }
+      }
+      return res.json(out);
+    }
+    res.json({ success: true, completed: false, ok: true });
+  } catch (err) {
+    console.error('chunk upload error:', err);
+    res.json({ success: false, error: '上传失败: ' + err.message });
+  }
+});
+
 // 上传视频到 Cloudinary（流式直传，不占内存）
 app.post('/api/upload', authAdmin, async (req, res) => {
   try {
