@@ -64,6 +64,47 @@ function r2PresignedUrl(method, key, contentType, expires) {
   return `https://${R2_HOST}/${R2_BUCKET}/${key}?${params.toString()}`;
 }
 
+// 通用 SigV4 签名请求（后端直连 R2，用于 multipart upload 等）
+function r2SignedRequest(method, key, extraQuery, body) {
+  const region = 'auto', service = 's3';
+  const now = new Date();
+  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '');
+  const dateStamp = amzDate.substring(0, 8);
+  const credScope = `${dateStamp}/${region}/${service}/aws4_request`;
+  const payloadHash = sha256hex(body || '');
+  const uriEncode = s => encodeURIComponent(s).replace(/[!'()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
+  const canonicalUri = '/' + R2_BUCKET + '/' + key.split('/').map(uriEncode).join('/');
+  const qp = new URLSearchParams();
+  if (extraQuery) Object.keys(extraQuery).sort().forEach(k => qp.set(k, extraQuery[k]));
+  const canonicalQuery = [...qp.entries()].sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0)).map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
+  const headers = { 'host': R2_HOST, 'x-amz-content-sha256': payloadHash, 'x-amz-date': amzDate };
+  const signedHeaders = Object.keys(headers).sort().join(';');
+  const canonicalHeaders = Object.keys(headers).sort().map(k => `${k}:${headers[k]}`).join('\n');
+  const canonicalReq = [method, canonicalUri, canonicalQuery, canonicalHeaders, '', signedHeaders, payloadHash].join('\n');
+  const stringToSign = ['AWS4-HMAC-SHA256', amzDate, credScope, sha256hex(canonicalReq)].join('\n');
+  const sig = crypto.createHmac('sha256', getSigningKey(R2_SECRET_KEY, dateStamp, region, service)).update(stringToSign).digest('hex');
+  headers['authorization'] = `AWS4-HMAC-SHA256 Credential=${R2_ACCESS_KEY}/${credScope}, SignedHeaders=${signedHeaders}, Signature=${sig}`;
+  const queryStr = qp.toString();
+  return {
+    hostname: R2_HOST,
+    path: `/${R2_BUCKET}/${key.split('/').map(uriEncode).join('/')}${queryStr ? '?' + queryStr : ''}`,
+    headers,
+  };
+}
+function r2Http(method, key, extraQuery, body) {
+  return new Promise((resolve, reject) => {
+    const reqOpts = r2SignedRequest(method, key, extraQuery, body);
+    const req = https.request({ ...reqOpts, method }, (res) => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body: data }));
+    });
+    req.on('error', reject);
+    if (body) req.write(body);
+    req.end();
+  });
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -515,6 +556,67 @@ app.post('/api/upload', authAdmin, async (req, res) => {
     res.json({ success: false, error: '上传失败: ' + err.message });
   } finally {
     try { fs.unlinkSync(tmpPath); } catch (e) {}
+  }
+});
+
+// ========== 分片上传（Multipart Upload，支持几 GB 大视频，不写磁盘） ==========
+// 1. 初始化分片上传
+app.post('/api/upload/init', authAdmin, async (req, res) => {
+  if (!R2_ENABLED) return res.json({ success: false, error: 'R2 未配置' });
+  try {
+    const filename = (req.body && req.body.filename) || 'video.mp4';
+    const key = `videos/${crypto.randomBytes(12).toString('hex')}/${filename}`;
+    const create = await r2Http('POST', key, { uploads: '' }, '');
+    if (create.status !== 200) return res.json({ success: false, error: '创建上传失败: ' + create.body.slice(0, 200) });
+    const uploadId = (create.body.match(/<UploadId>([^<]+)<\/UploadId>/) || [])[1];
+    if (!uploadId) return res.json({ success: false, error: '未获取到 uploadId' });
+    res.json({ success: true, key, uploadId });
+  } catch (e) {
+    res.json({ success: false, error: '初始化失败: ' + e.message });
+  }
+});
+
+// 2. 上传分片（raw body 二进制，每片 ≥5MB）
+app.post('/api/upload/part', express.raw({ type: '*/*', limit: '25mb' }), authAdmin, async (req, res) => {
+  if (!R2_ENABLED) return res.json({ success: false, error: 'R2 未配置' });
+  try {
+    const key = req.query.key;
+    const uploadId = req.query.uploadId;
+    const partNumber = req.query.partNumber;
+    if (!key || !uploadId || !partNumber) return res.json({ success: false, error: '缺少参数' });
+    const chunk = req.body; // Buffer
+    if (!chunk || !chunk.length) return res.json({ success: false, error: '分片为空' });
+    const up = await r2Http('PUT', key, { partNumber, uploadId }, chunk);
+    if (up.status !== 200) return res.json({ success: false, error: '分片上传失败: ' + up.body.slice(0, 200) });
+    res.json({ success: true, etag: up.headers.etag || '' });
+  } catch (e) {
+    res.json({ success: false, error: '分片失败: ' + e.message });
+  }
+});
+
+// 3. 完成上传（只完成 multipart，不创建作品；作品由表单提交创建）
+app.post('/api/upload/complete', authAdmin, async (req, res) => {
+  if (!R2_ENABLED) return res.json({ success: false, error: 'R2 未配置' });
+  try {
+    const { key, uploadId, parts } = req.body;
+    if (!key || !uploadId || !parts || !parts.length) return res.json({ success: false, error: '缺少参数' });
+    const completeBody = `<CompleteMultipartUpload>${parts.map(p => `<Part><PartNumber>${p.partNumber}</PartNumber><ETag>${p.etag}</ETag></Part>`).join('')}</CompleteMultipartUpload>`;
+    const complete = await r2Http('POST', key, { uploadId }, completeBody);
+    if (complete.status !== 200) return res.json({ success: false, error: '完成上传失败: ' + complete.body.slice(0, 200) });
+    res.json({ success: true, key, videoUrl: r2PublicUrl(key) });
+  } catch (e) {
+    res.json({ success: false, error: '完成失败: ' + e.message });
+  }
+});
+
+// 4. 取消分片上传
+app.post('/api/upload/abort', authAdmin, async (req, res) => {
+  try {
+    const { key, uploadId } = req.body;
+    await r2Http('DELETE', key, { uploadId }, '');
+    res.json({ success: true });
+  } catch (e) {
+    res.json({ success: false, error: '取消失败: ' + e.message });
   }
 });
 
