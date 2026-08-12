@@ -591,6 +591,20 @@ app.post('/api/admin/migrate-list', async (req, res) => {
   }
 });
 
+// POST /api/admin/clear-all: 清空所有作品 + 删除 R2 文件
+app.post('/api/admin/clear-all', async (req, res) => {
+  if (req.body?.pw !== 'clear2026') return res.status(403).json({ error: 'invalid pw' });
+  const count = works.length;
+  for (const w of works) {
+    if (w.filename && w.filename.startsWith('videos/')) {
+      try { await new Promise(r => { const d = https.request(`https://${R2_HOST}/${R2_BUCKET}/${w.filename}`, { method: 'DELETE' }, () => r()); d.on('error', () => r()); d.end(); }); } catch(e){}
+    }
+  }
+  works = [];
+  saveWorksToCloudinary();
+  res.json({ success: true, deleted: count });
+});
+
 // ========== 前端直传 Cloudinary 的一次性签名（弃用，保留兼容） ==========
 app.get('/api/cloudinary-sign', authAdmin, (req, res) => {
   try {
