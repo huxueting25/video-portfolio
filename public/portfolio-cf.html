@@ -154,17 +154,24 @@ function showErr(msg) {
 if (!tokenParam) {
   showErr('<p>访问需要有效的分享链接</p>');
 } else {
-  // 纯静态模式：从页面内嵌的 works 数据读取（不依赖任何后端）
-  try {
-    const works = JSON.parse(document.getElementById('works-embedded-data').textContent);
-    allWorks = works;
-    allWorks.forEach(w => { if (!w.project) w.project = 'echocalypse'; if (!w.category) w.category = 'EN'; });
-    renderAll();
-    document.getElementById('loading-overlay').style.display = 'none';
-  } catch(e) {
-    showErr('<p>作品数据加载失败，请刷新页面</p>');
-  }
-    .catch(() => showErr('<p style="color:#e94560;">分享链接无效或已失效</p>'));
+  // 纯静态模式：用 token 的 hash 拼出 R2 公开 works JSON 地址（只有持 token 者能访问）
+  (async () => {
+    try {
+      const hashBuf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(tokenParam));
+      const hash = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
+      const dataUrl = 'https://pub-af8e63a9c8fa418992e9e2de7412f5ee.r2.dev/data/works-' + hash + '.json';
+      const resp = await fetch(dataUrl);
+      if (!resp.ok) throw new Error('数据不存在');
+      const data = await resp.json();
+      const works = data.works || [];
+      allWorks = works;
+      allWorks.forEach(w => { if (!w.project) w.project = 'echocalypse'; if (!w.category) w.category = 'EN'; });
+      renderAll();
+      document.getElementById('loading-overlay').style.display = 'none';
+    } catch(e) {
+      showErr('<p>作品数据加载失败，请检查链接是否有效</p>');
+    }
+  })();
 }
 
 function posterUrl(w) {
@@ -473,6 +480,5 @@ const stb = document.getElementById('scroll-to-top');
 window.addEventListener('scroll', () => { stb.style.display = window.scrollY > 400 ? 'flex' : 'none'; });
 function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 </script>
-<script type="application/json" id="works-embedded-data">[]</script>
 </body>
 </html>
