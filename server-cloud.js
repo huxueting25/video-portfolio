@@ -23,6 +23,11 @@ const R2_SECRET_KEY = process.env.R2_SECRET_ACCESS_KEY || '';
 const R2_BUCKET = process.env.R2_BUCKET || 'portfolio-videos';
 const R2_ENABLED = !!(R2_ACCOUNT && R2_ACCESS_KEY);
 const R2_HOST = R2_ACCOUNT ? `${R2_ACCOUNT}.r2.cloudflarestorage.com` : '';
+// r2.dev 公开域名（访客直接访问视频/数据，不经过 Render）
+const R2_DEV_URL = process.env.R2_DEV_URL || 'https://pub-af8e63a9c8fa418992e9e2de7412f5ee.r2.dev';
+function r2PublicUrl(key) {
+  return R2_DEV_URL + '/' + key.split('/').map(encodeURIComponent).join('/');
+}
 
 function hmacSha256(key, data) {
   return crypto.createHmac('sha256', key).update(data).digest();
@@ -150,7 +155,7 @@ async function saveWorksToCloudinary() {
   } catch (e) {
     console.error('❌ 保存到 Cloudinary 失败:', e.message);
   }
-  // 同步备份到 R2 raw 文件（Cloudinary 限流时仍可保存）
+  // 同步备份到 R2 raw 文件（Cloudinary 限流时仍可保存）+ 导出公开 works JSON
   if (R2_ENABLED) {
     try {
       const data = JSON.stringify({ config, works, _savedAt: new Date().toISOString() });
@@ -163,6 +168,19 @@ async function saveWorksToCloudinary() {
         req.end();
       });
       console.log(`💾 数据已备份到 R2 (${works.length} 个作品)`);
+
+      // 导出公开 works JSON（按 portfolio token hash 命名，供 Cloudflare Pages 静态页访问）
+      const pubData = JSON.stringify({ works });
+      const tokenHash = crypto.createHash('sha256').update(config.portfolioToken || '').digest('hex').slice(0, 16);
+      const pubKey = `data/works-${tokenHash}.json`;
+      const pubUrl = r2PresignedUrl('PUT', pubKey, 'application/json', 600);
+      await new Promise((r, rj) => {
+        const req = https.request(pubUrl, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(pubData) } }, res => res.statusCode < 300 ? r() : rj(new Error('R2 ' + res.statusCode)));
+        req.on('error', rj);
+        req.write(pubData);
+        req.end();
+      });
+      console.log(`🌐 公开 works JSON 已导出: ${pubKey}`);
     } catch (e) {
       console.error('❌ 备份到 R2 失败:', e.message);
     }
@@ -491,7 +509,7 @@ app.post('/api/upload', authAdmin, async (req, res) => {
       bb.on('filesLimit', () => reject(new Error('一次只能上传一个文件')));
       req.pipe(bb);
     });
-    res.json({ success: true, filename: result.key, originalName: result.filename, videoUrl: '/v/' + result.key, size: result.size });
+    res.json({ success: true, filename: result.key, originalName: result.filename, videoUrl: r2PublicUrl(result.key), size: result.size });
   } catch (err) {
     console.error('R2 upload error:', err);
     res.json({ success: false, error: '上传失败: ' + err.message });
@@ -607,7 +625,7 @@ app.post('/api/admin/migrate-list', async (req, res) => {
           project: proj,
           filename: r2Key,
           originalName: filenameWithExt,
-          videoUrl: '/v/' + r2Key,
+          videoUrl: r2PublicUrl(r2Key),
           coverUrl: r.eager && r.eager[0] ? r.eager[0].secure_url : '',
           shareToken: crypto.randomBytes(8).toString('hex'),
           createdAt: r.created_at,
@@ -817,7 +835,7 @@ app.post('/api/replace-video/:id', authAdmin, async (req, res) => {
     });
     works[idx].filename = result.key;
     works[idx].originalName = result.filename;
-    works[idx].videoUrl = '/v/' + result.key;
+    works[idx].videoUrl = r2PublicUrl(result.key);
     saveWorksToCloudinary();
     res.json({ success: true, work: works[idx] });
   } catch (err) {
@@ -922,21 +940,10 @@ app.get('/api/share-data', authShare, (req, res) => {
 });
 
 // 作品集数据
-app.get('/api/portfolio-data', authShare, async (req, res) => {
-  try {
-    // 对 R2 视频返回 presigned URL（跳过 Render 重定向，省流量）
-    const out = await Promise.all(works.map(async w => {
-      const item = { ...w };
-      if (w.videoUrl && w.videoUrl.startsWith('/v/') && R2_ENABLED) {
-        try { item.videoUrl = await r2PresignedUrl('GET', w.videoUrl.slice(3), null, 86400); } catch (e) {}
-      }
-      return item;
-    }));
-    res.setHeader('Cache-Control', 'public, max-age=300'); // 5分钟缓存，多访客共享 presigned URL
-    res.json(out);
-  } catch (e) {
-    res.json(works);
-  }
+app.get('/api/portfolio-data', authShare, (req, res) => {
+  // videoUrl 已是 r2.dev 公开 URL，直接返回（无 Render 重定向，零流量消耗）
+  res.setHeader('Cache-Control', 'public, max-age=60');
+  res.json(works);
 });
 
 // ========== 页面路由 ==========
