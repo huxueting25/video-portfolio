@@ -562,7 +562,7 @@ app.post('/api/admin/migrate-list', async (req, res) => {
         newWorks.push({
           id: crypto.randomBytes(8).toString('hex'),
           title,
-          description:,
+          description: '',
           category: cat,
           project: proj,
           filename: r2Key,
