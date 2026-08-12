@@ -509,6 +509,88 @@ app.post('/api/recover', async (req, res) => {
   res.json({ success: false, recovered: 0, msg: 'Cloudinary 数据文件访问失败，请稍后重试' });
 });
 
+// POST /api/admin/migrate-list: 列出 Cloudinary 所有 portfolio/videos 资源，批量下载→上传到 R2，自动从文件名解析标题/分类/项目
+app.post('/api/admin/migrate-list', async (req, res) => {
+  if (req.body?.pw !== 'migrate2026') return res.status(403).json({ error: 'invalid pw' });
+  if (!R2_ENABLED) return res.json({ success: false, error: 'R2 未配置' });
+
+  const log = [];
+  try {
+    // 1. 列出 Cloudinary portfolio/videos/* 所有视频
+    log.push('1. 列出 Cloudinary 视频资源...');
+    const list = await cloudinary.api.resources({
+      type: 'upload',
+      resource_type: 'video',
+      prefix: 'portfolio/videos/',
+      max_results: 500,
+    });
+    const resources = list.resources || [];
+    log.push(`   找到 ${resources.length} 个视频`);
+
+    // 2. 逐个迁移
+    const newWorks = [];
+    for (let i = 0; i < resources.length; i++) {
+      const r = resources[i];
+      const originalName = r.original_filename || (r.public_id.split('/').pop());
+      const filenameWithExt = originalName.match(/\.[a-z0-9]+$/i) ? originalName : originalName + '.mp4';
+
+      // 自动解析标题/分类/项目（从文件名）
+      const title = originalName.replace(/\.[a-z0-9]+$/i, '').replace(/^portfolio\/videos\/[^/]+\//, '');
+      const cat = detectCategory(title, filenameWithExt);
+      const proj = detectProject(title, filenameWithExt);
+
+      try {
+        // 下载原视频到临时文件
+        const tmp = path.join(os.tmpdir(), 'mig_' + crypto.randomBytes(6).toString('hex'));
+        const downloadUrl = r.secure_url;
+        const r2Key = `videos/${crypto.randomBytes(8).toString('hex')}/${filenameWithExt}`;
+        const presigned = await new Promise((resolve, reject) => {
+          const out = require('fs').createWriteStream(tmp);
+          require('https').get(downloadUrl, r2 => { r2.pipe(out); out.on('finish', () => resolve()); out.on('error', reject); });
+        });
+
+        // 上传到 R2
+        const putUrl = r2PresignedUrl('PUT', r2Key, 'video/mp4', 600);
+        const fileSize = require('fs').statSync(tmp).size;
+        await new Promise((r, rj) => {
+          const u = https.request(putUrl, { method: 'PUT', headers: { 'Content-Type': 'video/mp4', 'Content-Length': fileSize } }, res => { res.statusCode < 300 ? r() : rj(new Error(`R2 ${res.statusCode}`)); });
+          u.on('error', rj);
+          require('fs').createReadStream(tmp).pipe(u);
+        });
+        require('fs').unlinkSync(tmp);
+
+        newWorks.push({
+          id: crypto.randomBytes(8).toString('hex'),
+          title,
+          description:,
+          category: cat,
+          project: proj,
+          filename: r2Key,
+          originalName: filenameWithExt,
+          videoUrl: '/v/' + r2Key,
+          coverUrl: r.eager && r.eager[0] ? r.eager[0].secure_url : '',
+          shareToken: crypto.randomBytes(8).toString('hex'),
+          createdAt: r.created_at,
+        });
+        log.push(`   [${i+1}/${resources.length}] ✓ ${title}`);
+      } catch (e) {
+        log.push(`   [${i+1}/${resources.length}] ✗ ${originalName}: ${e.message}`);
+      }
+    }
+
+    // 3. 写回内存 + 保存到 Cloudinary + 本地
+    works = newWorks;
+    saveWorksToCloudinary();
+    require('fs').writeFileSync(require('path').join(__dirname, 'data-backup-r3-final.json'), JSON.stringify({works, config, _savedAt: new Date().toISOString()}, null, 2));
+    log.push(`3. ✅ 完成 ${newWorks.length} 个作品`);
+
+    res.json({ success: true, migrated: newWorks.length, log });
+  } catch (e) {
+    log.push(`失败: ${e.message}`);
+    res.json({ success: false, error: e.message, log });
+  }
+});
+
 // ========== 前端直传 Cloudinary 的一次性签名（弃用，保留兼容） ==========
 app.get('/api/cloudinary-sign', authAdmin, (req, res) => {
   try {
