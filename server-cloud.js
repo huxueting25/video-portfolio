@@ -882,10 +882,21 @@ app.get('/api/share-data', authShare, (req, res) => {
 });
 
 // 作品集数据
-app.get('/api/portfolio-data', authShare, (req, res) => {
-  // 短缓存让 5 秒内多个访客共享同一份响应
-  res.setHeader('Cache-Control', 'public, max-age=5');
-  res.json(works);
+app.get('/api/portfolio-data', authShare, async (req, res) => {
+  try {
+    // 对 R2 视频返回 presigned URL（跳过 Render 重定向，省流量）
+    const out = await Promise.all(works.map(async w => {
+      const item = { ...w };
+      if (w.videoUrl && w.videoUrl.startsWith('/v/') && R2_ENABLED) {
+        try { item.videoUrl = await r2PresignedUrl('GET', w.videoUrl.slice(3), null, 86400); } catch (e) {}
+      }
+      return item;
+    }));
+    res.setHeader('Cache-Control', 'public, max-age=300'); // 5分钟缓存，多访客共享 presigned URL
+    res.json(out);
+  } catch (e) {
+    res.json(works);
+  }
 });
 
 // ========== 页面路由 ==========
