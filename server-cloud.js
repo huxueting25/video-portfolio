@@ -167,7 +167,6 @@ async function saveWorksToCloudinary() {
       console.error('❌ 备份到 R2 失败:', e.message);
     }
   }
-  }
 }
 
 // ========== 中间件 ==========
