@@ -169,18 +169,18 @@ async function saveWorksToCloudinary() {
       });
       console.log(`💾 数据已备份到 R2 (${works.length} 个作品)`);
 
-      // 导出公开 works JSON（按 portfolio token hash 命名，供 Cloudflare Pages 静态页访问）
-      const pubData = JSON.stringify({ works });
+      // 导出公开 works JS（script 标签加载，不受 CORS 限制）
+      const pubData = `window.__WORKS__ = ${JSON.stringify(works)};`;
       const tokenHash = crypto.createHash('sha256').update(config.portfolioToken || '').digest('hex').slice(0, 16);
-      const pubKey = `data/works-${tokenHash}.json`;
-      const pubUrl = r2PresignedUrl('PUT', pubKey, 'application/json', 600);
+      const pubKey = `data/works-${tokenHash}.js`;
+      const pubUrl = r2PresignedUrl('PUT', pubKey, 'application/javascript', 600);
       await new Promise((r, rj) => {
-        const req = https.request(pubUrl, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(pubData) } }, res => res.statusCode < 300 ? r() : rj(new Error('R2 ' + res.statusCode)));
+        const req = https.request(pubUrl, { method: 'PUT', headers: { 'Content-Type': 'application/javascript', 'Content-Length': Buffer.byteLength(pubData) } }, res => res.statusCode < 300 ? r() : rj(new Error('R2 ' + res.statusCode)));
         req.on('error', rj);
         req.write(pubData);
         req.end();
       });
-      console.log(`🌐 公开 works JSON 已导出: ${pubKey}`);
+      console.log(`🌐 公开 works JS 已导出: ${pubKey}`);
     } catch (e) {
       console.error('❌ 备份到 R2 失败:', e.message);
     }
