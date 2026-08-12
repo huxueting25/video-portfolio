@@ -154,20 +154,22 @@ function showErr(msg) {
 if (!tokenParam) {
   showErr('<p>访问需要有效的分享链接</p>');
 } else {
-  // 纯静态模式：用 token 的 hash 拼出 R2 公开 works JSON 地址（只有持 token 者能访问）
+  // 纯静态模式：用 token hash 拼 R2 地址，script 标签加载（不受 CORS 限制）
   (async () => {
     try {
       const hashBuf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(tokenParam));
       const hash = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
-      const dataUrl = 'https://pub-af8e63a9c8fa418992e9e2de7412f5ee.r2.dev/data/works-' + hash + '.json';
-      const resp = await fetch(dataUrl);
-      if (!resp.ok) throw new Error('数据不存在');
-      const data = await resp.json();
-      const works = data.works || [];
-      allWorks = works;
-      allWorks.forEach(w => { if (!w.project) w.project = 'echocalypse'; if (!w.category) w.category = 'EN'; });
-      renderAll();
-      document.getElementById('loading-overlay').style.display = 'none';
+      const s = document.createElement('script');
+      s.src = 'https://pub-af8e63a9c8fa418992e9e2de7412f5ee.r2.dev/data/works-' + hash + '.js';
+      s.onload = () => {
+        const works = window.__WORKS__ || [];
+        allWorks = works;
+        allWorks.forEach(w => { if (!w.project) w.project = 'echocalypse'; if (!w.category) w.category = 'EN'; });
+        renderAll();
+        document.getElementById('loading-overlay').style.display = 'none';
+      };
+      s.onerror = () => showErr('<p>作品数据加载失败，请检查链接是否有效</p>');
+      document.head.appendChild(s);
     } catch(e) {
       showErr('<p>作品数据加载失败，请检查链接是否有效</p>');
     }
