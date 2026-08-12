@@ -102,9 +102,32 @@ async function loadWorksFromCloudinary() {
     }
     cloudinaryReady = true;
   } catch (e) {
-    // 首次运行时文件不存在，这是正常的
-    console.log('⚠️ Cloudinary 数据文件不存在，从空数据开始');
+    console.log('⚠️ Cloudinary 加载失败，从 R2 备份加载...');
     cloudinaryReady = true;
+    // 失败时回退到 R2 备份
+    if (R2_ENABLED) {
+      try {
+        const url = await new Promise((resolve, reject) => {
+          const u = https.request({ hostname: R2_HOST, path: `/${R2_BUCKET}/data/works.json`, method: 'GET' }, res => {
+            let body = '';
+            res.on('data', c => body += c);
+            res.on('end', () => resolve({ status: res.statusCode, body }));
+          });
+          u.on('error', reject);
+          u.end();
+        });
+        if (url.status === 200) {
+          const data = JSON.parse(url.body);
+          if (data.works && Array.isArray(data.works)) {
+            works = data.works;
+            console.log(`✅ 从 R2 备份加载了 ${works.length} 个作品`);
+          }
+          if (data.config) {
+            config = { ...config, ...data.config };
+          }
+        }
+      } catch (e2) { console.log('⚠️ R2 备份也不可用，从空数据开始'); }
+    }
   }
 }
 
@@ -126,6 +149,24 @@ async function saveWorksToCloudinary() {
     console.log(`💾 数据已保存到 Cloudinary (${works.length} 个作品)`);
   } catch (e) {
     console.error('❌ 保存到 Cloudinary 失败:', e.message);
+  }
+  // 同步备份到 R2 raw 文件（Cloudinary 限流时仍可保存）
+  if (R2_ENABLED) {
+    try {
+      const data = JSON.stringify({ config, works, _savedAt: new Date().toISOString() });
+      const key = 'data/works.json';
+      const putUrl = r2PresignedUrl('PUT', key, 'application/json', 600);
+      await new Promise((r, rj) => {
+        const req = https.request(putUrl, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) } }, res => res.statusCode < 300 ? r() : rj(new Error('R2 ' + res.statusCode)));
+        req.on('error', rj);
+        req.write(data);
+        req.end();
+      });
+      console.log(`💾 数据已备份到 R2 (${works.length} 个作品)`);
+    } catch (e) {
+      console.error('❌ 备份到 R2 失败:', e.message);
+    }
+  }
   }
 }
 
