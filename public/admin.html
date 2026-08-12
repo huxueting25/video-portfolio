@@ -535,12 +535,55 @@ function uploadVideoChunked(file, eid, onProgress) {
 
 async function uploadVideo(file) {
   document.getElementById('upload-hint').style.display='none'; document.getElementById('upload-progress').style.display='block';
+  if (file.size > 300 * 1024 * 1024) {
+    // 大文件：分片上传（multipart，支持几 GB）
+    await uploadVideoChunkedR2(file, (pct) => {
+      document.getElementById('progress-fill').style.width=pct+'%';
+      document.getElementById('upload-status').textContent='上传中... '+pct+'%（分片）';
+    }).then(d => {
+      uploadedFile=d;
+      document.getElementById('upload-progress').style.display='none'; document.getElementById('upload-done').style.display='block';
+      document.getElementById('uploaded-name').textContent=d.originalName;
+      if(!document.getElementById('work-title').value)document.getElementById('work-title').value=d.originalName.replace(/\.\w+$/,'');
+    }).catch(err => {
+      document.getElementById('upload-status').textContent='上传失败: '+err.message;
+    });
+    return;
+  }
   const fd=new FormData(); fd.append('video',file);
   const xhr=new XMLHttpRequest(); xhr.open('POST','/api/upload'); xhr.setRequestHeader('X-Admin-Token',adminToken);
   xhr.upload.onprogress=e=>{if(e.lengthComputable){const pct=Math.round(e.loaded/e.total*100);document.getElementById('progress-fill').style.width=pct+'%';document.getElementById('upload-status').textContent='上传中... '+pct+'%';}};
   xhr.onload=()=>{try{const d=JSON.parse(xhr.responseText);if(d.success){uploadedFile=d;document.getElementById('upload-progress').style.display='none';document.getElementById('upload-done').style.display='block';document.getElementById('uploaded-name').textContent=d.originalName;if(!document.getElementById('work-title').value)document.getElementById('work-title').value=d.originalName.replace(/\.\w+$/,'');}else{document.getElementById('upload-status').textContent='上传失败: '+d.error;}}catch(e){document.getElementById('upload-status').textContent='上传失败: 服务器响应异常';}};
   xhr.onerror=()=>{document.getElementById('upload-status').textContent='上传失败，网络错误';};
   xhr.send(fd);
+}
+
+// 分片上传（multipart upload）
+async function uploadVideoChunkedR2(file, onProgress) {
+  const CHUNK = 8 * 1024 * 1024; // 8MB/片
+  // 1. 初始化
+  const initR = await fetch('/api/upload/init', { method:'POST', headers:{'Content-Type':'application/json','X-Admin-Token':adminToken}, body:JSON.stringify({filename:file.name}) });
+  const init = await initR.json();
+  if (!init.success) throw new Error(init.error);
+  const { key, uploadId } = init;
+  // 2. 逐片上传
+  const parts = [];
+  const total = Math.ceil(file.size / CHUNK);
+  for (let i = 0; i < total; i++) {
+    const chunk = file.slice(i * CHUNK, Math.min((i+1) * CHUNK, file.size));
+    const resp = await fetch('/api/upload/part?key='+encodeURIComponent(key)+'&uploadId='+encodeURIComponent(uploadId)+'&partNumber='+(i+1), {
+      method:'POST', headers:{'Content-Type':'application/octet-stream','X-Admin-Token':adminToken}, body: chunk
+    });
+    const d = await resp.json();
+    if (!d.success) throw new Error(d.error);
+    parts.push({ partNumber: i+1, etag: d.etag });
+    onProgress(Math.round((i+1)/total*100));
+  }
+  // 3. 完成（创建作品，元数据提交时再填）
+  const completeR = await fetch('/api/upload/complete', { method:'POST', headers:{'Content-Type':'application/json','X-Admin-Token':adminToken}, body:JSON.stringify({key, uploadId, parts, originalName: file.name}) });
+  const complete = await completeR.json();
+  if (!complete.success) throw new Error(complete.error);
+  return { filename: key, originalName: file.name, videoUrl: complete.videoUrl, size: file.size };
 }
 function clearUpload() { uploadedFile=null; fileInput.value=''; document.getElementById('upload-hint').style.display='flex'; document.getElementById('upload-progress').style.display='none'; document.getElementById('upload-done').style.display='none'; }
 
