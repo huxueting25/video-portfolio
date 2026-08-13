@@ -95,6 +95,9 @@ function r2SignedRequest(method, key, extraQuery, body) {
 function r2Http(method, key, extraQuery, body) {
   return new Promise((resolve, reject) => {
     const reqOpts = r2SignedRequest(method, key, extraQuery, body);
+        if (body && (Buffer.isBuffer(body) || typeof body === 'string')) {
+      reqOpts.headers['content-length'] = String(Buffer.isBuffer(body) ? body.length : Buffer.byteLength(body));
+    }
     const req = https.request({ ...reqOpts, method }, (res) => {
       let data = '';
       res.on('data', c => data += c);
