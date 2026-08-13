@@ -227,7 +227,7 @@ function renderWorkItem(w) {
   +(w.coverUrl?'<img src="'+w.coverUrl+'" class="preview-cover" style="width:100%;height:100%;object-fit:contain;border-radius:8px;">':'')
   +'<video src="'+ (w.videoUrl||'') +'" poster="'+ p +'" preload="metadata" muted playsinline onclick="this.paused?this.play():this.pause()" class="preview-video" style="width:100%;height:100%;object-fit:contain;border-radius:8px;cursor:pointer;'+(w.coverUrl?'display:none;':'')+'"></video>'
   +'<div class="play-overlay" onclick="pvFull(\''+w.id+'\')">🔍</div></div>'
-  +'<div class="work-detail"><div class="work-title-row"><h4 class="work-title-text">'+w.title+'</h4><span class="cat-badge cat-badge-'+(w.category||'EN')+'">'+catLabel(w.category)+'</span></div>'
+  +'<div class="work-detail"><div class="work-title-row"><h4 class="work-title-text">'+w.title+'</h4>'+((w.project==='clip'||w.project==='aigc')?'':'<span class="cat-badge cat-badge-'+(w.category||'EN')+'">'+catLabel(w.category)+'</span>')+'</div>'
   +'<p class="work-desc-text">'+(w.description||'暂无描述')+'</p><p class="work-date">'+fmtDate(w.createdAt)+'</p>'
   +'<div class="work-btns"><button class="btn-primary btn-xs" onclick="editWork(\''+w.id+'\')">✏️ 编辑</button><button class="btn-secondary btn-xs" onclick="copyShareLink(\''+w.shareToken+'\')">📋 链接</button><button class="btn-danger btn-xs" onclick="deleteWork(\''+w.id+'\')">🗑 删除</button></div></div></div>';
 }
