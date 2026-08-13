@@ -56,7 +56,8 @@ function r2PresignedUrl(method, key, contentType, expires) {
   // canonical URI 必须对路径段做 RFC 3986 编码（空格→%20，中文→%E7%89%88）
   const uriEncode = s => encodeURIComponent(s).replace(/[!'()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
   const canonicalUri = '/' + R2_BUCKET + '/' + key.split('/').map(uriEncode).join('/');
-  const canonicalQuery = params.toString();
+  // canonicalQuery 必须按字典序排序（AWS SigV4 规范），不能用 URLSearchParams.toString() 的插入顺序
+  const canonicalQuery = [...params.entries()].sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0)).map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
   const canonicalReq = [method, canonicalUri, canonicalQuery, `host:${R2_HOST}`, '', 'host', 'UNSIGNED-PAYLOAD'].join('\n');
   const stringToSign = ['AWS4-HMAC-SHA256', amzDate, credScope, sha256hex(canonicalReq)].join('\n');
   const sig = crypto.createHmac('sha256', getSigningKey(R2_SECRET_KEY, dateStamp, region, service)).update(stringToSign).digest('hex');
