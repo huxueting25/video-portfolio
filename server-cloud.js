@@ -41,6 +41,22 @@ function getSigningKey(secret, date, region, service) {
   const kService = hmacSha256(kRegion, service);
   return hmacSha256(kService, 'aws4_request');
 }
+// 把任意文件名消毒：去掉路径、不可见字符、保留扩展名
+function sanitizeR2Name(name) {
+  let n = path.basename(String(name || 'video.mp4'));
+  // 去掉控制字符、路径分隔符、shell 危险字符、emoji 高位字节
+  n = n.replace(/[\x00-\x1f\\\/:\*\?"<>\|`\${}]/g, '_');
+  // 截掉首尾的点和空格（Windows 兼容）
+  n = n.replace(/^[.\s]+|[.\s]+$/g, '');
+  if (!n) n = 'video_' + Date.now() + '.mp4';
+  // 保留扩展名为 VIDEO_EXT 之一，否则强制为 .mp4
+  const ext = ('.' + (n.split('.').pop() || '')).toLowerCase();
+  if (!VIDEO_EXT.includes(ext)) n = n.replace(/\.[^.]*$/, '') + '.mp4';
+  // 防止超长（Cloudflare R2 key 上限 1024 字节）
+  if (Buffer.byteLength(n, 'utf8') > 240) n = n.slice(0, 200) + '.mp4';
+  return n;
+}
+
 function r2PresignedUrl(method, key, contentType, expires) {
   const region = 'auto', service = 's3';
   const now = new Date();
@@ -55,14 +71,16 @@ function r2PresignedUrl(method, key, contentType, expires) {
   params.set('X-Amz-SignedHeaders', 'host');
   // canonical URI 必须对路径段做 RFC 3986 编码（空格→%20，中文→%E7%89%88）
   const uriEncode = s => encodeURIComponent(s).replace(/[!'()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
-  const canonicalUri = '/' + R2_BUCKET + '/' + key.split('/').map(uriEncode).join('/');
+  const encodedSegments = key.split('/').map(uriEncode);
+  const canonicalUri = '/' + R2_BUCKET + '/' + encodedSegments.join('/');
   // canonicalQuery 必须按字典序排序（AWS SigV4 规范），不能用 URLSearchParams.toString() 的插入顺序
   const canonicalQuery = [...params.entries()].sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0)).map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
   const canonicalReq = [method, canonicalUri, canonicalQuery, `host:${R2_HOST}`, '', 'host', 'UNSIGNED-PAYLOAD'].join('\n');
   const stringToSign = ['AWS4-HMAC-SHA256', amzDate, credScope, sha256hex(canonicalReq)].join('\n');
   const sig = crypto.createHmac('sha256', getSigningKey(R2_SECRET_KEY, dateStamp, region, service)).update(stringToSign).digest('hex');
   params.set('X-Amz-Signature', sig);
-  return `https://${R2_HOST}/${R2_BUCKET}/${key}?${params.toString()}`;
+  // 关键：返回的 URL path 必须使用 RFC 3986 编码（和签名计算一致），否则中文字段会 SignatureDoesNotMatch
+  return `https://${R2_HOST}${canonicalUri}?${params.toString()}`;
 }
 
 // 通用 SigV4 签名请求（后端直连 R2，用于 multipart upload 等）
@@ -532,7 +550,8 @@ app.post('/api/upload', authAdmin, async (req, res) => {
         ws.on('error', reject);
         ws.on('finish', async () => {
           try {
-            const r2Key = `videos/${crypto.randomBytes(12).toString('hex')}/${info.filename}`;
+            const safeName = sanitizeR2Name(info.filename);
+            const r2Key = `videos/${crypto.randomBytes(12).toString('hex')}/${safeName}`;
             const fileSize = fs.statSync(tmpPath).size;
             const putUrl = r2PresignedUrl('PUT', r2Key, 'video/mp4', 600);
             await new Promise((r, rj) => {
@@ -543,7 +562,7 @@ app.post('/api/upload', authAdmin, async (req, res) => {
               upReq.on('error', rj);
               fs.createReadStream(tmpPath).pipe(upReq);
             });
-            resolve({ key: r2Key, filename: info.filename, size: fileSize });
+            resolve({ key: r2Key, filename: safeName, size: fileSize });
           } catch (e) { reject(e); }
         });
       });
@@ -566,7 +585,7 @@ app.post('/api/upload/init', authAdmin, async (req, res) => {
   if (!R2_ENABLED) return res.json({ success: false, error: 'R2 未配置' });
   try {
     const filename = (req.body && req.body.filename) || 'video.mp4';
-    const key = `videos/${crypto.randomBytes(12).toString('hex')}/${filename}`;
+    const key = `videos/${crypto.randomBytes(12).toString('hex')}/${sanitizeR2Name(filename)}`;
     const create = await r2Http('POST', key, { uploads: '' }, '');
     if (create.status !== 200) return res.json({ success: false, error: '创建上传失败: ' + create.body.slice(0, 200) });
     const uploadId = (create.body.match(/<UploadId>([^<]+)<\/UploadId>/) || [])[1];
@@ -626,7 +645,7 @@ app.post('/api/upload/abort', authAdmin, async (req, res) => {
 app.post('/api/r2-sign-upload', authAdmin, async (req, res) => {
   if (!R2_ENABLED) return res.json({ success: false, error: 'R2 未配置' });
   try {
-    const filename = (req.body && req.body.filename) || 'video.mp4';
+    const filename = sanitizeR2Name((req.body && req.body.filename) || 'video.mp4');
     const contentType = (req.body && req.body.contentType) || 'video/mp4';
     const key = `videos/${crypto.randomBytes(12).toString('hex')}/${filename}`;
     const url = r2PresignedUrl('PUT', key, contentType, 600);
@@ -917,7 +936,8 @@ app.post('/api/replace-video/:id', authAdmin, async (req, res) => {
         ws.on('error', reject);
         ws.on('finish', async () => {
           try {
-            const r2Key = `videos/${crypto.randomBytes(12).toString('hex')}/${info.filename}`;
+            const safeName = sanitizeR2Name(info.filename);
+            const r2Key = `videos/${crypto.randomBytes(12).toString('hex')}/${safeName}`;
             const fileSize = fs.statSync(tmpPath).size;
             const putUrl = r2PresignedUrl('PUT', r2Key, 'video/mp4', 600);
             await new Promise((r, rj) => {
@@ -928,7 +948,7 @@ app.post('/api/replace-video/:id', authAdmin, async (req, res) => {
               upReq.on('error', rj);
               fs.createReadStream(tmpPath).pipe(upReq);
             });
-            resolve({ key: r2Key, filename: info.filename, size: fileSize });
+            resolve({ key: r2Key, filename: safeName, size: fileSize });
           } catch (e) { reject(e); }
         });
       });
