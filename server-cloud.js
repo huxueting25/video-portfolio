@@ -113,6 +113,12 @@ function r2SignedRequest(method, key, extraQuery, body) {
 function r2Http(method, key, extraQuery, body) {
   return new Promise((resolve, reject) => {
     const reqOpts = r2SignedRequest(method, key, extraQuery, body);
+    // 关键：R2 (S3) 要求 PUT/POST 带 body 时必须有 Content-Length header
+    // 因为 content-length 不在 SignedHeaders 里，这里作为 unsigned header 加上去不影响签名
+    if (body && (Buffer.isBuffer(body) || typeof body === 'string')) {
+      const len = Buffer.isBuffer(body) ? body.length : Buffer.byteLength(body);
+      reqOpts.headers['content-length'] = String(len);
+    }
     const req = https.request({ ...reqOpts, method }, (res) => {
       let data = '';
       res.on('data', c => data += c);
