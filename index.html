@@ -93,6 +93,18 @@
         <a class="side-link sub" href="#section-aigc" data-proj="aigc" onclick="scrollToSection('aigc')"> 全部作品 <span class="side-count" id="proj-count-aigc">0</span></a>
       </div>
     </div>
+    <!-- 动画系列 -->
+    <div class="side-category">
+      <div class="side-cat-header" onclick="toggleCategory('animation')">
+        <svg class="cat-arrow" id="cat-arrow-animation" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        <span class="cat-label">动画系列</span>
+        <span class="side-count" id="cat-count-animation">0</span>
+      </div>
+      <div class="side-sub-items hidden" id="cat-sub-animation">
+        <a class="side-link sub" href="#section-animation-3d" data-proj="animation" data-cat="3d" onclick="scrollToSection('animation','3d')"> 🧊 三维 <span class="side-count" id="side-count-animation-3d">0</span></a>
+        <a class="side-link sub" href="#section-animation-2d" data-proj="animation" data-cat="2d" onclick="scrollToSection('animation','2d')"> 🎨 二维 <span class="side-count" id="side-count-animation-2d">0</span></a>
+      </div>
+    </div>
   </nav>
 </aside>
 
@@ -135,13 +147,15 @@ const projConfig = {
   zomline: { label: 'Zomline Survival', icon: '🧟', subs: null },
   gr: { label: '代号GR', icon: '⚔️', subs: null },
   clip: { label: '影视混剪', icon: '🎬', subs: null },
-  aigc: { label: 'AIGC作品', icon: '🤖', subs: null }
+  aigc: { label: 'AIGC作品', icon: '🤖', subs: null },
+  animation: { label: '动画系列', icon: '✨', subs: ['3d','2d'] }
 };
 const catConfig = { EN:{label:'欧美EN',icon:'🌍'}, JP:{label:'日本JP',icon:'🎌'}, CN:{label:'简中CN',icon:'🇨🇳'}, KR:{label:'韩国KR',icon:'🇰🇷'} };
+const animCatConfig = { '3d':{label:'三维',icon:'🧊'}, '2d':{label:'二维',icon:'🎨'} };
 
 // 折叠状态：默认全部折叠，访客自行点开
 const collapsed = {}; // { 'echocalypse': {EN:true,JP:true,...}, 'shaonian': false, ... }
-const blockCollapsed = { buyAd: true, echocalypse: true, shaonian: true, zomline: true, gr: true, clipCat: true, aigcCat: true };
+const blockCollapsed = { buyAd: true, echocalypse: true, shaonian: true, zomline: true, gr: true, clipCat: true, aigcCat: true, animationCat: true };
 Object.keys(projConfig).forEach(p => {
   const cfg = projConfig[p];
   collapsed[p] = cfg.subs ? Object.fromEntries(cfg.subs.map(c => [c, true])) : false;
@@ -198,12 +212,15 @@ function renderAll() {
   document.getElementById('cat-count-buyAd').textContent = buyAdTotal;
   document.getElementById('cat-count-clip').textContent = countProj('clip');
   document.getElementById('cat-count-aigc').textContent = countProj('aigc');
+  document.getElementById('cat-count-animation').textContent = countProj('animation');
   ['echocalypse','shaonian','zomline','gr','clip','aigc'].forEach(p => {
     document.getElementById('proj-count-'+p).textContent = countProj(p);
     const cfg = projConfig[p];
     if (cfg.subs) cfg.subs.forEach(c => { document.getElementById('side-count-'+p+'-'+c).textContent = countProjCat(p, c); });
   });
-  document.getElementById('search-result').textContent = searchQuery ? '找到 '+(buyAdTotal+countProj('clip'))+' 个结果' : '';
+  document.getElementById('side-count-animation-3d').textContent = countProjCat('animation', '3d');
+  document.getElementById('side-count-animation-2d').textContent = countProjCat('animation', '2d');
+  document.getElementById('search-result').textContent = searchQuery ? '找到 '+(buyAdTotal+countProj('clip')+countProj('aigc')+countProj('animation'))+' 个结果' : '';
 
   let html = '';
 
@@ -244,6 +261,23 @@ function renderAll() {
   const aigcWorks = allWorks.filter(w => (w.project||'echocalypse')==='aigc' && (!searchQuery || w.title.toLowerCase().includes(searchQuery))).sort((a,b)=>a.order-b.order);
   html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'aigcCat\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">AIGC作品</h2><span class="proj-block-count">'+aigcWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-aigcCat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body'+(blockCollapsed.aigcCat?' collapsed':'')+'" id="proj-body-aigcCat">';
   html += aigcWorks.length===0 ? '<p class="section-empty">暂无作品</p>' : aigcWorks.map(w => renderCard(w)).join('');
+  html += '</div></div>';
+
+  // ===== 动画系列 =====
+  const animWorks = allWorks.filter(w => (w.project||'echocalypse')==='animation' && (!searchQuery || w.title.toLowerCase().includes(searchQuery)));
+  const anim3d = animWorks.filter(w=>(w.category||'3d')==='3d').sort((a,b)=>a.order-b.order);
+  const anim2d = animWorks.filter(w=>(w.category||'3d')==='2d').sort((a,b)=>a.order-b.order);
+  html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'animationCat\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">动画系列</h2><span class="proj-block-count">'+animWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-animationCat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body'+(blockCollapsed.animationCat?' collapsed':'')+'" id="proj-body-animationCat">';
+  html += '<section class="cat-section" id="section-animation-3d" data-proj="animation" data-cat="3d">';
+  html += '<div class="section-header" onclick="toggleSub(\'animation\',\'3d\')"><div class="section-header-left"><span class="section-icon">🧊</span><h3 class="section-label">三维</h3><span class="section-count">'+anim3d.length+' 个作品</span></div><div class="section-toggle'+(collapsed.animation['3d']?' collapsed':'')+'" id="toggle-animation-3d"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>';
+  html += '<div class="section-body'+(collapsed.animation['3d']?' collapsed':'')+'" id="body-animation-3d">';
+  html += anim3d.length===0 ? '<p class="section-empty">暂无三维作品</p>' : anim3d.map(w => renderCard(w)).join('');
+  html += '</div></section>';
+  html += '<section class="cat-section" id="section-animation-2d" data-proj="animation" data-cat="2d">';
+  html += '<div class="section-header" onclick="toggleSub(\'animation\',\'2d\')"><div class="section-header-left"><span class="section-icon">🎨</span><h3 class="section-label">二维</h3><span class="section-count">'+anim2d.length+' 个作品</span></div><div class="section-toggle'+(collapsed.animation['2d']?' collapsed':'')+'" id="toggle-animation-2d"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>';
+  html += '<div class="section-body'+(collapsed.animation['2d']?' collapsed':'')+'" id="body-animation-2d">';
+  html += anim2d.length===0 ? '<p class="section-empty">暂无二维作品</p>' : anim2d.map(w => renderCard(w)).join('');
+  html += '</div></section>';
   html += '</div></div>';
 
   document.getElementById('category-sections').innerHTML = html;
@@ -315,6 +349,7 @@ function applyCat(proj, cat, isCollapsed) {
 function getTopBlock(proj) {
   if (proj === 'clip') return 'clipCat';
   if (proj === 'aigc') return 'aigcCat';
+  if (proj === 'animation') return 'animationCat';
   return 'buyAd';
 }
 
