@@ -44,6 +44,10 @@
 
   <div class="admin-layout">
     <aside class="admin-sidebar">
+      <div style="padding:8px;margin-bottom:8px;border:1px dashed var(--border);border-radius:8px;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">栏目排序</div>
+        <div id="section-order-list"></div>
+      </div>
       <div class="sidebar-title">买量广告</div>
       <nav class="sidebar-nav">
         <div class="side-project">
@@ -64,6 +68,7 @@
         <a class="side-link proj" href="#admin-section-gr" data-proj="gr" onclick="scrollToAdmin('gr')"><span class="side-dot side-dot-gr"></span>代号GR <span class="side-count" id="admin-proj-count-gr">0</span></a>
         <a class="side-link proj" href="#admin-section-clip" data-proj="clip" onclick="scrollToAdmin('clip')"><span class="side-dot side-dot-clip"></span>影视混剪 <span class="side-count" id="admin-proj-count-clip">0</span></a>
         <a class="side-link proj" href="#admin-section-aigc" data-proj="aigc" onclick="scrollToAdmin('aigc')"><span class="side-dot side-dot-aigc"></span>AIGC作品 <span class="side-count" id="admin-proj-count-aigc">0</span></a>
+        <a class="side-link proj" href="#admin-section-animation" data-proj="animation" onclick="scrollToAdmin('animation')"><span class="side-dot" style="background:#a855f7;"></span>动画系列 <span class="side-count" id="admin-proj-count-animation">0</span></a>
       </nav>
     </aside>
 
@@ -104,7 +109,7 @@
       <div class="modal-body">
         <div class="form-group"><label>作品标题</label><input type="text" id="work-title" placeholder="例如：色轮转场动画" required></div>
         <div class="form-group"><label>作品描述</label><textarea id="work-description" rows="3" placeholder="简短描述作品内容、技术手段..."></textarea></div>
-        <div class="form-group"><label>所属项目</label><select id="work-project" onchange="onProjectChange()" style="width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;"><option value="echocalypse">🎮 绯色回响</option><option value="shaonian">🏯 少年三国志</option><option value="zomline">🧟 Zomline Survival</option><option value="gr">⚔️ 代号GR</option><option value="clip">🎬 影视混剪（无市场分类）</option><option value="aigc">🤖 AIGC作品（无市场分类）</option></select></div>
+        <div class="form-group"><label>所属项目</label><select id="work-project" onchange="onProjectChange()" style="width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;"><option value="echocalypse">🎮 绯色回响</option><option value="shaonian">🏯 少年三国志</option><option value="zomline">🧟 Zomline Survival</option><option value="gr">⚔️ 代号GR</option><option value="clip">🎬 影视混剪（无市场分类）</option><option value="aigc">🤖 AIGC作品（无市场分类）</option><option value="animation">✨ 动画系列（三维/二维）</option></select></div>
         <div class="form-group" id="work-category-group"><label>市场分类</label><select id="work-category" style="width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;"><option value="EN">🌍 欧美EN</option><option value="JP">🎌 日本JP</option><option value="CN">🇨🇳 简中CN</option><option value="KR">🇰🇷 韩国KR</option></select></div>
         <div class="form-group" id="upload-area"><label>视频文件</label>
           <div class="upload-drop" id="drop-zone">
@@ -170,7 +175,9 @@
 
 <script>
 let adminToken = '', currentWorks = [], uploadedFile = null, portfolioToken = '', adminSearchQuery = '';
-const projConfig = { echocalypse:{label:'绯色回响',icon:'🎮',subs:['EN','JP','CN','KR']}, shaonian:{label:'少年三国志',icon:'🏯',subs:null}, zomline:{label:'Zomline Survival',icon:'🧟',subs:null}, gr:{label:'代号GR',icon:'⚔️',subs:null}, clip:{label:'影视混剪',icon:'🎬',subs:null}, aigc:{label:'AIGC作品',icon:'🤖',subs:null} };
+const projConfig = { echocalypse:{label:'绯色回响',icon:'🎮',subs:['EN','JP','CN','KR']}, shaonian:{label:'少年三国志',icon:'🏯',subs:null}, zomline:{label:'Zomline Survival',icon:'🧟',subs:null}, gr:{label:'代号GR',icon:'⚔️',subs:null}, clip:{label:'影视混剪',icon:'🎬',subs:null}, aigc:{label:'AIGC作品',icon:'🤖',subs:null}, animation:{label:'动画系列',icon:'✨',subs:['3d','2d']} };
+const animCatConfig = { '3d':{label:'三维',icon:'🧊'}, '2d':{label:'二维',icon:'🎨'} };
+let sectionOrder = ['buyAd', 'clip', 'aigc', 'animation'];
 const catConfig = { EN:{label:'欧美EN',icon:'🌍'}, JP:{label:'日本JP',icon:'🎌'}, CN:{label:'简中CN',icon:'🇨🇳'}, KR:{label:'韩国KR',icon:'🇰🇷'} };
 const adminCollapsed = {};
 Object.keys(projConfig).forEach(p => {
@@ -227,7 +234,7 @@ function renderWorkItem(w) {
   +(w.coverUrl?'<img src="'+w.coverUrl+'" class="preview-cover" style="width:100%;height:100%;object-fit:contain;border-radius:8px;">':'')
   +'<video src="'+ (w.videoUrl||'') +'" poster="'+ p +'" preload="metadata" muted playsinline onclick="this.paused?this.play():this.pause()" class="preview-video" style="width:100%;height:100%;object-fit:contain;border-radius:8px;cursor:pointer;'+(w.coverUrl?'display:none;':'')+'"></video>'
   +'<div class="play-overlay" onclick="pvFull(\''+w.id+'\')">🔍</div></div>'
-  +'<div class="work-detail"><div class="work-title-row"><h4 class="work-title-text">'+w.title+'</h4>'+((w.project==='clip'||w.project==='aigc')?'':'<span class="cat-badge cat-badge-'+(w.category||'EN')+'">'+catLabel(w.category)+'</span>')+'</div>'
+  +'<div class="work-detail"><div class="work-title-row"><h4 class="work-title-text">'+w.title+'</h4>'+((w.project==='clip'||w.project==='aigc')?'':(w.project==='animation'?'<span class="cat-badge" style="background:rgba(168,85,247,0.18);color:#a855f7;">'+(animCatConfig[w.category||'3d']||animCatConfig['3d']).label+'</span>':'<span class="cat-badge cat-badge-'+(w.category||'EN')+'">'+catLabel(w.category)+'</span>'))+'</div>'
   +'<p class="work-desc-text">'+(w.description||'暂无描述')+'</p><p class="work-date">'+fmtDate(w.createdAt)+'</p>'
   +'<div class="work-btns"><button class="btn-primary btn-xs" onclick="editWork(\''+w.id+'\')">✏️ 编辑</button><button class="btn-secondary btn-xs" onclick="copyShareLink(\''+w.shareToken+'\')">📋 链接</button><button class="btn-danger btn-xs" onclick="deleteWork(\''+w.id+'\')">🗑 删除</button></div></div></div>';
 }
@@ -237,7 +244,7 @@ function renderWorks() {
   let totalV = currentWorks.filter(w => !adminSearchQuery || w.title.toLowerCase().includes(adminSearchQuery)).length;
   document.getElementById('work-count').textContent = adminSearchQuery ? totalV : currentWorks.length;
 
-  ['echocalypse','shaonian','zomline','gr','clip','aigc'].forEach(p => {
+  ['echocalypse','shaonian','zomline','gr','clip','aigc','animation'].forEach(p => {
     const n = currentWorks.filter(w=>(w.project||'echocalypse')===p&&(!adminSearchQuery||w.title.toLowerCase().includes(adminSearchQuery))).length;
     const el = document.getElementById('admin-proj-count-'+p); if (el) el.textContent = n;
     const pcfg = projConfig[p];
@@ -248,59 +255,93 @@ function renderWorks() {
   });
 
   let html = '';
-  ['echocalypse','shaonian','zomline','gr'].forEach(proj => {
-    const pcfg = projConfig[proj];
-    const projWorks = currentWorks.filter(w=>(w.project||'echocalypse')===proj&&(!adminSearchQuery||w.title.toLowerCase().includes(adminSearchQuery)));
 
-    html += '<div style="margin-bottom:32px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid var(--accent);"><span style="font-size:20px;">'+pcfg.icon+'</span><h2 style="font-size:18px;font-weight:700;">'+pcfg.label+'</h2><span style="font-size:12px;color:var(--text-muted);background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:10px;">'+projWorks.length+' 个</span></div>';
+  // 渲染各一级分类模块（按 sectionOrder 排序）
+  sectionOrder.forEach(sec => {
+    if (sec === 'buyAd') {
+      // 买量广告
+      ['echocalypse','shaonian','zomline','gr'].forEach(proj => {
+        const pcfg = projConfig[proj];
+        const projWorks = currentWorks.filter(w=>(w.project||'echocalypse')===proj&&(!adminSearchQuery||w.title.toLowerCase().includes(adminSearchQuery)));
 
-    if (pcfg.subs) {
-      pcfg.subs.forEach(cat => {
-        const items = projWorks.filter(w=>(w.category||'EN')===cat).sort((a,b)=>a.order-b.order);
-        const isC = adminCollapsed[proj][cat];
-        const ccfg = catConfig[cat];
-        html += '<section class="cat-section" id="admin-section-'+proj+'-'+cat+'" data-proj="'+proj+'" data-cat="'+cat+'">';
-        html += '<div class="section-header" onclick="toggleAdminSub(\''+proj+'\',\''+cat+'\')"><div class="section-header-left"><span class="section-icon">'+ccfg.icon+'</span><h2 class="section-label">'+ccfg.label+'</h2><span class="section-count">'+items.length+' 个</span></div><div class="section-toggle'+(isC?' collapsed':'')+'" id="admin-toggle-'+proj+'-'+cat+'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>';
-        html += '<div class="section-body'+(isC?' collapsed':'')+'" id="admin-body-'+proj+'-'+cat+'">';
-        html += items.length===0 ? '<p class="section-empty">暂无作品</p>' : items.map(w => renderWorkItem(w)).join('');
-        html += '</div></section>';
+        html += '<div style="margin-bottom:32px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid var(--accent);"><span style="font-size:20px;">'+pcfg.icon+'</span><h2 style="font-size:18px;font-weight:700;">'+pcfg.label+'</h2><span style="font-size:12px;color:var(--text-muted);background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:10px;">'+projWorks.length+' 个</span></div>';
+
+        if (pcfg.subs) {
+          pcfg.subs.forEach(cat => {
+            const items = projWorks.filter(w=>(w.category||'EN')===cat).sort((a,b)=>a.order-b.order);
+            const isC = adminCollapsed[proj][cat];
+            const ccfg = catConfig[cat];
+            html += '<section class="cat-section" id="admin-section-'+proj+'-'+cat+'" data-proj="'+proj+'" data-cat="'+cat+'">';
+            html += '<div class="section-header" onclick="toggleAdminSub(\''+proj+'\',\''+cat+'\')"><div class="section-header-left"><span class="section-icon">'+ccfg.icon+'</span><h2 class="section-label">'+ccfg.label+'</h2><span class="section-count">'+items.length+' 个</span></div><div class="section-toggle'+(isC?' collapsed':'')+'" id="admin-toggle-'+proj+'-'+cat+'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>';
+            html += '<div class="section-body'+(isC?' collapsed':'')+'" id="admin-body-'+proj+'-'+cat+'">';
+            html += items.length===0 ? '<p class="section-empty">暂无作品</p>' : items.map(w => renderWorkItem(w)).join('');
+            html += '</div></section>';
+          });
+        } else {
+          const items = projWorks.sort((a,b)=>a.order-b.order);
+          html += '<section class="cat-section" id="admin-section-'+proj+'" data-proj="'+proj+'"><div class="section-body">';
+          html += items.length===0 ? '<p class="section-empty">暂无作品</p>' : items.map(w => renderWorkItem(w)).join('');
+          html += '</div></section>';
+        }
+        html += '</div>';
       });
-    } else {
-      const items = projWorks.sort((a,b)=>a.order-b.order);
-      html += '<section class="cat-section" id="admin-section-'+proj+'" data-proj="'+proj+'"><div class="section-body">';
-      html += items.length===0 ? '<p class="section-empty">暂无作品</p>' : items.map(w => renderWorkItem(w)).join('');
+    } else if (sec === 'clip') {
+      // 影视混剪 独立模块
+      const clipWorks = currentWorks.filter(w=>(w.project||'echocalypse')==='clip' && (!adminSearchQuery||w.title.toLowerCase().includes(adminSearchQuery))).sort((a,b)=>a.order-b.order);
+      html += '<div style="margin-bottom:32px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid var(--accent);"><span style="font-size:20px;">🎬</span><h2 style="font-size:18px;font-weight:700;">影视混剪</h2><span style="font-size:12px;color:var(--text-muted);background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:10px;">'+clipWorks.length+' 个</span>';
+      html += '<button class="btn-primary btn-sm" style="margin-left:auto;" onclick="quickUploadClip()">+ 上传影视混剪</button>';
+      html += '</div>';
+      if (clipWorks.length===0) {
+        html += '<div style="text-align:center;padding:40px;border:2px dashed var(--border);border-radius:14px;color:var(--text-muted);"><p style="margin-bottom:16px;">还没有影视混剪作品</p><button class="btn-primary" onclick="quickUploadClip()">+ 上传第一个作品</button></div>';
+      } else {
+        html += '<div class="cat-section" id="admin-section-clip" data-proj="clip"><div class="section-body">';
+        html += clipWorks.map(w => renderWorkItem(w)).join('');
+        html += '</div></div>';
+      }
+      html += '</div>';
+    } else if (sec === 'aigc') {
+      // AIGC作品 独立模块
+      const aigcWorks = currentWorks.filter(w=>(w.project||'echocalypse')==='aigc' && (!adminSearchQuery||w.title.toLowerCase().includes(adminSearchQuery))).sort((a,b)=>a.order-b.order);
+      html += '<div style="margin-bottom:32px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid var(--accent);"><span style="font-size:20px;">🤖</span><h2 style="font-size:18px;font-weight:700;">AIGC作品</h2><span style="font-size:12px;color:var(--text-muted);background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:10px;">'+aigcWorks.length+' 个</span>';
+      html += '<button class="btn-primary btn-sm" style="margin-left:auto;" onclick="quickUploadAigc()">+ 上传AIGC作品</button>';
+      html += '</div>';
+      if (aigcWorks.length===0) {
+        html += '<div style="text-align:center;padding:40px;border:2px dashed var(--border);border-radius:14px;color:var(--text-muted);"><p style="margin-bottom:16px;">还没有AIGC作品</p><button class="btn-primary" onclick="quickUploadAigc()">+ 上传第一个作品</button></div>';
+      } else {
+        html += '<div class="cat-section" id="admin-section-aigc" data-proj="aigc"><div class="section-body">';
+        html += aigcWorks.map(w => renderWorkItem(w)).join('');
+        html += '</div></div>';
+      }
+      html += '</div>';
+    } else if (sec === 'animation') {
+      // 动画系列 独立模块
+      const animWorks = currentWorks.filter(w=>(w.project||'echocalypse')==='animation' && (!adminSearchQuery||w.title.toLowerCase().includes(adminSearchQuery))).sort((a,b)=>a.order-b.order);
+      const anim3dWorks = animWorks.filter(w=>(w.category||'3d')==='3d');
+      const anim2dWorks = animWorks.filter(w=>(w.category||'3d')==='2d');
+      html += '<div style="margin-bottom:32px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid var(--accent);"><span style="font-size:20px;">✨</span><h2 style="font-size:18px;font-weight:700;">动画系列</h2><span style="font-size:12px;color:var(--text-muted);background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:10px;">'+animWorks.length+' 个</span>';
+      html += '<button class="btn-primary btn-sm" style="margin-left:auto;" onclick="quickUploadAnimation()">+ 上传动画作品</button>';
+      html += '</div>';
+      // 三维子分类
+      html += '<section class="cat-section" id="admin-section-animation-3d" data-proj="animation" data-cat="3d">';
+      html += '<div class="section-header" onclick="toggleAdminSub(\'animation\',\'3d\')"><div class="section-header-left"><span class="section-icon">🧊</span><h2 class="section-label">三维</h2><span class="section-count">'+anim3dWorks.length+' 个</span></div><div class="section-toggle'+(adminCollapsed.animation['3d']?' collapsed':'')+'" id="admin-toggle-animation-3d"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>';
+      html += '<div class="section-body'+(adminCollapsed.animation['3d']?' collapsed':'')+'" id="admin-body-animation-3d">';
+      html += anim3dWorks.length===0 ? '<p class="section-empty">暂无三维作品</p>' : anim3dWorks.map(w => renderWorkItem(w)).join('');
       html += '</div></section>';
+      // 二维子分类
+      html += '<section class="cat-section" id="admin-section-animation-2d" data-proj="animation" data-cat="2d">';
+      html += '<div class="section-header" onclick="toggleAdminSub(\'animation\',\'2d\')"><div class="section-header-left"><span class="section-icon">🎨</span><h2 class="section-label">二维</h2><span class="section-count">'+anim2dWorks.length+' 个</span></div><div class="section-toggle'+(adminCollapsed.animation['2d']?' collapsed':'')+'" id="admin-toggle-animation-2d"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>';
+      html += '<div class="section-body'+(adminCollapsed.animation['2d']?' collapsed':'')+'" id="admin-body-animation-2d">';
+      html += anim2dWorks.length===0 ? '<p class="section-empty">暂无二维作品</p>' : anim2dWorks.map(w => renderWorkItem(w)).join('');
+      html += '</div></section>';
+      html += '</div>';
     }
-    html += '</div>';
   });
 
-  // 影视混剪 独立模块
-  const clipWorks = currentWorks.filter(w=>(w.project||'echocalypse')==='clip' && (!adminSearchQuery||w.title.toLowerCase().includes(adminSearchQuery))).sort((a,b)=>a.order-b.order);
-  html += '<div style="margin-bottom:32px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid var(--accent);"><span style="font-size:20px;">🎬</span><h2 style="font-size:18px;font-weight:700;">影视混剪</h2><span style="font-size:12px;color:var(--text-muted);background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:10px;">'+clipWorks.length+' 个</span>';
-  html += '<button class="btn-primary btn-sm" style="margin-left:auto;" onclick="quickUploadClip()">+ 上传影视混剪</button>';
-  html += '</div>';
-  if (clipWorks.length===0) {
-    html += '<div style="text-align:center;padding:40px;border:2px dashed var(--border);border-radius:14px;color:var(--text-muted);"><p style="margin-bottom:16px;">还没有影视混剪作品</p><button class="btn-primary" onclick="quickUploadClip()">+ 上传第一个作品</button></div>';
-  } else {
-    html += '<div class="cat-section" id="admin-section-clip" data-proj="clip"><div class="section-body">';
-    html += clipWorks.map(w => renderWorkItem(w)).join('');
-    html += '</div></div>';
-  }
-  html += '</div>';
-
-  // AIGC作品 独立模块
-  const aigcWorks = currentWorks.filter(w=>(w.project||'echocalypse')==='aigc' && (!adminSearchQuery||w.title.toLowerCase().includes(adminSearchQuery))).sort((a,b)=>a.order-b.order);
-  html += '<div style="margin-bottom:32px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid var(--accent);"><span style="font-size:20px;">🤖</span><h2 style="font-size:18px;font-weight:700;">AIGC作品</h2><span style="font-size:12px;color:var(--text-muted);background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:10px;">'+aigcWorks.length+' 个</span>';
-  html += '<button class="btn-primary btn-sm" style="margin-left:auto;" onclick="quickUploadAigc()">+ 上传AIGC作品</button>';
-  html += '</div>';
-  if (aigcWorks.length===0) {
-    html += '<div style="text-align:center;padding:40px;border:2px dashed var(--border);border-radius:14px;color:var(--text-muted);"><p style="margin-bottom:16px;">还没有AIGC作品</p><button class="btn-primary" onclick="quickUploadAigc()">+ 上传第一个作品</button></div>';
-  } else {
-    html += '<div class="cat-section" id="admin-section-aigc" data-proj="aigc"><div class="section-body">';
-    html += aigcWorks.map(w => renderWorkItem(w)).join('');
-    html += '</div></div>';
-  }
-  html += '</div>';
+  // 渲染排序 UI
+  const sectionLabels = { buyAd:'🎮 买量广告', clip:'🎬 影视混剪', aigc:'🤖 AIGC作品', animation:'✨ 动画系列' };
+  const orderHtml = sectionOrder.map((s,i) => '<div style="display:flex;align-items:center;gap:4px;padding:3px 0;font-size:12px;"><span style="flex:1;">'+sectionLabels[s]+'</span>'+(i>0?'<button onclick="moveSectionUp(\''+s+'\')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:0 2px;">↑</button>':'')+(i<sectionOrder.length-1?'<button onclick="moveSectionDown(\''+s+'\')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:0 2px;">↓</button>':'')+'</div>').join('');
+  const orderEl = document.getElementById('section-order-list');
+  if (orderEl) orderEl.innerHTML = orderHtml;
 
   container.innerHTML = html;
   initDrag();
@@ -320,6 +361,26 @@ function quickUploadAigc() {
   document.getElementById('work-project').value = 'aigc';
   onProjectChange();
   document.getElementById('modal-upload').style.display='flex';
+}
+
+function quickUploadAnimation() {
+  uploadedFile=null;
+  resetForm();
+  document.getElementById('work-project').value = 'animation';
+  onProjectChange();
+  document.getElementById('modal-upload').style.display='flex';
+}
+
+function moveSectionUp(section) {
+  const i = sectionOrder.indexOf(section);
+  if (i > 0) { [sectionOrder[i-1], sectionOrder[i]] = [sectionOrder[i], sectionOrder[i-1]]; saveSectionOrder(); renderWorks(); }
+}
+function moveSectionDown(section) {
+  const i = sectionOrder.indexOf(section);
+  if (i < sectionOrder.length-1) { [sectionOrder[i], sectionOrder[i+1]] = [sectionOrder[i+1], sectionOrder[i]]; saveSectionOrder(); renderWorks(); }
+}
+function saveSectionOrder() {
+  fetch('/api/works', { method:'POST', headers:{'Content-Type':'application/json','X-Admin-Token':adminToken}, body:JSON.stringify({ sectionOrder }) });
 }
 
 function pvEnter(id,el) { const w=currentWorks.find(x=>x.id===id); if(!w||!w.coverUrl)return; const cv=el.querySelector('.preview-cover'), vid=el.querySelector('.preview-video'); if(cv)cv.style.display='none'; if(vid){vid.style.display='block';vid.play();} }
@@ -408,11 +469,15 @@ document.getElementById('btn-add').addEventListener('click',()=>{uploadedFile=nu
 function onProjectChange() {
   const p = document.getElementById('work-project').value;
   const grp = document.getElementById('work-category-group');
-  // 影视混剪无子类，自动隐藏市场分类
+  const catSelect = document.getElementById('work-category');
   if (p === 'clip' || p === 'aigc') {
     grp.style.display = 'none';
+  } else if (p === 'animation') {
+    grp.style.display = '';
+    catSelect.innerHTML = '<option value="3d">🧊 三维</option><option value="2d">🎨 二维</option>';
   } else {
     grp.style.display = '';
+    catSelect.innerHTML = '<option value="EN">🌍 欧美EN</option><option value="JP">🎌 日本JP</option><option value="CN">🇨🇳 简中CN</option><option value="KR">🇰🇷 韩国KR</option>';
   }
 }
 function resetForm() {

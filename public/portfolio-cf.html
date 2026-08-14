@@ -93,6 +93,18 @@
         <a class="side-link sub" href="#section-aigc" data-proj="aigc" onclick="scrollToSection('aigc')"> 全部作品 <span class="side-count" id="proj-count-aigc">0</span></a>
       </div>
     </div>
+    <!-- 动画系列 -->
+    <div class="side-category">
+      <div class="side-cat-header" onclick="toggleCategory('animation')">
+        <svg class="cat-arrow" id="cat-arrow-animation" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        <span class="cat-label">动画系列</span>
+        <span class="side-count" id="cat-count-animation">0</span>
+      </div>
+      <div class="side-sub-items hidden" id="cat-sub-animation">
+        <a class="side-link sub" href="#section-animation-3d" data-proj="animation" data-cat="3d" onclick="scrollToSection('animation','3d')"> 🧊 三维 <span class="side-count" id="side-count-animation-3d">0</span></a>
+        <a class="side-link sub" href="#section-animation-2d" data-proj="animation" data-cat="2d" onclick="scrollToSection('animation','2d')"> 🎨 二维 <span class="side-count" id="side-count-animation-2d">0</span></a>
+      </div>
+    </div>
   </nav>
 </aside>
 
@@ -135,13 +147,16 @@ const projConfig = {
   zomline: { label: 'Zomline Survival', icon: '🧟', subs: null },
   gr: { label: '代号GR', icon: '⚔️', subs: null },
   clip: { label: '影视混剪', icon: '🎬', subs: null },
-  aigc: { label: 'AIGC作品', icon: '🤖', subs: null }
+  aigc: { label: 'AIGC作品', icon: '🤖', subs: null },
+  animation: { label: '动画系列', icon: '✨', subs: ['3d','2d'] }
 };
+const animCatConfig = { '3d':{label:'三维',icon:'🧊'}, '2d':{label:'二维',icon:'🎨'} };
+let sectionOrder = ['buyAd', 'clip', 'aigc', 'animation'];
 const catConfig = { EN:{label:'欧美EN',icon:'🌍'}, JP:{label:'日本JP',icon:'🎌'}, CN:{label:'简中CN',icon:'🇨🇳'}, KR:{label:'韩国KR',icon:'🇰🇷'} };
 
 // 折叠状态：默认全部折叠，访客自行点开
 const collapsed = {}; // { 'echocalypse': {EN:true,JP:true,...}, 'shaonian': false, ... }
-const blockCollapsed = { buyAd: true, echocalypse: true, shaonian: true, zomline: true, gr: true, clipCat: true, aigcCat: true };
+const blockCollapsed = { buyAd: true, echocalypse: true, shaonian: true, zomline: true, gr: true, clipCat: true, aigcCat: true, animationCat: true };
 Object.keys(projConfig).forEach(p => {
   const cfg = projConfig[p];
   collapsed[p] = cfg.subs ? Object.fromEntries(cfg.subs.map(c => [c, true])) : false;
@@ -154,20 +169,22 @@ function showErr(msg) {
 if (!tokenParam) {
   showErr('<p>访问需要有效的分享链接</p>');
 } else {
-  // 纯静态模式：用 token 的 hash 拼出 R2 公开 works JSON 地址（只有持 token 者能访问）
+  // 纯静态模式：用 token hash 拼 R2 地址，script 标签加载（不受 CORS 限制）
   (async () => {
     try {
       const hashBuf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(tokenParam));
       const hash = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
-      const dataUrl = 'https://pub-af8e63a9c8fa418992e9e2de7412f5ee.r2.dev/data/works-' + hash + '.json';
-      const resp = await fetch(dataUrl);
-      if (!resp.ok) throw new Error('数据不存在');
-      const data = await resp.json();
-      const works = data.works || [];
-      allWorks = works;
-      allWorks.forEach(w => { if (!w.project) w.project = 'echocalypse'; if (!w.category) w.category = 'EN'; });
-      renderAll();
-      document.getElementById('loading-overlay').style.display = 'none';
+      const s = document.createElement('script');
+      s.src = 'https://pub-af8e63a9c8fa418992e9e2de7412f5ee.r2.dev/data/works-' + hash + '.js';
+      s.onload = () => {
+        const works = window.__WORKS__ || [];
+        allWorks = works;
+        allWorks.forEach(w => { if (!w.project) w.project = 'echocalypse'; if (!w.category) w.category = 'EN'; });
+        renderAll();
+        document.getElementById('loading-overlay').style.display = 'none';
+      };
+      s.onerror = () => showErr('<p>作品数据加载失败，请检查链接是否有效</p>');
+      document.head.appendChild(s);
     } catch(e) {
       showErr('<p>作品数据加载失败，请检查链接是否有效</p>');
     }
@@ -196,53 +213,82 @@ function renderAll() {
   document.getElementById('cat-count-buyAd').textContent = buyAdTotal;
   document.getElementById('cat-count-clip').textContent = countProj('clip');
   document.getElementById('cat-count-aigc').textContent = countProj('aigc');
-  ['echocalypse','shaonian','zomline','gr','clip','aigc'].forEach(p => {
-    document.getElementById('proj-count-'+p).textContent = countProj(p);
+  const animTotalCount = countProj('animation');
+  document.getElementById('cat-count-animation').textContent = animTotalCount;
+  ['echocalypse','shaonian','zomline','gr','clip','aigc','animation'].forEach(p => {
+    const el = document.getElementById('proj-count-'+p);
+    if (el) el.textContent = countProj(p);
     const cfg = projConfig[p];
-    if (cfg.subs) cfg.subs.forEach(c => { document.getElementById('side-count-'+p+'-'+c).textContent = countProjCat(p, c); });
+    if (cfg.subs) cfg.subs.forEach(c => { const cel = document.getElementById('side-count-'+p+'-'+c); if (cel) cel.textContent = countProjCat(p, c); });
   });
-  document.getElementById('search-result').textContent = searchQuery ? '找到 '+(buyAdTotal+countProj('clip'))+' 个结果' : '';
+  document.getElementById('search-result').textContent = searchQuery ? '找到 '+(buyAdTotal+countProj('clip')+countProj('aigc')+countProj('animation'))+' 个结果' : '';
 
   let html = '';
 
-  // ===== 买量广告 =====
-  html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'buyAd\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">买量广告</h2><span class="proj-block-count">'+buyAdTotal+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-buyAd"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body'+(blockCollapsed.buyAd?' collapsed':'')+'" id="proj-body-buyAd">';
-  ['echocalypse','shaonian','zomline','gr'].forEach(proj => {
-    const pcfg = projConfig[proj];
-    const projWorks = allWorks.filter(w => (w.project||'echocalypse')===proj && (!searchQuery || w.title.toLowerCase().includes(searchQuery)));
-    html += '<div class="proj-block" data-proj="'+proj+'">';
-    html += '<div class="proj-block-header" onclick="toggleProjBlock(\''+proj+'\')"><div class="section-header-left"><span class="proj-block-icon">'+pcfg.icon+'</span><h2 class="proj-block-label">'+pcfg.label+'</h2><span class="proj-block-count">'+projWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-'+proj+'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>';
-    html += '<div class="proj-block-body'+(blockCollapsed[proj]?' collapsed':'')+'" id="proj-body-'+proj+'">';
-    if (pcfg.subs) {
-      pcfg.subs.forEach(cat => {
-        const items = projWorks.filter(w => (w.category||'EN')===cat).sort((a,b)=>a.order-b.order);
-        const isC = collapsed[proj][cat];
-        const ccfg = catConfig[cat];
-        html += '<section class="cat-section" id="section-'+proj+'-'+cat+'" data-proj="'+proj+'" data-cat="'+cat+'">';
-        html += '<div class="section-header" onclick="toggleSub(\''+proj+'\',\''+cat+'\')"><div class="section-header-left"><span class="section-icon">'+ccfg.icon+'</span><h3 class="section-label">'+ccfg.label+'</h3><span class="section-count">'+items.length+' 个作品</span></div><div class="section-toggle'+(isC?' collapsed':'')+'" id="toggle-'+proj+'-'+cat+'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>';
-        html += '<div class="section-body'+(isC?' collapsed':'')+'" id="body-'+proj+'-'+cat+'">';
-        html += items.length===0 ? '<p class="section-empty">暂无作品</p>' : items.map(w => renderCard(w)).join('');
-        html += '</div></section>';
+  // 按 sectionOrder 排序渲染各一级分类
+  sectionOrder.forEach(sec => {
+    if (sec === 'buyAd') {
+      // ===== 买量广告 =====
+      html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'buyAd\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">买量广告</h2><span class="proj-block-count">'+buyAdTotal+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-buyAd"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body'+(blockCollapsed.buyAd?' collapsed':'')+'" id="proj-body-buyAd">';
+      ['echocalypse','shaonian','zomline','gr'].forEach(proj => {
+        const pcfg = projConfig[proj];
+        const projWorks = allWorks.filter(w => (w.project||'echocalypse')===proj && (!searchQuery || w.title.toLowerCase().includes(searchQuery)));
+        html += '<div class="proj-block" data-proj="'+proj+'">';
+        html += '<div class="proj-block-header" onclick="toggleProjBlock(\''+proj+'\')"><div class="section-header-left"><span class="proj-block-icon">'+pcfg.icon+'</span><h2 class="proj-block-label">'+pcfg.label+'</h2><span class="proj-block-count">'+projWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-'+proj+'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>';
+        html += '<div class="proj-block-body'+(blockCollapsed[proj]?' collapsed':'')+'" id="proj-body-'+proj+'">';
+        if (pcfg.subs) {
+          pcfg.subs.forEach(cat => {
+            const items = projWorks.filter(w => (w.category||'EN')===cat).sort((a,b)=>a.order-b.order);
+            const isC = collapsed[proj][cat];
+            const ccfg = catConfig[cat];
+            html += '<section class="cat-section" id="section-'+proj+'-'+cat+'" data-proj="'+proj+'" data-cat="'+cat+'">';
+            html += '<div class="section-header" onclick="toggleSub(\''+proj+'\',\''+cat+'\')"><div class="section-header-left"><span class="section-icon">'+ccfg.icon+'</span><h3 class="section-label">'+ccfg.label+'</h3><span class="section-count">'+items.length+' 个作品</span></div><div class="section-toggle'+(isC?' collapsed':'')+'" id="toggle-'+proj+'-'+cat+'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>';
+            html += '<div class="section-body'+(isC?' collapsed':'')+'" id="body-'+proj+'-'+cat+'">';
+            html += items.length===0 ? '<p class="section-empty">暂无作品</p>' : items.map(w => renderCard(w)).join('');
+            html += '</div></section>';
+          });
+        } else {
+          const items = projWorks.sort((a,b)=>a.order-b.order);
+          html += items.length===0 ? '<p class="section-empty">暂无作品</p>' : items.map(w => renderCard(w)).join('');
+        }
+        html += '</div></div>';
       });
-    } else {
-      const items = projWorks.sort((a,b)=>a.order-b.order);
-      html += items.length===0 ? '<p class="section-empty">暂无作品</p>' : items.map(w => renderCard(w)).join('');
+      html += '</div></div>';
+    } else if (sec === 'clip') {
+      // ===== 影视混剪 =====
+      const clipWorks = allWorks.filter(w => (w.project||'echocalypse')==='clip' && (!searchQuery || w.title.toLowerCase().includes(searchQuery))).sort((a,b)=>a.order-b.order);
+      html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'clipCat\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">影视混剪</h2><span class="proj-block-count">'+clipWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-clipCat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body'+(blockCollapsed.clipCat?' collapsed':'')+'" id="proj-body-clipCat">';
+      html += clipWorks.length===0 ? '<p class="section-empty">暂无作品</p>' : clipWorks.map(w => renderCard(w)).join('');
+      html += '</div></div>';
+    } else if (sec === 'aigc') {
+      // ===== AIGC作品 =====
+      const aigcWorks = allWorks.filter(w => (w.project||'echocalypse')==='aigc' && (!searchQuery || w.title.toLowerCase().includes(searchQuery))).sort((a,b)=>a.order-b.order);
+      html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'aigcCat\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">AIGC作品</h2><span class="proj-block-count">'+aigcWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-aigcCat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body'+(blockCollapsed.aigcCat?' collapsed':'')+'" id="proj-body-aigcCat">';
+      html += aigcWorks.length===0 ? '<p class="section-empty">暂无作品</p>' : aigcWorks.map(w => renderCard(w)).join('');
+      html += '</div></div>';
+    } else if (sec === 'animation') {
+      // ===== 动画系列 =====
+      const animWorks = allWorks.filter(w => (w.project||'echocalypse')==='animation' && (!searchQuery || w.title.toLowerCase().includes(searchQuery)));
+      const anim3d = animWorks.filter(w=>(w.category||'3d')==='3d').sort((a,b)=>a.order-b.order);
+      const anim2d = animWorks.filter(w=>(w.category||'3d')==='2d').sort((a,b)=>a.order-b.order);
+      document.getElementById('side-count-animation-3d').textContent = anim3d.length;
+      document.getElementById('side-count-animation-2d').textContent = anim2d.length;
+      html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'animationCat\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">动画系列</h2><span class="proj-block-count">'+animWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-animationCat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body'+(blockCollapsed.animationCat?' collapsed':'')+'" id="proj-body-animationCat">';
+      // 三维
+      html += '<section class="cat-section" id="section-animation-3d" data-proj="animation" data-cat="3d">';
+      html += '<div class="section-header" onclick="toggleSub(\'animation\',\'3d\')"><div class="section-header-left"><span class="section-icon">🧊</span><h3 class="section-label">三维</h3><span class="section-count">'+anim3d.length+' 个作品</span></div><div class="section-toggle'+(collapsed.animation['3d']?' collapsed':'')+'" id="toggle-animation-3d"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>';
+      html += '<div class="section-body'+(collapsed.animation['3d']?' collapsed':'')+'" id="body-animation-3d">';
+      html += anim3d.length===0 ? '<p class="section-empty">暂无三维作品</p>' : anim3d.map(w => renderCard(w)).join('');
+      html += '</div></section>';
+      // 二维
+      html += '<section class="cat-section" id="section-animation-2d" data-proj="animation" data-cat="2d">';
+      html += '<div class="section-header" onclick="toggleSub(\'animation\',\'2d\')"><div class="section-header-left"><span class="section-icon">🎨</span><h3 class="section-label">二维</h3><span class="section-count">'+anim2d.length+' 个作品</span></div><div class="section-toggle'+(collapsed.animation['2d']?' collapsed':'')+'" id="toggle-animation-2d"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>';
+      html += '<div class="section-body'+(collapsed.animation['2d']?' collapsed':'')+'" id="body-animation-2d">';
+      html += anim2d.length===0 ? '<p class="section-empty">暂无二维作品</p>' : anim2d.map(w => renderCard(w)).join('');
+      html += '</div></section>';
+      html += '</div></div>';
     }
-    html += '</div></div>';
   });
-  html += '</div></div>';
-
-  // ===== 影视混剪 =====
-  const clipWorks = allWorks.filter(w => (w.project||'echocalypse')==='clip' && (!searchQuery || w.title.toLowerCase().includes(searchQuery))).sort((a,b)=>a.order-b.order);
-  html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'clipCat\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">影视混剪</h2><span class="proj-block-count">'+clipWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-clipCat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body'+(blockCollapsed.clipCat?' collapsed':'')+'" id="proj-body-clipCat">';
-  html += clipWorks.length===0 ? '<p class="section-empty">暂无作品</p>' : clipWorks.map(w => renderCard(w)).join('');
-  html += '</div></div>';
-
-  // ===== AIGC作品 =====
-  const aigcWorks = allWorks.filter(w => (w.project||'echocalypse')==='aigc' && (!searchQuery || w.title.toLowerCase().includes(searchQuery))).sort((a,b)=>a.order-b.order);
-  html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'aigcCat\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">AIGC作品</h2><span class="proj-block-count">'+aigcWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-aigcCat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body'+(blockCollapsed.aigcCat?' collapsed':'')+'" id="proj-body-aigcCat">';
-  html += aigcWorks.length===0 ? '<p class="section-empty">暂无作品</p>' : aigcWorks.map(w => renderCard(w)).join('');
-  html += '</div></div>';
 
   document.getElementById('category-sections').innerHTML = html;
   setupObservers();
@@ -313,6 +359,7 @@ function applyCat(proj, cat, isCollapsed) {
 function getTopBlock(proj) {
   if (proj === 'clip') return 'clipCat';
   if (proj === 'aigc') return 'aigcCat';
+  if (proj === 'animation') return 'animationCat';
   return 'buyAd';
 }
 
