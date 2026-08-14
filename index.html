@@ -24,7 +24,7 @@
 <aside class="sidebar">
   <nav class="sidebar-nav">
     <!-- 买量广告（游戏项目组） -->
-    <div class="side-category">
+    <div class="side-category" data-section="buyAd">
       <div class="side-cat-header" onclick="toggleCategory('buyAd')">
         <svg class="cat-arrow" id="cat-arrow-buyAd" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
         <span class="cat-label">买量广告</span>
@@ -72,7 +72,7 @@
       </div>
     </div>
     <!-- 影视混剪 -->
-    <div class="side-category">
+    <div class="side-category" data-section="clip">
       <div class="side-cat-header" onclick="toggleCategory('clip')">
         <svg class="cat-arrow" id="cat-arrow-clip" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
         <span class="cat-label">影视混剪</span>
@@ -83,7 +83,7 @@
       </div>
     </div>
     <!-- AIGC作品 -->
-    <div class="side-category">
+    <div class="side-category" data-section="aigc">
       <div class="side-cat-header" onclick="toggleCategory('aigc')">
         <svg class="cat-arrow" id="cat-arrow-aigc" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
         <span class="cat-label">AIGC作品</span>
@@ -94,7 +94,7 @@
       </div>
     </div>
     <!-- 动画系列 -->
-    <div class="side-category">
+    <div class="side-category" data-section="animation">
       <div class="side-cat-header" onclick="toggleCategory('animation')">
         <svg class="cat-arrow" id="cat-arrow-animation" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
         <span class="cat-label">动画系列</span>
@@ -183,6 +183,7 @@ if (!tokenParam) {
           sectionOrder = window.__SECTION_ORDER__;
         }
         allWorks.forEach(w => { if (!w.project) w.project = 'echocalypse'; if (!w.category) w.category = 'EN'; });
+        applySidebarOrder();
         renderAll();
         document.getElementById('loading-overlay').style.display = 'none';
       };
@@ -206,6 +207,16 @@ function countProj(proj) {
 
 function countProjCat(proj, cat) {
   return allWorks.filter(w => (w.project||'echocalypse')===proj && (w.category||'EN')===cat && (!searchQuery || w.title.toLowerCase().includes(searchQuery))).length;
+}
+
+function applySidebarOrder() {
+  const nav = document.querySelector('.sidebar-nav');
+  if (!nav) return;
+  const blocks = Array.from(nav.querySelectorAll('.side-category[data-section]'));
+  sectionOrder.forEach(sec => {
+    const el = blocks.find(b => b.dataset.section === sec);
+    if (el) nav.appendChild(el); // appendChild 会移动已有元素到末尾
+  });
 }
 
 function renderAll() {
