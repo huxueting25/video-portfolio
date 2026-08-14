@@ -140,6 +140,7 @@ let allWorks = [];
 let searchQuery = '';
 let vidCounter = 0;
 let activeProj = 'echocalypse', activeCat = 'EN';
+let sectionOrder = ['buyAd', 'clip', 'aigc', 'animation'];
 
 const projConfig = {
   echocalypse: { label: '绯色回响', icon: '🎮', subs: ['EN','JP','CN','KR'] },
@@ -178,6 +179,9 @@ if (!tokenParam) {
       s.onload = () => {
         const works = window.__WORKS__ || [];
         allWorks = works;
+        if (window.__SECTION_ORDER__ && Array.isArray(window.__SECTION_ORDER__)) {
+          sectionOrder = window.__SECTION_ORDER__;
+        }
         allWorks.forEach(w => { if (!w.project) w.project = 'echocalypse'; if (!w.category) w.category = 'EN'; });
         renderAll();
         document.getElementById('loading-overlay').style.display = 'none';
@@ -224,6 +228,9 @@ function renderAll() {
 
   let html = '';
 
+  // 按 sectionOrder 排序渲染各一级分类
+  sectionOrder.forEach(sec => {
+  if (sec === 'buyAd') {
   // ===== 买量广告 =====
   html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'buyAd\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">买量广告</h2><span class="proj-block-count">'+buyAdTotal+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-buyAd"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body'+(blockCollapsed.buyAd?' collapsed':'')+'" id="proj-body-buyAd">';
   ['echocalypse','shaonian','zomline','gr'].forEach(proj => {
@@ -250,19 +257,19 @@ function renderAll() {
     html += '</div></div>';
   });
   html += '</div></div>';
-
+  } else if (sec === 'clip') {
   // ===== 影视混剪 =====
   const clipWorks = allWorks.filter(w => (w.project||'echocalypse')==='clip' && (!searchQuery || w.title.toLowerCase().includes(searchQuery))).sort((a,b)=>a.order-b.order);
   html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'clipCat\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">影视混剪</h2><span class="proj-block-count">'+clipWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-clipCat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body'+(blockCollapsed.clipCat?' collapsed':'')+'" id="proj-body-clipCat">';
   html += clipWorks.length===0 ? '<p class="section-empty">暂无作品</p>' : clipWorks.map(w => renderCard(w)).join('');
   html += '</div></div>';
-
+  } else if (sec === 'aigc') {
   // ===== AIGC作品 =====
   const aigcWorks = allWorks.filter(w => (w.project||'echocalypse')==='aigc' && (!searchQuery || w.title.toLowerCase().includes(searchQuery))).sort((a,b)=>a.order-b.order);
   html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'aigcCat\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">AIGC作品</h2><span class="proj-block-count">'+aigcWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-aigcCat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body'+(blockCollapsed.aigcCat?' collapsed':'')+'" id="proj-body-aigcCat">';
   html += aigcWorks.length===0 ? '<p class="section-empty">暂无作品</p>' : aigcWorks.map(w => renderCard(w)).join('');
   html += '</div></div>';
-
+  } else if (sec === 'animation') {
   // ===== 动画系列 =====
   const animWorks = allWorks.filter(w => (w.project||'echocalypse')==='animation' && (!searchQuery || w.title.toLowerCase().includes(searchQuery)));
   const anim3d = animWorks.filter(w=>(w.category||'3d')==='3d').sort((a,b)=>a.order-b.order);
@@ -279,6 +286,8 @@ function renderAll() {
   html += anim2d.length===0 ? '<p class="section-empty">暂无二维作品</p>' : anim2d.map(w => renderCard(w)).join('');
   html += '</div></section>';
   html += '</div></div>';
+  }
+  });
 
   document.getElementById('category-sections').innerHTML = html;
   setupObservers();

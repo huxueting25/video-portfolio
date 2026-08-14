@@ -151,6 +151,7 @@ let config = {
   password: process.env.ADMIN_PASSWORD || 'portfolio2026',
   adminToken: process.env.ADMIN_TOKEN || crypto.randomBytes(16).toString('hex'),
   portfolioToken: process.env.PORTFOLIO_TOKEN || crypto.randomBytes(12).toString('hex'),
+  sectionOrder: ['buyAd', 'clip', 'aigc', 'animation'],
 };
 
 let works = [];
@@ -236,7 +237,8 @@ async function saveWorksToCloudinary() {
       console.log(`💾 数据已备份到 R2 (${works.length} 个作品)`);
 
       // 导出公开 works JS（script 标签加载，不受 CORS 限制）
-      const pubData = `window.__WORKS__ = ${JSON.stringify(works)};`;
+      const sectionOrder = Array.isArray(config.sectionOrder) && config.sectionOrder.length ? config.sectionOrder : ['buyAd', 'clip', 'aigc', 'animation'];
+      const pubData = `window.__WORKS__ = ${JSON.stringify(works)};\nwindow.__SECTION_ORDER__ = ${JSON.stringify(sectionOrder)};`;
       const tokenHash = crypto.createHash('sha256').update(config.portfolioToken || '').digest('hex').slice(0, 16);
       const pubKey = `data/works-${tokenHash}.js`;
       const pubUrl = r2PresignedUrl('PUT', pubKey, 'application/javascript', 600);
@@ -856,6 +858,13 @@ function detectProject(title, originalName) {
 
 // 创建/更新作品
 app.post('/api/works', authAdmin, (req, res) => {
+  // 分类排序请求（只有 sectionOrder，无作品字段）
+  if (Array.isArray(req.body.sectionOrder) && !req.body.id && !req.body.title) {
+    config.sectionOrder = req.body.sectionOrder;
+    saveWorksToCloudinary();
+    return res.json({ success: true, sectionOrder: config.sectionOrder });
+  }
+
   const { id, title, description, filename, originalName, coverUrl, coverFilename, videoUrl, category } = req.body;
 
   if (id) {
@@ -986,7 +995,7 @@ app.post('/api/works/:id/regenerate-token', authAdmin, (req, res) => {
 
 // 获取配置
 app.get('/api/config', authAdmin, (req, res) => {
-  res.json({ portfolioToken: config.portfolioToken });
+  res.json({ portfolioToken: config.portfolioToken, sectionOrder: config.sectionOrder || ['buyAd', 'clip', 'aigc', 'animation'] });
 });
 
 // 重新生成作品集 token
