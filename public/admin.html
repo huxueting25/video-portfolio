@@ -204,13 +204,13 @@ document.getElementById('login-form').addEventListener('submit', async e => {
 })();
 
 async function loadConfig() {
-  try { const r=await fetch('/api/config',{headers:{'X-Admin-Token':adminToken}}); const d=await r.json(); portfolioToken=d.portfolioToken; if(Array.isArray(d.sectionOrder)&&d.sectionOrder.length){ sectionOrder=d.sectionOrder; if(currentWorks.length) renderWorks(); } document.getElementById('portfolio-link').value=location.origin+'/portfolio?p='+portfolioToken; } catch(e){}
+  try { const r=await fetch('/api/config',{headers:{'X-Admin-Token':adminToken}}); const d=await r.json(); portfolioToken=d.portfolioToken; if(Array.isArray(d.sectionOrder)&&d.sectionOrder.length){ sectionOrder=d.sectionOrder; if(currentWorks.length) renderWorks(); } document.getElementById('portfolio-link').value='https://huxueting25.github.io/video-portfolio/?p='+portfolioToken; } catch(e){}
 }
 function copyPortfolioLink() { const l=document.getElementById('portfolio-link').value; navigator.clipboard.writeText(l).then(()=>showToast('✅ 已复制')).catch(()=>prompt('手动复制:',l)); }
 async function regeneratePortfolioToken() {
   if(!confirm('重新生成后旧链接失效，确定？'))return;
   const r=await fetch('/api/regenerate-portfolio-token',{method:'POST',headers:{'X-Admin-Token':adminToken}}); const d=await r.json();
-  if(d.success){ portfolioToken=d.portfolioToken; document.getElementById('portfolio-link').value=location.origin+'/portfolio?p='+portfolioToken; showToast('✅ 链接已更新'); }
+  if(d.success){ portfolioToken=d.portfolioToken; document.getElementById('portfolio-link').value='https://huxueting25.github.io/video-portfolio/?p='+portfolioToken; showToast('✅ 链接已更新'); }
 }
 function showAdmin() { document.getElementById('login-view').classList.remove('active'); document.getElementById('admin-view').classList.add('active'); }
 function showToast(msg) { const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),3000); }
