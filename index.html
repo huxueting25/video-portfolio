@@ -166,15 +166,18 @@ function showErr(msg) {
   document.getElementById('loading-overlay').innerHTML = '<div style="text-align:center;padding-top:40vh;">'+msg+'</div>';
 }
 
-if (!tokenParam) {
-  showErr('<p>访问需要有效的分享链接</p>');
-} else {
-  // 纯静态模式：用 token hash 拼 R2 地址，script 标签加载（不受 CORS 限制）
-  (async () => {
-    try {
+// TODO 临时关闭分享链接校验：无 token 时用固定 hash 直接加载数据，恢复时改回 token 校验
+(async () => {
+  try {
+    let hash;
+    if (tokenParam) {
+      // 纯静态模式：用 token hash 拼 R2 地址，script 标签加载（不受 CORS 限制）
       const hashBuf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(tokenParam));
-      const hash = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
-      const s = document.createElement('script');
+      hash = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
+    } else {
+      hash = '0a51be926018a4de'; // 临时固定 hash（当前 portfolioToken 导出的文件名），恢复校验时删除此分支
+    }
+    const s = document.createElement('script');
       s.src = 'https://pub-af8e63a9c8fa418992e9e2de7412f5ee.r2.dev/data/works-' + hash + '.js';
       s.onload = () => {
         const works = window.__WORKS__ || [];
@@ -189,11 +192,10 @@ if (!tokenParam) {
       };
       s.onerror = () => showErr('<p>作品数据加载失败，请检查链接是否有效</p>');
       document.head.appendChild(s);
-    } catch(e) {
-      showErr('<p>作品数据加载失败，请检查链接是否有效</p>');
-    }
-  })();
-}
+  } catch(e) {
+    showErr('<p>作品数据加载失败，请检查链接是否有效</p>');
+  }
+})();
 
 function posterUrl(w) {
   if (w.coverUrl) return w.coverUrl;
