@@ -101,12 +101,24 @@ body {
 .section-title { font-family: 'Archivo Black', 'Arial Black', 'Inter', sans-serif; font-weight: 400; font-size: clamp(48px, 6.8vw, 86px); line-height: 1.05; letter-spacing: 0.005em; color: #fff; text-transform: uppercase; white-space: nowrap; }
 .section-title .zh { font-family: 'Noto Sans SC', sans-serif; font-weight: 300; font-size: 0.4em; color: var(--muted); letter-spacing: 0.3em; display: block; margin-top: 18px; text-transform: none; }
 
-.work-tabs { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 28px; padding: 0 16px; }
-.work-tab { padding: 12px 22px; border: 1px solid var(--border-hi); border-radius: 99px; background: transparent; color: var(--text-2); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1); display: inline-flex; align-items: center; gap: 10px; white-space: nowrap; }
-.work-tab:hover { border-color: var(--accent); color: var(--accent-glow); transform: translateY(-2px); }
-.work-tab.active { background: var(--accent); color: var(--bg); border-color: var(--accent); box-shadow: 0 0 32px -8px var(--accent), 0 0 16px -4px var(--accent-glow) inset; }
-.work-tab .count { opacity: 0.55; font-size: 10px; font-weight: 500; }
-.work-tab.active .count { opacity: 0.7; }
+/* === 作品侧边栏（文件夹筛选） === */
+.work-body { display: flex; gap: 36px; align-items: flex-start; }
+.work-side { flex: 0 0 252px; position: sticky; top: 96px; max-height: calc(100vh - 130px); overflow-y: auto; padding-right: 4px; }
+.work-main { flex: 1; min-width: 0; }
+.folder-list { display: flex; flex-direction: column; gap: 2px; }
+.folder-row { display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-radius: 6px; border: 1px solid transparent; cursor: pointer; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-2); letter-spacing: 0.08em; transition: background 0.2s, color 0.2s, border-color 0.2s; user-select: none; }
+.folder-row:hover { background: rgba(167, 139, 250, 0.08); color: #fff; }
+.folder-row.active { background: rgba(167, 139, 250, 0.14); border-color: var(--border-hi); color: var(--accent-glow); }
+.folder-arrow { font-size: 8px; width: 10px; text-align: center; color: var(--dim); transition: transform 0.25s, color 0.2s; flex: none; }
+.folder-row.open .folder-arrow { transform: rotate(90deg); color: var(--accent); }
+.folder-ico { width: 18px; text-align: center; flex: none; opacity: 0.85; }
+.folder-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.folder-count { color: var(--dim); font-size: 10px; flex: none; }
+.folder-row.active .folder-count { color: var(--accent); }
+.folder-children { margin-left: 17px; padding-left: 12px; border-left: 1px solid var(--border); display: flex; flex-direction: column; gap: 2px; }
+.folder-children.hidden { display: none; }
+.folder-row.root { margin-bottom: 10px; padding-bottom: 14px; border-radius: 0; border-bottom: 1px solid var(--border); color: #fff; font-weight: 500; }
+.folder-row.root:hover { background: transparent; color: var(--accent-glow); }
 
 /* === 环形画廊 === */
 .ring-wrap { margin-bottom: 70px; }
@@ -150,6 +162,11 @@ body {
 .work-cat::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 4px var(--accent); }
 .work-title { font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .work-meta { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.1em; }
+.work-group-head { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 12px; margin-top: 22px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.work-group-head:first-child { margin-top: 0; }
+.work-group-head .gh-label { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; color: var(--accent-glow); letter-spacing: 0.3em; text-transform: uppercase; }
+.work-group-head .gh-key { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); }
+.work-group-head .gh-count { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--dim); }
 @keyframes cardIn { from { opacity: 0; transform: translateY(20px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
 /* === ABOUT === */
@@ -239,7 +256,8 @@ footer { margin-top: 60px; text-align: center; font-family: 'JetBrains Mono', mo
   .home-content { padding: 100px 0 90px; }
   #work { padding: 90px 24px 60px; }
   .work-grid { grid-template-columns: 1fr; }
-  .work-tab { padding: 9px 16px; font-size: 10px; }
+  .work-body { flex-direction: column; gap: 24px; }
+  .work-side { position: static; flex: none; width: 100%; max-height: none; }
   .ring-stage { height: 380px; }
   .ring-item { width: 190px; height: 120px; margin: -60px 0 0 -95px; }
   #about { flex-direction: column; padding: 100px 24px; gap: 40px; }
@@ -300,20 +318,23 @@ footer { margin-top: 60px; text-align: center; font-family: 'JetBrains Mono', mo
     </div>
   </div>
 
-  <div class="work-tabs" id="workTabs"></div>
-
-  <div class="ring-wrap">
-    <div class="ring-stage" id="ringStage">
-      <div class="ring-track" id="ringTrack"></div>
-      <div class="ring-center">
-        <div class="orbit"></div>
-        <div class="c-title">Selected</div>
-        <div class="c-count" id="ringCount">9</div>
+  <div class="work-body">
+    <aside class="work-side" id="workSide"></aside>
+    <div class="work-main">
+      <div class="ring-wrap">
+        <div class="ring-stage" id="ringStage">
+          <div class="ring-track" id="ringTrack"></div>
+          <div class="ring-center">
+            <div class="orbit"></div>
+            <div class="c-title">Selected</div>
+            <div class="c-count" id="ringCount">9</div>
+          </div>
+        </div>
       </div>
+
+      <div class="work-grid" id="workGrid"></div>
     </div>
   </div>
-
-  <div class="work-grid" id="workGrid"></div>
 </section>
 
 <!-- ABOUT -->
@@ -391,25 +412,65 @@ footer { margin-top: 60px; text-align: center; font-family: 'JetBrains Mono', mo
 </div>
 
 <script>
-/* === 真实作品数据（占位符，将被替换） === */
+/* === 内置作品数据（远程 works.json 加载失败时的回退） === */
 const REAL_WORKS = [{"c":"aigc","l":"CN","t":"上下左右","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786358709/portfolio/videos/b72f52aab031ab03.mp4","k":""},{"c":"aigc","l":"CN","t":"下班打开","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786361543/portfolio/videos/7db960e1b167e861.mp4","k":""},{"c":"aigc","l":"EN","t":"真人解说+RE夏日爱丽丝","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785857953/portfolio/videos/8b6735737eeb7434.mp4","k":""},{"c":"aigc","l":"EN","t":"旋转婚纱+蜃加多角色升级","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785946271/portfolio/videos/7f87b2b475b7c38f.mp4","k":""},{"c":"aigc","l":"EN","t":"上下左右","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785947451/portfolio/videos/d07b623b20eef976.mp4","k":""},{"c":"aigc","l":"EN","t":"RE黛莫妮卡","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785947795/portfolio/videos/ad9816d78846c8aa.mp4","k":""},{"c":"aigc","l":"EN","t":"球迷解说","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785947939/portfolio/videos/36c64d0d4ab6da93.mp4","k":""},{"c":"aigc","l":"EN","t":"仰视老婆","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948004/portfolio/videos/0fd997a6ff59ffa5.mp4","k":""},{"c":"aigc","l":"EN","t":"90°登陆老婆","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948068/portfolio/videos/f7fd1361b499fc51.mp4","k":""},{"c":"aigc","l":"EN","t":"旋转婚纱+90°蜃多角色升级","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948375/portfolio/videos/2606c5acd64fa432.mp4","k":""},{"c":"aigc","l":"EN","t":"想看卡点和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948596/portfolio/videos/7159c70257d0d802.mp4","k":""},{"c":"aigc","l":"EN","t":"很有影响力","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948657/portfolio/videos/da11517d3ec32f86.mp4","k":""},{"c":"aigc","l":"EN","t":"拉你下水","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948761/portfolio/videos/ac79b872e064c6a3.mp4","k":""},{"c":"aigc","l":"EN","t":"我当蜃迷妹和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948817/portfolio/videos/8dbdc439957135d6.mp4","k":""},{"c":"aigc","l":"EN","t":"AI手办化","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948901/portfolio/videos/33078d1e76b81155.mp4","k":""},{"c":"aigc","l":"EN","t":"白羽也出sp和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949011/portfolio/videos/1fcf3a209b9cc0af.mp4","k":""},{"c":"aigc","l":"EN","t":"半神半妖","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949105/portfolio/videos/2b2cf0fa353921d7.mp4","k":""},{"c":"aigc","l":"EN","t":"四宫格漫画和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949167/portfolio/videos/b048ef9a24e15bf0.mp4","k":""},{"c":"aigc","l":"EN","t":"help卡点","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949359/portfolio/videos/e0e86f3d21d46e4f.mp4","k":""},{"c":"aigc","l":"EN","t":"福利磕了","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949415/portfolio/videos/98d1f4e6115c5602.mp4","k":""},{"c":"aigc","l":"EN","t":"上下左右魔女版","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949495/portfolio/videos/fd8965f353dc16ce.mp4","k":""},{"c":"aigc","l":"EN","t":"跨出屏幕卡点","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949523/portfolio/videos/48fb5e2c2de8fceb.mp4","k":""},{"c":"aigc","l":"EN","t":"背影眺望","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949614/portfolio/videos/7797fdab6999d04a.mp4","k":""},{"c":"aigc","l":"EN","t":"补水时间","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949708/portfolio/videos/2a30e8a5e0cd2449.mp4","k":""},{"c":"aigc","l":"EN","t":"90°蜃皮肤框内看板娘","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949788/portfolio/videos/65e7b9147ca4fd50.mp4","k":""},{"c":"aigc","l":"EN","t":"电扇变装和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949911/portfolio/videos/30a140be5db1b4e3.mp4","k":""},{"c":"aigc","l":"EN","t":"扭动展示","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785950030/portfolio/videos/8e92850f2a1d79a7.mp4","k":""},{"c":"aigc","l":"EN","t":"RE丝西娜简和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785950121/portfolio/videos/d49b30041bf1ec58.mp4","k":""},{"c":"aigc","l":"EN","t":"拼图展示和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785950203/portfolio/videos/27dc0cfad6c0f0d3.mp4","k":""},{"c":"aigc","l":"EN","t":"开局就抽到和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785950295/portfolio/videos/fd291d6f97879d9c.mp4","k":""},{"c":"aigc","l":"EN","t":"砍一刀","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785950509/portfolio/videos/f3dcdf882d89a2d2.mp4","k":""},{"c":"aigc","l":"EN","t":"AI角色PV","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785950591/portfolio/videos/089811a256efbc6e.mp4","k":""},{"c":"aigc","l":"EN","t":"多角色点触","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785950676/portfolio/videos/203d788e82989798.mp4","k":""},{"c":"aigc","l":"EN","t":"互换衣服和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785950739/portfolio/videos/224a2a4dda43092d.mp4","k":""},{"c":"aigc","l":"EN","t":"AI滚屏和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785950826/portfolio/videos/e3ff408d1c7ff416.mp4","k":""},{"c":"aigc","l":"EN","t":"末日火车","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786365072/portfolio/videos/4ccd302393c5b3ce.mp4","k":""},{"c":"aigc","l":"JP","t":"上下左右","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786021091/portfolio/videos/35d1bbc43ec49bb5.mp4","k":""},{"c":"aigc","l":"JP","t":"RE黛莫妮卡和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786021549/portfolio/videos/d6ce8a874385a5d3.mp4","k":""},{"c":"aigc","l":"JP","t":"框内未央看板娘和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786021652/portfolio/videos/29f75812f0542b8c.mp4","k":""},{"c":"aigc","l":"JP","t":"框内未央皮肤看板娘和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786021837/portfolio/videos/5caf1aa3572a4f06.mp4","k":""},{"c":"aigc","l":"JP","t":"登录老婆和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786021948/portfolio/videos/7a8b7516ccbf1c4a.mp4","k":""},{"c":"aigc","l":"JP","t":"RE丝西娜简","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786022135/portfolio/videos/6e9d4974e867818f.mp4","k":""},{"c":"aigc","l":"JP","t":"拼图展示和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786022256/portfolio/videos/d84f8136c488ed8d.mp4","k":""},{"c":"aigc","l":"JP","t":"我当蜃迷妹和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786022403/portfolio/videos/4fd4f1a7567841d4.mp4","k":""},{"c":"aigc","l":"JP","t":"砍一刀","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786022482/portfolio/videos/c1e8337361d76641.mp4","k":""},{"c":"aigc","l":"JP","t":"开局就抽到","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786022612/portfolio/videos/333db71c049e670b.mp4","k":""},{"c":"aigc","l":"JP","t":"90°登录老婆","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786023079/portfolio/videos/5f1c355915feac5e.mp4","k":""},{"c":"aigc","l":"JP","t":"AI手办化和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786124362/portfolio/videos/d5019efd2bce728d.mp4","k":""},{"c":"aigc","l":"JP","t":"想看卡点和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786124757/portfolio/videos/ea63e2b600ea8294.mp4","k":""},{"c":"aigc","l":"KR","t":"上下左右和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786358273/portfolio/videos/a99b57f2fd7d0a26.mp4","k":""},{"c":"buyAd","l":"CN","t":"开局抽白羽","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786357927/portfolio/videos/8393b12b7d728b79.mp4","k":""},{"c":"buyAd","l":"CN","t":"色轮转场","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786358773/portfolio/videos/89cf615d9cf234b9.mp4","k":""},{"c":"buyAd","l":"CN","t":"丝西娜是亲女儿","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786358908/portfolio/videos/51f5e1a17d8a974f.mp4","k":""},{"c":"buyAd","l":"CN","t":"开局就抽到","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786358949/portfolio/videos/c7b813356bbbbf98.mp4","k":""},{"c":"buyAd","l":"CN","t":"要不要告诉他","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786359131/portfolio/videos/7768b420c1413c38.mp4","k":""},{"c":"buyAd","l":"CN","t":"约瑟芬录屏轮播","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786359364/portfolio/videos/2b098b7d75d86661.mp4","k":""},{"c":"buyAd","l":"CN","t":"泰希卡pv","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786359508/portfolio/videos/c65c30f7337a8239.mp4","k":""},{"c":"buyAd","l":"CN","t":"砍一刀","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786359610/portfolio/videos/d890cf12ea3ddd9c.mp4","k":""},{"c":"buyAd","l":"CN","t":"爱丽丝角色解说","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786359652/portfolio/videos/f4de2b95c8b6ed5e.mp4","k":""},{"c":"buyAd","l":"CN","t":"前贴带爱丽丝回家","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786359771/portfolio/videos/233e1263fc8e31c0.mp4","k":""},{"c":"buyAd","l":"CN","t":"开局抽爱丽丝","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786360087/portfolio/videos/6651b43c6b72c24a.mp4","k":""},{"c":"buyAd","l":"CN","t":"前贴几点下班","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786360121/portfolio/videos/e836a83474a64225.mp4","k":""},{"c":"buyAd","l":"CN","t":"前贴召唤是我","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786360170/portfolio/videos/2f654eb3fcae7306.mp4","k":""},{"c":"buyAd","l":"CN","t":"紧急通知","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786360201/portfolio/videos/0a1612e7e8eb02fc.mp4","k":""},{"c":"buyAd","l":"CN","t":"2.5周年福利","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786361591/portfolio/videos/7fac3f593182bbf0.mp4","k":""},{"c":"buyAd","l":"CN","t":"20G游戏","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786361617/portfolio/videos/2141c2e8dbbbffcb.mp4","k":""},{"c":"buyAd","l":"EN","t":"框内蜃看板娘","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785947225/portfolio/videos/2ff285c997c3008d.mp4","k":""},{"c":"buyAd","l":"EN","t":"框内蜃皮肤看板娘","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785947329/portfolio/videos/98926afb92c1a2c3.mp4","k":""},{"c":"buyAd","l":"EN","t":"循环展示老婆","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785947631/portfolio/videos/3fc19f26043ab8a4.mp4","k":""},{"c":"buyAd","l":"EN","t":"开局抽钰","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785947835/portfolio/videos/8cf598730b51220d.mp4","k":""},{"c":"buyAd","l":"EN","t":"框内看白羽","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948137/portfolio/videos/ed28c92f7f0ac4a6.mp4","k":""},{"c":"buyAd","l":"EN","t":"佐娅看板娘和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948224/portfolio/videos/cd528ca69691e71c.mp4","k":""},{"c":"buyAd","l":"EN","t":"开局抽蜃和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948461/portfolio/videos/571a7e413cf1c0d2.mp4","k":""},{"c":"buyAd","l":"EN","t":"开局抽佐娅和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948503/portfolio/videos/f77795a754539043.mp4","k":""},{"c":"buyAd","l":"EN","t":"框内未央皮肤看板娘和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948713/portfolio/videos/86f0fd44aa1baf05.mp4","k":""},{"c":"buyAd","l":"EN","t":"弃号重开朱丽叶和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948852/portfolio/videos/5b6fdf2e74c502e5.mp4","k":""},{"c":"buyAd","l":"EN","t":"好消息芃芃","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949223/portfolio/videos/592641d18e327b8b.mp4","k":""},{"c":"buyAd","l":"EN","t":"黎看板娘","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785950418/portfolio/videos/5a9f9fa96c8e3a5d.mp4","k":""},{"c":"buyAd","l":"EN","t":"色轮转场和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785950462/portfolio/videos/2fbebc3de4a63de0.mp4","k":""},{"c":"buyAd","l":"EN","t":"七美女展示","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785950552/portfolio/videos/60c5cb43c2d0dfe6.mp4","k":""},{"c":"buyAd","l":"JP","t":"框内蜃看板娘","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786018427/portfolio/videos/18d3e491af5b9b6b.mp4","k":""},{"c":"buyAd","l":"JP","t":"开局抽佐娅和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786019059/portfolio/videos/2fd852fac9896023.mp4","k":""},{"c":"buyAd","l":"JP","t":"开局抽钰和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786019379/portfolio/videos/b30cf29a864f7e3e.mp4","k":""},{"c":"buyAd","l":"JP","t":"开局抽蜃和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786020602/portfolio/videos/5d878e62b848abe7.mp4","k":""},{"c":"buyAd","l":"JP","t":"开局抽白羽和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786021414/portfolio/videos/f3285110d49a3eea.mp4","k":""},{"c":"buyAd","l":"JP","t":"佐娅看板娘和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786021485/portfolio/videos/944f58a671a4dd15.mp4","k":""},{"c":"buyAd","l":"JP","t":"弃号重开朱丽叶和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786021761/portfolio/videos/6da2ee0e5141d418.mp4","k":""},{"c":"buyAd","l":"JP","t":"好消息芃芃和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786021894/portfolio/videos/7c03869aedeff0c8.mp4","k":""},{"c":"buyAd","l":"JP","t":"色轮转场","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786022555/portfolio/videos/3df56f5bd165e3e9.mp4","k":""},{"c":"buyAd","l":"JP","t":"框内看白羽和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786124190/portfolio/videos/79d81b2f4fb6d144.mp4","k":""},{"c":"buyAd","l":"JP","t":"仰视老婆","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786125281/portfolio/videos/853991dddd0d1c54.mp4","k":""},{"c":"buyAd","l":"JP","t":"上下左右魔女篇","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786125493/portfolio/videos/0a5a71d75ccf01fe.mp4","k":""},{"c":"buyAd","l":"JP","t":"福利磕了","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786125598/portfolio/videos/2bad08b1bb815a01.mp4","k":""},{"c":"buyAd","l":"JP","t":"扭动展示","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786125635/portfolio/videos/18efeb0e22ea021d.mp4","k":""},{"c":"buyAd","l":"JP","t":"很有影响力","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786125734/portfolio/videos/1e105b30421d81ab.mp4","k":""},{"c":"buyAd","l":"JP","t":"蜃皮肤看板娘和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786125831/portfolio/videos/6621c3237c710c84.mp4","k":""},{"c":"buyAd","l":"JP","t":"AI滚屏和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786126551/portfolio/videos/46e80b865a6a7396.mp4","k":""},{"c":"buyAd","l":"JP","t":"四宫格漫画和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786126781/portfolio/videos/ca8cb5a8e7c8c166.mp4","k":""},{"c":"buyAd","l":"JP","t":"半神半妖","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786126941/portfolio/videos/d2bbe0a89af85c39.mp4","k":""},{"c":"buyAd","l":"JP","t":"电扇变装和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786127204/portfolio/videos/dd8472e61c770825.mp4","k":""},{"c":"buyAd","l":"JP","t":"互换衣服和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786127283/portfolio/videos/a88d152b27709a43.mp4","k":""},{"c":"buyAd","l":"JP","t":"喜不喜欢和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786127436/portfolio/videos/4deb46b1c87c2db5.mp4","k":""},{"c":"buyAd","l":"JP","t":"跨出屏幕卡点","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786127583/portfolio/videos/8e591ce0b23eef87.mp4","k":""},{"c":"buyAd","l":"JP","t":"七美女展示和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786127655/portfolio/videos/8dd1514f5feb8512.mp4","k":""},{"c":"buyAd","l":"KR","t":"开局抽白羽","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786358220/portfolio/videos/4822c17dd4de5c54.mp4","k":""},{"c":"buyAd","l":"KR","t":"框内未央看板娘","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786358362/portfolio/videos/3defed9f8d547bd5.mp4","k":""},{"c":"buyAd","l":"KR","t":"框内未央皮肤看板娘","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786358500/portfolio/videos/918090b7c021806c.mp4","k":""},{"c":"buyAd","l":"KR","t":"循环展示和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786358584/portfolio/videos/c59473d54820b8b8.mp4","k":""},{"c":"buyAd","l":"Multi","t":"情怀_KOL碰巧巧1","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786364714/portfolio/videos/1b4f78adc1fcbb0d.mp4","k":""},{"c":"buyAd","l":"Multi","t":"情怀_KOL碰巧巧2","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786364780/portfolio/videos/1069784486a1c0d9.mp4","k":""},{"c":"buyAd","l":"Multi","t":"情怀_KOL张天翊1","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786364978/portfolio/videos/f9cc0d36e6302a99.mp4","k":""},{"c":"buyAd","l":"Multi","t":"情怀_KOL张天翊2","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786365005/portfolio/videos/13cd6cf454e1dcb6.mp4","k":""},{"c":"clip","l":"CN","t":"约瑟芬混剪","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786359316/portfolio/videos/274b7b5dd04397b6.mp4","k":""},{"c":"clip","l":"EN","t":"ROAD混剪和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949334/portfolio/videos/e68540761a141496.mp4","k":""},{"c":"clip","l":"EN","t":"goal混剪","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949879/portfolio/videos/316a4c322109f672.mp4","k":""},{"c":"clip","l":"JP","t":"goal混剪","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786022824/portfolio/videos/2828b6877fa78d1f.mp4","k":""},{"c":"clip","l":"JP","t":"Road混剪和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786124553/portfolio/videos/78aaebb0481b30a3.mp4","k":""}];
 
-const catLabels = { buyAd: 'Buy Ad', aigc: 'AIGC', clip: 'Clip' };
-const catIcon = { buyAd: '🎬', aigc: '✨', clip: '🏯' };
+/* === 数据源：优先从 R2 公开 works JS 加载分类与元数据（script 标签加载，不受 CORS 限制），失败时回退内置数据 === */
+/* 该 JS 由后台保存时导出，内容与 data/works.json 相同；文件名 = sha256(portfolioToken) 前 16 位 */
+const DATA_JS = 'https://pub-af8e63a9c8fa418992e9e2de7412f5ee.r2.dev/data/works-0a51be926018a4de.js';
+/* works.json 中 project 为各游戏项目名，统一归入 buyAd 栏目 */
+const GAME_PROJECTS = ['echocalypse', 'shaonian', 'zomline', 'gr'];
+
+const catLabels = { buyAd: 'Buy Ad', aigc: 'AIGC', animation: 'Anime', clip: 'Clip' };
+const catIcon = { buyAd: '🎬', aigc: '✨', animation: '🎞️', clip: '🏯' };
 const catGrad = {
   buyAd: 'radial-gradient(circle at 30% 30%, #a78bfa, transparent 60%)',
   aigc: 'radial-gradient(circle at 50% 70%, #7c5fbb, transparent 60%)',
+  animation: 'radial-gradient(circle at 40% 40%, #4ecca3, transparent 60%)',
   clip: 'radial-gradient(circle at 70% 30%, #c4b5fd, transparent 60%)'
 };
 const langLabel = { EN: 'English', JP: 'Japanese', CN: 'Chinese', KR: 'Korean', Multi: 'Multi' };
+const CAT_LABELS = { EN: '欧美EN', JP: '日本JP', CN: '简中CN', KR: '韩国KR', Multi: '通用', '2d': '二维2D', '3d': '三维3D' };
+const CAT_ORDER = ['EN', 'JP', 'CN', 'KR', 'Multi', '2d', '3d'];
+const PROJECT_LABELS = { echocalypse: '绯色回响', shaonian: '少年三国志', zomline: 'Zomline Survival', gr: '代号GR', clip: '影视混剪', aigc: 'AIGC作品', animation: '动画系列' };
+const PROJECT_ORDER = ['echocalypse', 'shaonian', 'zomline', 'gr', 'aigc', 'animation', 'clip'];
 
-const TABS = [
-  { filter: 'buyAd', label: 'UA Ads', count: REAL_WORKS.filter(w => w.c === 'buyAd').length },
-  { filter: 'aigc', label: 'AIGC', count: REAL_WORKS.filter(w => w.c === 'aigc').length },
-  { filter: 'anime', label: 'Anime', count: 0 },
-  { filter: 'clip', label: 'Reels', count: REAL_WORKS.filter(w => w.c === 'clip').length }
-];
-let currentFilter = 'all';
+let WORKS = REAL_WORKS;
+let currentFilter = { proj: 'all', cat: 'all' };
+
+function projKey(w) { return w.p || (w.c === 'buyAd' ? 'echocalypse' : w.c); }
+
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* 通过 <script> 加载 R2 公开 works JS（与 index.html / portfolio-cf.html 同一机制，不受 CORS 限制） */
+function loadRemoteWorks() {
+  const s = document.createElement('script');
+  s.src = DATA_JS;
+  s.onload = () => {
+    const list = Array.isArray(window.__WORKS__) ? window.__WORKS__ : [];
+    if (!list.length) { console.warn('[works] 远程数据为空，使用内置数据'); return; }
+    WORKS = list.map(w => ({
+      c: GAME_PROJECTS.includes(w.project) ? 'buyAd' : (w.project || 'buyAd'),
+      l: w.category || 'Multi',
+      t: (w.title || '').trim() || 'Untitled',
+      v: w.videoUrl || '',
+      p: w.project,
+      o: Number(w.order) || 0,
+      ts: w.createdAt || ''
+    })).sort((a, b) => {
+      if (a.c === 'buyAd' && b.c === 'buyAd' && a.p !== b.p) {
+        return GAME_PROJECTS.indexOf(a.p) - GAME_PROJECTS.indexOf(b.p);
+      }
+      return (a.o - b.o) || (a.ts < b.ts ? -1 : 1);
+    });
+    buildSide();
+    renderGrid();
+    buildRing();
+    console.info('[works] 已从远程加载 ' + WORKS.length + ' 条作品数据');
+  };
+  s.onerror = () => console.warn('[works] 远程数据加载失败，使用内置数据');
+  document.head.appendChild(s);
+}
 
 /* === 全局点击粒子 + 光晕跟随 === */
 (function() {
@@ -719,7 +780,7 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
 });
 
 /* === WORK === */
-const workTabs = document.getElementById('workTabs');
+const workSide = document.getElementById('workSide');
 const workGrid = document.getElementById('workGrid');
 const ringTrack = document.getElementById('ringTrack');
 const ringStage = document.getElementById('ringStage');
@@ -731,14 +792,68 @@ const modalTitle = document.getElementById('modalTitle');
 const modalMeta = document.getElementById('modalMeta');
 const modalTags = document.getElementById('modalTags');
 
-TABS.forEach(t => {
-  const btn = document.createElement('button');
-  btn.className = 'work-tab' + (t.filter === 'all' ? ' active' : '');
-  btn.dataset.filter = t.filter;
-  btn.innerHTML = `${t.label}<span class="count">${t.count}</span>`;
-  btn.addEventListener('click', () => setFilter(t.filter));
-  workTabs.appendChild(btn);
-});
+const openFolders = new Set(PROJECT_ORDER);
+
+function filteredWorks() {
+  return WORKS.filter(w =>
+    (currentFilter.proj === 'all' || projKey(w) === currentFilter.proj) &&
+    (currentFilter.cat === 'all' || (w.l || 'Multi') === currentFilter.cat)
+  );
+}
+
+/* 侧边栏文件夹树：一级文件夹按 project 聚合，二级文件夹按 category 聚合 */
+function buildSide() {
+  workSide.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'folder-list';
+
+  const root = document.createElement('div');
+  root.className = 'folder-row root' + (currentFilter.proj === 'all' ? ' active' : '');
+  root.innerHTML = `<span class="folder-ico">📂</span><span class="folder-name">全部作品</span><span class="folder-count">${WORKS.length}</span>`;
+  root.addEventListener('click', () => {
+    currentFilter = { proj: 'all', cat: 'all' };
+    buildSide(); renderGrid(); buildRing();
+  });
+  wrap.appendChild(root);
+
+  PROJECT_ORDER.forEach(p => {
+    const projWorks = WORKS.filter(w => projKey(w) === p);
+    if (!projWorks.length) return;
+    const open = openFolders.has(p);
+    const row = document.createElement('div');
+    row.className = 'folder-row' + (open ? ' open' : '') + (currentFilter.proj === p ? ' active' : '');
+    row.innerHTML = `<span class="folder-arrow">▶</span><span class="folder-ico">📁</span><span class="folder-name">${escapeHtml(PROJECT_LABELS[p] || p)}</span><span class="folder-count">${projWorks.length}</span>`;
+    row.addEventListener('click', () => {
+      if (openFolders.has(p)) openFolders.delete(p); else openFolders.add(p);
+      currentFilter = { proj: p, cat: 'all' };
+      buildSide(); renderGrid(); buildRing();
+    });
+    wrap.appendChild(row);
+
+    const cats = {};
+    projWorks.forEach(w => { const k = w.l || 'Multi'; (cats[k] = cats[k] || []).push(w); });
+    const catKeys = Object.keys(cats).sort((a, b) => {
+      const pa = CAT_ORDER.indexOf(a), pb = CAT_ORDER.indexOf(b);
+      return (pa < 0 ? 99 : pa) - (pb < 0 ? 99 : pb) || (a < b ? -1 : 1);
+    });
+    const childWrap = document.createElement('div');
+    childWrap.className = 'folder-children' + (open ? '' : ' hidden');
+    catKeys.forEach(k => {
+      const crow = document.createElement('div');
+      crow.className = 'folder-row sub' + (currentFilter.proj === p && currentFilter.cat === k ? ' active' : '');
+      crow.innerHTML = `<span class="folder-ico">🗂</span><span class="folder-name">${escapeHtml(CAT_LABELS[k] || k)}</span><span class="folder-count">${cats[k].length}</span>`;
+      crow.addEventListener('click', () => {
+        openFolders.add(p);
+        currentFilter = { proj: p, cat: k };
+        buildSide(); renderGrid(); buildRing();
+      });
+      childWrap.appendChild(crow);
+    });
+    wrap.appendChild(childWrap);
+  });
+
+  workSide.appendChild(wrap);
+}
 
 function openModal(w) {
   modalIcon.textContent = catIcon[w.c];
@@ -805,33 +920,66 @@ function attachCardFx(el, w) {
   el.addEventListener('click', () => openModal(w));
 }
 
-function renderGrid(filter) {
+function renderGrid() {
   workGrid.innerHTML = '';
-  const list = REAL_WORKS.filter(w => filter === 'all' || w.c === filter);
-  list.forEach((w, i) => {
-    const el = document.createElement('div');
-    el.className = 'work-card';
-    el.style.setProperty('--thumb-gradient', catGrad[w.c]);
-    el.innerHTML = `
+  const list = filteredWorks();
+  // 分块规则：全部 → 按 project 分块；选中项目 → 按 category 分块；选中叶子 → 单块
+  const groupBy = currentFilter.proj === 'all' ? 'proj' : (currentFilter.cat === 'all' ? 'cat' : 'none');
+  const groups = [];
+  list.forEach(w => {
+    const key = groupBy === 'proj' ? projKey(w) : (groupBy === 'cat' ? (w.l || 'Multi') : '');
+    let g = groups.find(x => x.key === key);
+    if (!g) { g = { key, items: [] }; groups.push(g); }
+    g.items.push(w);
+  });
+  if (groupBy === 'proj') {
+    groups.sort((a, b) => {
+      const pa = PROJECT_ORDER.indexOf(a.key), pb = PROJECT_ORDER.indexOf(b.key);
+      return (pa < 0 ? 99 : pa) - (pb < 0 ? 99 : pb) || (a.key < b.key ? -1 : 1);
+    });
+  } else if (groupBy === 'cat') {
+    groups.sort((a, b) => {
+      const pa = CAT_ORDER.indexOf(a.key), pb = CAT_ORDER.indexOf(b.key);
+      return (pa < 0 ? 99 : pa) - (pb < 0 ? 99 : pb) || (a.key < b.key ? -1 : 1);
+    });
+  }
+  let i = 0;
+  groups.forEach(g => {
+    // 所有聚合项按 order 排序（order 相同时按创建时间）
+    g.items.sort((a, b) => ((a.o || 0) - (b.o || 0)) || ((a.ts || '') < (b.ts || '') ? -1 : 1));
+    if (groupBy !== 'none') {
+      const head = document.createElement('div');
+      head.className = 'work-group-head';
+      const label = groupBy === 'proj' ? (PROJECT_LABELS[g.key] || g.key) : (CAT_LABELS[g.key] || g.key);
+      head.innerHTML = `<span class="gh-label">${escapeHtml(label)}</span><span class="gh-key">${escapeHtml(g.key)}</span><span class="gh-count">${g.items.length}</span>`;
+      workGrid.appendChild(head);
+    }
+    g.items.forEach(w => {
+      const el = document.createElement('div');
+      el.className = 'work-card';
+      el.style.setProperty('--thumb-gradient', catGrad[w.c]);
+      el.innerHTML = `
       <div class="spot"></div>
       <div class="work-thumb"><div class="work-thumb-icon">${catIcon[w.c]}</div></div>
       <div class="work-info">
-        <div class="work-cat">${catLabels[w.c]} · ${w.l}</div>
-        <div class="work-title">${w.t}</div>
-        <div class="work-meta">${langLabel[w.l] || w.l}</div>
+        <div class="work-cat">${catLabels[w.c]} · ${escapeHtml(w.l)}</div>
+        <div class="work-title">${escapeHtml(w.t)}</div>
+        <div class="work-meta">${escapeHtml(langLabel[w.l] || w.l)}</div>
       </div>`;
-    attachCardFx(el, w);
-    el.style.animation = `cardIn 0.5s ${i * 0.04}s cubic-bezier(0.22,1,0.36,1) both`;
-    workGrid.appendChild(el);
+      attachCardFx(el, w);
+      el.style.animation = `cardIn 0.5s ${i * 0.04}s cubic-bezier(0.22,1,0.36,1) both`;
+      workGrid.appendChild(el);
+      i++;
+    });
   });
 }
 
 let ringAngle = 0, ringDragging = false, ringStartX = 0, ringStartAngle = 0;
-function buildRing(filter) {
-  let items = REAL_WORKS.filter(w => filter === 'all' || w.c === filter);
-  // ring 最多显示 12 个（避免太挤）
+function buildRing() {
+  let items = filteredWorks();
+  // ring 最多显示 12 个（避免太挤），为空时退回全部
   if (items.length > 12) items = items.slice(0, 12);
-  if (items.length < 4) items = REAL_WORKS.slice(0, 9);
+  if (!items.length) items = WORKS.slice(0, 9);
   ringTrack.innerHTML = '';
   ringCount.textContent = items.length;
   const n = items.length;
@@ -841,7 +989,7 @@ function buildRing(filter) {
     const el = document.createElement('div');
     el.className = 'ring-item';
     el.style.setProperty('--ring-gradient', catGrad[w.c]);
-    el.innerHTML = `<div class="thumb"><div class="ghost"></div><div class="icon">${catIcon[w.c]}</div></div><div class="label"><div class="t">${w.t}</div><div class="l-cat">${catLabels[w.c]}</div><div class="l-meta">${w.l} · ${langLabel[w.l] || ''}</div></div>`;
+    el.innerHTML = `<div class="thumb"><div class="ghost"></div><div class="icon">${catIcon[w.c]}</div></div><div class="label"><div class="t">${escapeHtml(w.t)}</div><div class="l-cat">${catLabels[w.c]}</div><div class="l-meta">${escapeHtml(w.l)} · ${escapeHtml(langLabel[w.l] || '')}</div></div>`;
     el.style.transform = `rotateY(${i * stepDeg}deg) translateZ(${radius}px)`;
     el.addEventListener('click', (e) => { e.stopPropagation(); openModal(w); });
     ringTrack.appendChild(el);
@@ -879,17 +1027,11 @@ function ringLoop() {
   requestAnimationFrame(ringLoop);
 }
 
-function setFilter(filter) {
-  if (filter === currentFilter) return;
-  currentFilter = filter;
-  document.querySelectorAll('.work-tab').forEach(b => b.classList.toggle('active', b.dataset.filter === filter));
-  renderGrid(filter);
-  buildRing(filter);
-}
-
-renderGrid('all');
-buildRing('all');
+buildSide();
+renderGrid();
+buildRing();
 ringLoop();
+loadRemoteWorks();
 
 /* === 磁性按钮 === */
 document.querySelectorAll('.btn').forEach(btn => {
