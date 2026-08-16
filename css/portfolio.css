@@ -313,7 +313,7 @@ body {
 }
 .proj-toggle { color: var(--muted); transition: transform 0.3s ease; flex-shrink: 0; }
 .proj-toggle.collapsed { transform: rotate(-90deg); }
-.proj-block-body { overflow: hidden; transition: max-height 0.4s ease, padding 0.3s ease, margin 0.3s ease; max-height: 12000px; }
+.proj-block-body { overflow: hidden; transition: max-height 0.4s ease, padding 0.3s ease, margin 0.3s ease; max-height: 200000px; }
 .proj-block-body.collapsed { max-height: 0; padding: 0; margin: 0; }
 
 /* ========== 搜索框 ========== */
