@@ -22,3 +22,6 @@ Thumbs.db
 dist/
 build/
 .cache/
+
+# 本地备份目录
+backups/

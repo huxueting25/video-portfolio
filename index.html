@@ -63,6 +63,14 @@
       <h2 class="section-title">Reels & Cuts</h2>
     </div>
   </div>
+
+  <!-- 旋转画廊：精选预览，拖拽旋转，点击播放视频 -->
+  <div class="ring-wrap" id="ringWrap">
+    <div class="ring-stage" id="ringStage">
+      <div class="ring-track" id="ringTrack"></div>
+    </div>
+  </div>
+
   <div class="work-body">
 
 <aside class="sidebar">
@@ -225,6 +233,16 @@
   <p>正在加载作品集...</p>
 </div>
 
+<!-- 画廊视频灯箱 -->
+<div class="ring-modal" id="ringModal" style="display:none">
+  <div class="ring-modal-backdrop" id="ringModalBackdrop"></div>
+  <div class="ring-modal-box">
+    <button class="ring-modal-close" id="ringModalClose" type="button">✕</button>
+    <video id="ringModalVideo" controls playsinline preload="none"></video>
+    <div class="ring-modal-title" id="ringModalTitle"></div>
+  </div>
+</div>
+
 <script>
 const params = new URLSearchParams(window.location.search);
 const tokenParam = params.get('p') || params.get('s');
@@ -292,8 +310,9 @@ function showErr(msg) {
 
 function posterUrl(w) {
   if (w.coverUrl) return w.coverUrl;
-  if (!w.videoUrl) return '';
-  return w.videoUrl.replace('/upload/','/upload/so_0,w_640/').replace('.mp4','.jpg');
+  if (!w.id) return '';
+  // 本地/部署同目录 covers/ 下的抽帧封面（ffmpeg 批量生成）
+  return 'covers/' + w.id + '.jpg';
 }
 
 function countProj(proj) {
@@ -401,6 +420,7 @@ function renderAll() {
 
   document.getElementById('category-sections').innerHTML = html;
   setupObservers();
+  buildRing();
 }
 
 function renderCard(w) {
@@ -447,6 +467,120 @@ function playVideo(idx) {
     v.play().catch(()=>{});
   }
 }
+
+// ===== 旋转画廊（精选预览） =====
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+let ringAngle = 0, ringDragging = false, ringStartX = 0, ringStartAngle = 0;
+
+function buildRing() {
+  const track = document.getElementById('ringTrack');
+  const wrap = document.getElementById('ringWrap');
+  if (!track || !wrap) return;
+  // 画廊固定展示 AIGC 作品（排除《梦寻》），搜索时再叠加搜索词；最多 16 个避免拥挤
+  let items = allWorks.filter(w => (w.project || 'echocalypse') === 'aigc' && w.title !== 'AI-梦核短片《梦寻》');
+  if (searchQuery) items = items.filter(w => w.title.toLowerCase().includes(searchQuery));
+  if (items.length > 16) items = items.slice(0, 16);
+  if (!items.length) { wrap.style.display = 'none'; track.innerHTML = ''; return; }
+  wrap.style.display = '';
+  const n = items.length;
+  const stepDeg = 360 / n;
+  const radius = Math.min(640, Math.max(300, n * 52));
+  track.innerHTML = '';
+  items.forEach((w, i) => {
+    const el = document.createElement('div');
+    el.className = 'ring-item';
+    const pLabel = (projConfig[w.project] || {}).label || '';
+    const cLabel = (catConfig[w.category] || animCatConfig[w.category] || {}).label || '';
+    const pUrl = posterUrl(w);
+    el.innerHTML = '<div class="thumb">' + (pUrl ? '<img src="' + pUrl + '" alt="">' : '') + '</div>'
+      + '<div class="label"><div class="t">' + escapeHtml(w.title) + '</div>'
+      + '<div class="l-cat">' + escapeHtml(pLabel + (cLabel ? ' · ' + cLabel : '')) + '</div></div>';
+    el.style.transform = 'rotateY(' + (i * stepDeg) + 'deg) translateZ(' + radius + 'px)';
+    el.__w = w;
+    track.appendChild(el);
+  });
+  ringAngle = 0;
+}
+
+// ===== 画廊视频灯箱 =====
+function openRingVideo(w) {
+  const modal = document.getElementById('ringModal');
+  const v = document.getElementById('ringModalVideo');
+  const t = document.getElementById('ringModalTitle');
+  if (!modal || !v || !t) return;
+  v.innerHTML = '';
+  v.poster = posterUrl(w) || '';
+  if (w.videoUrl) {
+    const s = document.createElement('source');
+    s.src = w.videoUrl; s.type = 'video/mp4';
+    v.appendChild(s);
+  }
+  v.load();
+  t.textContent = w.title || '';
+  modal.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  const tryPlay = () => { v.play().catch(() => {}); };
+  if (v.readyState >= 2) tryPlay(); else v.addEventListener('canplay', tryPlay, { once: true });
+}
+
+function closeRingVideo() {
+  const modal = document.getElementById('ringModal');
+  const v = document.getElementById('ringModalVideo');
+  if (modal) { modal.style.display = 'none'; document.body.style.overflow = ''; }
+  if (v) { v.pause(); v.innerHTML = ''; v.removeAttribute('src'); }
+}
+
+document.getElementById('ringModalClose').addEventListener('click', closeRingVideo);
+document.getElementById('ringModalBackdrop').addEventListener('click', closeRingVideo);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeRingVideo(); });
+
+const ringStageEl = document.getElementById('ringStage');
+if (ringStageEl) {
+  let downX = 0, downY = 0;
+  ringStageEl.addEventListener('pointerdown', (e) => {
+    ringDragging = true; ringStartX = e.clientX; ringStartAngle = ringAngle;
+    downX = e.clientX; downY = e.clientY;
+    ringStageEl.classList.add('dragging');
+  });
+  ringStageEl.addEventListener('pointermove', (e) => {
+    if (!ringDragging) return;
+    ringAngle = ringStartAngle + (e.clientX - ringStartX) * 0.45;
+  });
+  const endDrag = () => { ringDragging = false; ringStageEl.classList.remove('dragging'); };
+  ringStageEl.addEventListener('pointerup', endDrag);
+  ringStageEl.addEventListener('pointerleave', endDrag);
+  // 点击卡片播放视频；位移超过 6px 视为拖拽，不触发
+  ringStageEl.addEventListener('click', (e) => {
+    if (Math.hypot(e.clientX - downX, e.clientY - downY) > 6) return;
+    const item = e.target.closest('.ring-item');
+    if (item && item.__w) openRingVideo(item.__w);
+  });
+}
+
+function ringLoop() {
+  const track = document.getElementById('ringTrack');
+  if (track && track.children.length) {
+    if (!ringDragging) ringAngle += 0.12;
+    track.style.transform = 'rotateY(' + ringAngle + 'deg)';
+    const n = track.children.length;
+    const stepDeg = 360 / n;
+    for (let i = 0; i < n; i++) {
+      const el = track.children[i];
+      const a = ((ringAngle + i * stepDeg) % 360 + 360) % 360;
+      const front = a < 15 || a > 345;
+      el.classList.toggle('hot', front);
+      const diff = Math.abs(((a + 180) % 360) - 180);
+      el.style.opacity = front ? 1 : 0.35 + (1 - diff / 180) * 0.4;
+    }
+  }
+  requestAnimationFrame(ringLoop);
+}
+
+buildRing();
+ringLoop();
 
 // ===== 折叠（默认全折叠；手风琴：展开一个即折叠同层其他）=====
 function applyBlock(proj, isCollapsed) {

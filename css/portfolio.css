@@ -179,11 +179,13 @@ body {
 @keyframes scroll-down { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
 
 /* ========== WORK 区块 ========== */
-#work { min-height: 100vh; padding: 120px 48px 80px; position: relative; border-bottom: 1px solid var(--border); }
+#work { min-height: 100vh; padding: 40px 48px 80px; position: relative; border-bottom: 1px solid var(--border); }
 .section-head {
   display: flex; justify-content: space-between; align-items: flex-end;
   margin-bottom: 40px; padding-bottom: 28px;
   border-bottom: 1px solid var(--border); gap: 32px; flex-wrap: wrap;
+  /* 仅视觉下移标题，不占布局空间，画廊位置保持不动 */
+  transform: translateY(80px);
 }
 .section-head-left { max-width: 860px; }
 .section-eyebrow {
@@ -615,7 +617,7 @@ footer {
   .badge-private { display: none; }
   #home { padding: 0 24px; }
   .home-content { padding: 100px 0 90px; }
-  #work { padding: 90px 24px 60px; }
+  #work { padding: 48px 24px 60px; }
   .work-body { flex-direction: column; gap: 24px; }
   .sidebar { position: static; flex: none; width: 100%; max-height: none; }
   .section-head { flex-direction: column; align-items: flex-start; }
@@ -630,4 +632,31 @@ footer {
   #contact { padding: 60px 24px 50px; }
   .dog-tag { width: 92%; max-width: 340px; }
   #scroll-to-top { bottom: 20px; right: 20px; width: 44px; height: 44px; }
+  .ring-stage { height: 380px; }
+  .ring-item { width: 190px; height: 120px; margin: -60px 0 0 -95px; }
 }
+
+/* ========== Work 旋转画廊（精选预览） ========== */
+.ring-wrap { margin-bottom: 40px; }
+.ring-stage { position: relative; height: 470px; perspective: 1500px; perspective-origin: 50% 42%; cursor: grab; touch-action: pan-y; user-select: none; }
+.ring-stage.dragging { cursor: grabbing; }
+.ring-track { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-style: preserve-3d; will-change: transform; }
+.ring-item { position: absolute; left: 0; top: 0; width: 230px; height: 145px; margin: -72px 0 0 -115px; border-radius: 10px; overflow: hidden; cursor: pointer; background: var(--bg-card); border: 1px solid var(--border); transition: border-color 0.3s, box-shadow 0.3s; backface-visibility: hidden; will-change: transform; }
+.ring-item:hover { border-color: var(--accent); }
+.ring-item .thumb { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(135deg, var(--bg-card), var(--accent-deep)); }
+.ring-item .thumb img { width: 100%; height: 100%; object-fit: cover; opacity: 0.75; transition: opacity 0.3s; pointer-events: none; }
+.ring-item.hot .thumb img { opacity: 1; }
+.ring-item .label { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 14px 14px; background: linear-gradient(transparent, rgba(5,3,8,0.95)); z-index: 2; }
+.ring-item .label .t { font-size: 12px; font-weight: 500; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ring-item .label .l-cat { font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 10px; letter-spacing: 0.25em; color: var(--accent-glow); margin-top: 5px; text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
+.ring-item .label .l-cat::before { content: ''; width: 12px; height: 1px; background: var(--accent); flex: none; }
+.ring-item.hot { border-color: var(--accent); box-shadow: 0 0 40px -6px var(--accent); z-index: 6; }
+
+/* ========== 画廊视频灯箱 ========== */
+.ring-modal { position: fixed; inset: 0; z-index: 1000; }
+.ring-modal-backdrop { position: absolute; inset: 0; background: rgba(5,3,8,0.86); backdrop-filter: blur(6px); }
+.ring-modal-box { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(960px, 94vw); background: var(--bg-2); border: 1px solid var(--border-hi); border-radius: 12px; padding: 18px 18px 14px; box-shadow: 0 24px 80px rgba(0,0,0,0.6), 0 0 60px -20px var(--accent); }
+.ring-modal-close { position: absolute; top: -14px; right: -14px; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border-hi); background: var(--bg-card); color: var(--text-2); font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.25s; }
+.ring-modal-close:hover { background: var(--accent); color: var(--bg); transform: rotate(90deg); }
+.ring-modal video { width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 8px; display: block; }
+.ring-modal-title { margin-top: 12px; font-size: 14px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
