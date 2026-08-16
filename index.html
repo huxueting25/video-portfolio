@@ -411,7 +411,7 @@ function renderAll() {
 function renderCard(w) {
   const idx = vidCounter++;
   const pUrl = posterUrl(w);
-  return '<div class="work-card"><div class="spot"></div><div class="work-video-wrap">'
+  return '<div class="work-card"><div class="work-video-wrap">'
     +'<video id="video-'+idx+'" controls playsinline preload="none" class="work-video" data-src="'+ (w.videoUrl||'') +'" poster="'+pUrl+'"></video>'
     +'<div class="video-placeholder" id="placeholder-'+idx+'" onclick="playVideo('+idx+')">'
     +(pUrl?'<img class="cover-img" src="'+pUrl+'" alt="" loading="lazy">':'')
@@ -437,24 +437,6 @@ function setupObservers() {
     });
   }, { rootMargin: '200px' });
   allVideos.forEach(v => obs.observe(v));
-  // 卡片 3D 倾斜 + 光标聚光（每次重渲染重新绑定）
-  document.querySelectorAll('.work-card').forEach(c => attachCardFx(c));
-}
-
-function attachCardFx(el) {
-  el.addEventListener('mousemove', (e) => {
-    const r = el.getBoundingClientRect();
-    const px = (e.clientX - r.left) / r.width - 0.5;
-    const py = (e.clientY - r.top) / r.height - 0.5;
-    el.style.transform = `perspective(900px) rotateX(${-py * 6}deg) rotateY(${px * 8}deg) translateY(-4px)`;
-    el.style.setProperty('--sx', `${(px + 0.5) * 100}%`);
-    el.style.setProperty('--sy', `${(py + 0.5) * 100}%`);
-  });
-  el.addEventListener('mouseleave', () => {
-    el.style.transform = '';
-    el.style.setProperty('--sx', '50%');
-    el.style.setProperty('--sy', '50%');
-  });
 }
 
 function playVideo(idx) {

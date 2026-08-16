@@ -375,20 +375,12 @@ body {
   border-radius: 6px;
   overflow: hidden;
   position: relative;
-  transform-style: preserve-3d;
-  will-change: transform;
   transition: border-color 0.3s, box-shadow 0.3s;
 }
 .work-card:hover {
   border-color: var(--accent);
   box-shadow: 0 24px 60px -20px rgba(167, 139, 250, 0.45);
 }
-.work-card .spot {
-  position: absolute; inset: 0; z-index: 3; opacity: 0;
-  transition: opacity 0.35s; pointer-events: none;
-  background: radial-gradient(280px circle at var(--sx, 50%) var(--sy, 50%), rgba(196, 181, 253, 0.16), transparent 65%);
-}
-.work-card:hover .spot { opacity: 1; }
 .work-video-wrap { aspect-ratio: 16 / 9; background: #000; overflow: hidden; position: relative; }
 .work-video { width: 100%; height: 100%; object-fit: contain; display: block; }
 
