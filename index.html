@@ -83,10 +83,10 @@
             <span class="side-count" id="proj-count-echocalypse">0</span>
           </div>
           <div class="side-sub-items hidden" id="proj-sub-echocalypse">
-            <a class="side-link sub" href="#section-echocalypse-EN" data-proj="echocalypse" data-cat="EN" onclick="scrollToSection('echocalypse','EN')"> 欧美EN <span class="side-count" id="side-count-echocalypse-EN">0</span></a>
-            <a class="side-link sub" href="#section-echocalypse-JP" data-proj="echocalypse" data-cat="JP" onclick="scrollToSection('echocalypse','JP')"> 日本JP <span class="side-count" id="side-count-echocalypse-JP">0</span></a>
-            <a class="side-link sub" href="#section-echocalypse-CN" data-proj="echocalypse" data-cat="CN" onclick="scrollToSection('echocalypse','CN')"> 简中CN <span class="side-count" id="side-count-echocalypse-CN">0</span></a>
-            <a class="side-link sub" href="#section-echocalypse-KR" data-proj="echocalypse" data-cat="KR" onclick="scrollToSection('echocalypse','KR')"> 韩国KR <span class="side-count" id="side-count-echocalypse-KR">0</span></a>
+            <a class="side-link sub" href="#section-echocalypse-EN" data-proj="echocalypse" data-cat="EN" onclick="scrollToSection('echocalypse','EN'); return false;"> 欧美EN <span class="side-count" id="side-count-echocalypse-EN">0</span></a>
+            <a class="side-link sub" href="#section-echocalypse-JP" data-proj="echocalypse" data-cat="JP" onclick="scrollToSection('echocalypse','JP'); return false;"> 日本JP <span class="side-count" id="side-count-echocalypse-JP">0</span></a>
+            <a class="side-link sub" href="#section-echocalypse-CN" data-proj="echocalypse" data-cat="CN" onclick="scrollToSection('echocalypse','CN'); return false;"> 简中CN <span class="side-count" id="side-count-echocalypse-CN">0</span></a>
+            <a class="side-link sub" href="#section-echocalypse-KR" data-proj="echocalypse" data-cat="KR" onclick="scrollToSection('echocalypse','KR'); return false;"> 韩国KR <span class="side-count" id="side-count-echocalypse-KR">0</span></a>
           </div>
         </div>
         <div class="side-project">
@@ -123,7 +123,7 @@
         <span class="side-count" id="cat-count-clip">0</span>
       </div>
       <div class="side-sub-items hidden" id="cat-sub-clip">
-        <a class="side-link sub" href="#section-clip" data-proj="clip" onclick="scrollToSection('clip')"> 全部视频 <span class="side-count" id="proj-count-clip">0</span></a>
+        <a class="side-link sub" href="#section-clip" data-proj="clip" onclick="scrollToSection('clip'); return false;"> 全部视频 <span class="side-count" id="proj-count-clip">0</span></a>
       </div>
     </div>
     <!-- AIGC作品 -->
@@ -134,7 +134,7 @@
         <span class="side-count" id="cat-count-aigc">0</span>
       </div>
       <div class="side-sub-items hidden" id="cat-sub-aigc">
-        <a class="side-link sub" href="#section-aigc" data-proj="aigc" onclick="scrollToSection('aigc')"> 全部作品 <span class="side-count" id="proj-count-aigc">0</span></a>
+        <a class="side-link sub" href="#section-aigc" data-proj="aigc" onclick="scrollToSection('aigc'); return false;"> 全部作品 <span class="side-count" id="proj-count-aigc">0</span></a>
       </div>
     </div>
     <!-- 动画系列 -->
@@ -145,8 +145,8 @@
         <span class="side-count" id="cat-count-animation">0</span>
       </div>
       <div class="side-sub-items hidden" id="cat-sub-animation">
-        <a class="side-link sub" href="#section-animation-3d" data-proj="animation" data-cat="3d" onclick="scrollToSection('animation','3d')"> 🧊 三维 <span class="side-count" id="side-count-animation-3d">0</span></a>
-        <a class="side-link sub" href="#section-animation-2d" data-proj="animation" data-cat="2d" onclick="scrollToSection('animation','2d')"> 🎨 二维 <span class="side-count" id="side-count-animation-2d">0</span></a>
+        <a class="side-link sub" href="#section-animation-3d" data-proj="animation" data-cat="3d" onclick="scrollToSection('animation','3d'); return false;"> 🧊 三维 <span class="side-count" id="side-count-animation-3d">0</span></a>
+        <a class="side-link sub" href="#section-animation-2d" data-proj="animation" data-cat="2d" onclick="scrollToSection('animation','2d'); return false;"> 🎨 二维 <span class="side-count" id="side-count-animation-2d">0</span></a>
       </div>
     </div>
   </nav>
@@ -343,11 +343,11 @@ function renderAll() {
   sectionOrder.forEach(sec => {
   if (sec === 'buyAd') {
   // ===== 买量广告 =====
-  html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'buyAd\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">买量广告</h2><span class="proj-block-count">'+buyAdTotal+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-buyAd"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body'+(blockCollapsed.buyAd?' collapsed':'')+'" id="proj-body-buyAd">';
+  html += '<div class="proj-block" id="top-buyAd"><div class="proj-block-header" onclick="toggleProjBlock(\'buyAd\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">买量广告</h2><span class="proj-block-count">'+buyAdTotal+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-buyAd"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body'+(blockCollapsed.buyAd?' collapsed':'')+'" id="proj-body-buyAd">';
   ['echocalypse','shaonian','zomline','gr'].forEach(proj => {
     const pcfg = projConfig[proj];
     const projWorks = allWorks.filter(w => (w.project||'echocalypse')===proj && (!searchQuery || w.title.toLowerCase().includes(searchQuery)));
-    html += '<div class="proj-block" data-proj="'+proj+'">';
+    html += '<div class="proj-block" id="block-'+proj+'" data-proj="'+proj+'">';
     html += '<div class="proj-block-header" onclick="toggleProjBlock(\''+proj+'\')"><div class="section-header-left"><span class="proj-block-icon">'+pcfg.icon+'</span><h2 class="proj-block-label">'+pcfg.label+'</h2><span class="proj-block-count">'+projWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-'+proj+'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>';
     html += '<div class="proj-block-body'+(blockCollapsed[proj]?' collapsed':'')+'" id="proj-body-'+proj+'">';
     if (pcfg.subs) {
@@ -389,7 +389,7 @@ function renderAll() {
   const animWorks = allWorks.filter(w => (w.project||'echocalypse')==='animation' && (!searchQuery || w.title.toLowerCase().includes(searchQuery)));
   const anim3d = animWorks.filter(w=>(w.category||'3d')==='3d').sort((a,b)=>a.order-b.order);
   const anim2d = animWorks.filter(w=>(w.category||'3d')==='2d').sort((a,b)=>a.order-b.order);
-  html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'animationCat\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">动画系列</h2><span class="proj-block-count">'+animWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-animationCat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body'+(blockCollapsed.animationCat?' collapsed':'')+'" id="proj-body-animationCat">';
+  html += '<div class="proj-block" id="top-animation"><div class="proj-block-header" onclick="toggleProjBlock(\'animationCat\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">动画系列</h2><span class="proj-block-count">'+animWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-animationCat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body'+(blockCollapsed.animationCat?' collapsed':'')+'" id="proj-body-animationCat">';
   html += '<section class="cat-section" id="section-animation-3d" data-proj="animation" data-cat="3d">';
   html += '<div class="section-header" onclick="toggleSub(\'animation\',\'3d\')"><div class="section-header-left"><span class="section-icon">🧊</span><h3 class="section-label">三维</h3><span class="section-count">'+anim3d.length+' 个作品</span></div><div class="section-toggle'+(collapsed.animation['3d']?' collapsed':'')+'" id="toggle-animation-3d"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>';
   html += '<div class="section-body'+(collapsed.animation['3d']?' collapsed':'')+'" id="body-animation-3d">';
@@ -544,12 +544,8 @@ function toggleAndScroll(proj) {
     sub.classList.toggle('hidden', willCollapse);
     if (arrow) arrow.classList.toggle('collapsed', willCollapse);
   }
-  // 滚动到目标项目
-  const sec = document.getElementById('section-'+proj);
-  if (sec) {
-    const h = document.querySelector('.top-nav').offsetHeight;
-    window.scrollTo({ top: sec.getBoundingClientRect().top + window.scrollY - h - 16, behavior: 'smooth' });
-  }
+  // 展开时滚动到目标项目块
+  if (!willCollapse) scrollToId('block-'+proj);
 }
 
 function toggleProject(proj) {
@@ -569,13 +565,35 @@ function toggleCategory(cat) {
     sub.classList.toggle('hidden');
     if (arrow) arrow.classList.toggle('collapsed');
   }
-  const body = document.getElementById('cat-body-'+cat);
-  const toggle = document.getElementById('cat-toggle-'+cat);
-  if (body) body.classList.toggle('collapsed', sub?.classList.contains('hidden'));
-  if (toggle) toggle.classList.toggle('collapsed', sub?.classList.contains('hidden'));
+  // 展开分类时：主区域对应块同步展开并跳转过去
+  if (!sub || sub.classList.contains('hidden')) return;
+  const map = {
+    buyAd: { block: 'buyAd', sec: 'top-buyAd' },
+    clip: { block: 'clipCat', sec: 'section-clip' },
+    aigc: { block: 'aigcCat', sec: 'section-aigc' },
+    animation: { block: 'animationCat', sec: 'top-animation' }
+  };
+  const t = map[cat];
+  if (!t) return;
+  const body = document.getElementById('proj-body-'+t.block);
+  if (body && body.classList.contains('collapsed')) applyBlock(t.block, false);
+  scrollToId(t.sec);
 }
 
 // ===== 侧边栏点击分类 =====
+// 折叠动画（max-height transition）进行中直接测量会拿到中间态位置，
+// 先临时关闭过渡、按最终布局测量，再恢复过渡并平滑滚动
+function scrollToId(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const animated = document.querySelectorAll('.proj-block-body, .section-body');
+  animated.forEach(n => n.style.transition = 'none');
+  const h = document.querySelector('.top-nav').offsetHeight;
+  const top = el.getBoundingClientRect().top + window.scrollY - h - 16;
+  animated.forEach(n => n.style.transition = '');
+  window.scrollTo({ top, behavior: 'smooth' });
+}
+
 function scrollToSection(proj, cat) {
   activeProj = proj;
   if (cat) activeCat = cat;
@@ -603,12 +621,7 @@ function scrollToSection(proj, cat) {
   }
 
   // 滚动
-  const secId = cat ? 'section-'+proj+'-'+cat : 'section-'+proj;
-  const sec = document.getElementById(secId);
-  if (sec) {
-    const h = document.querySelector('.top-nav').offsetHeight;
-    window.scrollTo({ top: sec.getBoundingClientRect().top + window.scrollY - h - 16, behavior: 'smooth' });
-  }
+  scrollToId(cat ? 'section-'+proj+'-'+cat : 'section-'+proj);
 
   // 高亮侧边栏
   document.querySelectorAll('.side-link').forEach(l => {
