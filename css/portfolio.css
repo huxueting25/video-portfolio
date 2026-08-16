@@ -341,6 +341,7 @@ body {
   background: var(--bg-card); overflow: hidden;
 }
 .cat-section.hidden { display: none; }
+.cat-section.cat-flat { border: none; background: transparent; border-radius: 0; overflow: visible; margin-bottom: 0; }
 .section-header {
   display: flex; justify-content: space-between; align-items: center;
   padding: 16px 24px; cursor: pointer; user-select: none;

@@ -366,7 +366,7 @@ function renderAll() {
   } else if (sec === 'clip') {
   // ===== 影视混剪 =====
   const clipWorks = allWorks.filter(w => (w.project||'echocalypse')==='clip' && (!searchQuery || w.title.toLowerCase().includes(searchQuery))).sort((a,b)=>a.order-b.order);
-  html += '<section class="cat-section" id="section-clip" data-proj="clip">';
+  html += '<section class="cat-section cat-flat" id="section-clip" data-proj="clip">';
   html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'clipCat\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">影视混剪</h2><span class="proj-block-count">'+clipWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-clipCat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body'+(blockCollapsed.clipCat?' collapsed':'')+'" id="proj-body-clipCat">';
   html += clipWorks.length===0 ? '<p class="section-empty">暂无作品</p>' : clipWorks.map(w => renderCard(w)).join('');
   html += '</div></div>';
@@ -374,7 +374,7 @@ function renderAll() {
   } else if (sec === 'aigc') {
   // ===== AIGC作品 =====
   const aigcWorks = allWorks.filter(w => (w.project||'echocalypse')==='aigc' && (!searchQuery || w.title.toLowerCase().includes(searchQuery))).sort((a,b)=>a.order-b.order);
-  html += '<section class="cat-section" id="section-aigc" data-proj="aigc">';
+  html += '<section class="cat-section cat-flat" id="section-aigc" data-proj="aigc">';
   html += '<div class="proj-block"><div class="proj-block-header" onclick="toggleProjBlock(\'aigcCat\')"><div class="section-header-left"><h2 class="proj-block-label cat-label">AIGC作品</h2><span class="proj-block-count">'+aigcWorks.length+' 个作品</span></div><div class="proj-toggle" id="proj-toggle-aigcCat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div><div class="proj-block-body'+(blockCollapsed.aigcCat?' collapsed':'')+'" id="proj-body-aigcCat">';
   html += aigcWorks.length===0 ? '<p class="section-empty">暂无作品</p>' : aigcWorks.map(w => renderCard(w)).join('');
   html += '</div></div>';
