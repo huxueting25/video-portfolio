@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARIA HU · 胡雪婷 — Video Editor × Motion Designer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #050308;
+  --bg-2: #0a0410;
+  --bg-card: #12082a;
+  --text: #ffffff;
+  --text-2: #d4c8f0;
+  --muted: #8b7fad;
+  --dim: #5b4f7a;
+  --accent: #a78bfa;
+  --accent-glow: #c4b5fd;
+  --accent-soft: #7c5fbb;
+  --accent-deep: #5b21b6;
+  --border: #1f1535;
+  --border-hi: #3b2f5c;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: auto; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', 'Noto Sans SC', sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+}
+::selection { background: var(--accent); color: var(--bg); }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+#fxCanvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 400; }
+
+.nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; padding: 22px 48px; background: rgba(5, 3, 8, 0.6); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); }
+.brand { display: flex; align-items: center; gap: 12px; font-family: 'Archivo Black', sans-serif; font-size: 16px; letter-spacing: 0.18em; color: #fff; text-transform: uppercase; cursor: pointer; }
+.brand-mark { width: 28px; height: 28px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, var(--accent-glow), var(--accent-deep)); box-shadow: 0 0 20px var(--accent); position: relative; transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.brand:hover .brand-mark { transform: rotate(180deg) scale(1.1); }
+.brand-mark::after { content: ''; position: absolute; inset: 6px; border-radius: 50%; background: var(--bg); }
+.nav-links { display: flex; gap: 32px; list-style: none; }
+.nav-links a { color: var(--text-2); text-decoration: none; font-size: 11px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; transition: color 0.2s; position: relative; }
+.nav-links a:hover { color: var(--accent-glow); }
+.nav-links a::after { content: ''; position: absolute; left: 0; right: 0; bottom: -6px; height: 1px; background: var(--accent); transform: scaleX(0); transition: transform 0.3s; }
+.nav-links a:hover::after { transform: scaleX(1); }
+
+.overlay { position: fixed; inset: 0; z-index: 999; background: linear-gradient(160deg, #a78bfa 0%, #7c5fbb 45%, #5b21b6 100%); transform: translateY(100%); transition: transform 0.55s cubic-bezier(0.76, 0, 0.24, 1); display: flex; align-items: center; justify-content: center; pointer-events: none; overflow: hidden; }
+.overlay::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.25), transparent 55%); }
+.overlay.show { transform: translateY(0); }
+.overlay .word { font-family: 'Archivo Black', sans-serif; font-size: clamp(52px, 9vw, 110px); letter-spacing: 0.08em; text-transform: uppercase; color: #050308; opacity: 0; transform: translateY(24px) scale(0.96); transition: opacity 0.35s 0.15s, transform 0.35s 0.15s cubic-bezier(0.22, 1, 0.36, 1); }
+.overlay.show .word { opacity: 1; transform: translateY(0) scale(1); }
+.overlay .tag-sub { position: absolute; bottom: 14%; left: 50%; transform: translateX(-50%); font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.4em; text-transform: uppercase; color: rgba(5, 3, 8, 0.55); opacity: 0; transition: opacity 0.3s 0.3s; }
+.overlay.show .tag-sub { opacity: 1; }
+
+/* === HOME === */
+#home { position: relative; min-height: 100vh; padding: 0 48px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-bottom: 1px solid var(--border); cursor: crosshair; }
+#jellyCanvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+#home::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 85% 75% at 50% 42%, transparent 55%, var(--bg) 100%); z-index: 2; pointer-events: none; }
+
+.home-content { position: relative; z-index: 3; max-width: 960px; margin: 0 auto; padding: 120px 0 110px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.home-eyebrow { display: inline-flex; align-items: center; gap: 10px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent); letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 30px; padding: 6px 14px; border: 1px solid var(--border-hi); border-radius: 99px; background: rgba(167, 139, 250, 0.05); }
+.home-eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); animation: pulse 1.6s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.7); } }
+
+.home-title { font-family: 'Archivo Black', 'Inter', sans-serif; font-weight: 400; font-size: clamp(56px, 8.4vw, 104px); line-height: 1.0; letter-spacing: 0.005em; color: #fff; margin-bottom: 30px; text-transform: uppercase; text-align: center; white-space: nowrap; }
+.home-title .line { display: block; opacity: 0; transform: translateY(40px); animation: rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.home-title .line:nth-child(1) { animation-delay: 0.15s; }
+.home-title .line:nth-child(2) { animation-delay: 0.32s; }
+.home-title .line:nth-child(3) { animation-delay: 0.49s; }
+@keyframes rise { to { opacity: 1; transform: translateY(0); } }
+.home-subtitle { font-size: 15px; color: var(--text-2); letter-spacing: 0.05em; margin: 0 auto 48px; font-weight: 300; max-width: 560px; text-align: center; opacity: 0; animation: rise 0.8s 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.home-subtitle em { font-style: normal; color: var(--accent-glow); font-weight: 500; }
+.cta-row { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; opacity: 0; animation: rise 0.8s 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.btn { padding: 15px 32px; font-size: 11px; font-weight: 600; letter-spacing: 0.25em; text-transform: uppercase; text-decoration: none; cursor: pointer; transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), background 0.3s, color 0.3s, box-shadow 0.3s, border-color 0.3s; font-family: 'JetBrains Mono', monospace; display: inline-flex; align-items: center; gap: 10px; border: 1px solid transparent; will-change: transform; }
+.btn-primary { background: #fff; color: var(--bg); }
+.btn-primary:hover { background: var(--accent-glow); box-shadow: 0 0 40px -4px var(--accent); }
+.btn-ghost { background: transparent; color: #fff; border-color: var(--border-hi); }
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent-glow); }
+.btn .arr { transition: transform 0.3s; }
+.btn:hover .arr { transform: translateX(4px); }
+.scroll-indicator { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 3; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.3em; text-transform: uppercase; opacity: 0; animation: fadeIn 0.8s 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+@keyframes fadeIn { to { opacity: 1; } }
+.scroll-arrow { width: 1px; height: 36px; background: linear-gradient(to bottom, var(--accent), transparent); position: relative; overflow: hidden; }
+.scroll-arrow::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent, var(--accent-glow)); animation: scroll-down 1.8s infinite; }
+@keyframes scroll-down { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
+
+/* === WORK === */
+#work { min-height: 100vh; padding: 120px 48px 80px; position: relative; border-bottom: 1px solid var(--border); }
+.section-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; padding-bottom: 28px; border-bottom: 1px solid var(--border); gap: 32px; flex-wrap: wrap; }
+.section-head-left { max-width: 860px; }
+.section-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent); letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+.section-eyebrow::before { content: ''; width: 24px; height: 1px; background: var(--accent); }
+.section-title { font-family: 'Archivo Black', 'Arial Black', 'Inter', sans-serif; font-weight: 400; font-size: clamp(48px, 6.8vw, 86px); line-height: 1.05; letter-spacing: 0.005em; color: #fff; text-transform: uppercase; white-space: nowrap; }
+.section-title .zh { font-family: 'Noto Sans SC', sans-serif; font-weight: 300; font-size: 0.4em; color: var(--muted); letter-spacing: 0.3em; display: block; margin-top: 18px; text-transform: none; }
+
+.work-tabs { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 28px; padding: 0 16px; }
+.work-tab { padding: 12px 22px; border: 1px solid var(--border-hi); border-radius: 99px; background: transparent; color: var(--text-2); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1); display: inline-flex; align-items: center; gap: 10px; white-space: nowrap; }
+.work-tab:hover { border-color: var(--accent); color: var(--accent-glow); transform: translateY(-2px); }
+.work-tab.active { background: var(--accent); color: var(--bg); border-color: var(--accent); box-shadow: 0 0 32px -8px var(--accent), 0 0 16px -4px var(--accent-glow) inset; }
+.work-tab .count { opacity: 0.55; font-size: 10px; font-weight: 500; }
+.work-tab.active .count { opacity: 0.7; }
+
+/* === 环形画廊 === */
+.ring-wrap { margin-bottom: 70px; }
+.ring-stage { position: relative; height: 470px; perspective: 1500px; perspective-origin: 50% 42%; cursor: grab; touch-action: pan-y; user-select: none; }
+.ring-stage.dragging { cursor: grabbing; }
+.ring-track { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-style: preserve-3d; will-change: transform; }
+.ring-center { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 5; pointer-events: none; text-align: center; }
+.ring-center .orbit { width: 150px; height: 150px; border-radius: 50%; border: 1px dashed rgba(255,255,255,0.1); margin: 0 auto 14px; position: relative; animation: spin 30s linear infinite; }
+.ring-center .orbit::before { content: ''; position: absolute; inset: -9px; border-radius: 50%; border: 1px solid transparent; border-top-color: var(--accent); animation: spin 10s linear infinite reverse; }
+.ring-center .orbit::after { content: ''; position: absolute; inset: 14px; border-radius: 50%; border: 1px solid transparent; border-bottom-color: var(--accent-glow); animation: spin 6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.ring-center .c-title { font-family: 'Archivo Black', sans-serif; font-size: 15px; letter-spacing: 0.2em; text-transform: uppercase; color: #fff; }
+.ring-center .c-count { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent); margin-top: 5px; letter-spacing: 0.2em; }
+.ring-item { position: absolute; left: 0; top: 0; width: 230px; height: 145px; margin: -72px 0 0 -115px; border-radius: 10px; overflow: hidden; cursor: pointer; background: var(--bg-card); border: 1px solid var(--border); transition: border-color 0.3s, box-shadow 0.3s; backface-visibility: hidden; will-change: transform; }
+.ring-item:hover { border-color: var(--accent); }
+.ring-item .thumb { position: absolute; inset: 0; display: grid; place-items: center; background: linear-gradient(135deg, var(--bg-card), var(--accent-deep)); overflow: hidden; transition: transform 0.3s; }
+.ring-item .ghost { position: absolute; inset: 0; background: var(--ring-gradient, radial-gradient(circle at 30% 30%, var(--accent), transparent 60%)); opacity: 0.4; filter: blur(24px); transition: opacity 0.3s; }
+.ring-item.hot .ghost { opacity: 0.7; }
+.ring-item .icon { font-size: 38px; opacity: 0.6; filter: drop-shadow(0 0 18px rgba(196,181,253,0.5)); transition: all 0.3s; z-index: 1; }
+.ring-item.hot .icon { opacity: 1; transform: scale(1.15); }
+.ring-item .label { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 14px 14px; background: linear-gradient(transparent, rgba(5,3,8,0.95)); z-index: 2; }
+.ring-item .label .t { font-size: 12px; font-weight: 500; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ring-item .label .l-cat { font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 10px; letter-spacing: 0.25em; color: var(--accent-glow); margin-top: 5px; text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
+.ring-item .label .l-cat::before { content: ''; width: 12px; height: 1px; background: var(--accent); }
+.ring-item .label .l-meta { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.15em; color: var(--muted); margin-top: 3px; text-transform: uppercase; }
+.ring-item.hot { border-color: var(--accent); box-shadow: 0 0 40px -6px var(--accent); z-index: 6; }
+
+/* === 作品网格 === */
+.work-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; position: relative; min-height: 200px; }
+.work-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; cursor: pointer; transition: border-color 0.3s, box-shadow 0.3s; position: relative; will-change: transform; transform-style: preserve-3d; }
+.work-card:hover { border-color: var(--accent); box-shadow: 0 24px 60px -20px rgba(167, 139, 250, 0.45); }
+.work-card .spot { position: absolute; inset: 0; z-index: 3; opacity: 0; transition: opacity 0.35s; pointer-events: none; background: radial-gradient(280px circle at var(--sx, 50%) var(--sy, 50%), rgba(196, 181, 253, 0.16), transparent 65%); }
+.work-card:hover .spot { opacity: 1; }
+.work-card .work-thumb { aspect-ratio: 16/9; position: relative; overflow: hidden; background: linear-gradient(135deg, var(--bg-card), var(--accent-deep)); }
+.work-thumb::before { content: ''; position: absolute; inset: 0; background: var(--thumb-gradient, radial-gradient(circle at 30% 30%, var(--accent), transparent 60%)); opacity: 0.35; filter: blur(20px); transition: opacity 0.4s, transform 0.6s; }
+.work-card:hover .work-thumb::before { opacity: 0.6; transform: scale(1.08); }
+.work-thumb-icon { position: absolute; inset: 0; display: grid; place-items: center; font-size: 38px; opacity: 0.55; transition: all 0.4s; filter: drop-shadow(0 0 20px rgba(196, 181, 253, 0.5)); z-index: 1; }
+.work-card:hover .work-thumb-icon { opacity: 0.95; transform: scale(1.12); }
+.work-info { padding: 16px 18px; border-top: 1px solid var(--border); position: relative; z-index: 2; }
+.work-cat { font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 10px; color: var(--accent); letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.work-cat::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 4px var(--accent); }
+.work-title { font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.work-meta { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.1em; }
+@keyframes cardIn { from { opacity: 0; transform: translateY(20px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* === ABOUT === */
+#about { min-height: 100vh; padding: 140px 48px; display: flex; align-items: center; gap: 80px; border-bottom: 1px solid var(--border); }
+.about-photo { flex: 0 0 42%; aspect-ratio: 3/4; background: linear-gradient(135deg, #1f1535 0%, #5b21b6 100%); border-radius: 8px; overflow: hidden; position: relative; border: 1px solid var(--border-hi); box-shadow: 0 40px 80px -30px rgba(167, 139, 250, 0.3); transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+.about-photo:hover { transform: translateY(-6px) rotate(-0.5deg); }
+.about-photo::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 30% 30%, rgba(196, 181, 253, 0.3), transparent 60%); }
+.about-photo-placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; z-index: 1; }
+.about-photo-placeholder .icon { width: 64px; height: 64px; border: 1px dashed var(--border-hi); border-radius: 50%; display: grid; place-items: center; margin-bottom: 18px; color: var(--accent); font-size: 24px; }
+.about-photo-placeholder .hint { margin-top: 8px; opacity: 0.6; font-size: 10px; }
+.about-content { flex: 1; }
+.about-bio { color: var(--text-2); font-size: 16px; line-height: 1.8; margin-bottom: 40px; max-width: 520px; }
+.about-bio strong { color: var(--accent-glow); font-weight: 500; }
+.skills-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; max-width: 620px; }
+.skill-chip { padding: 16px 18px; background: rgba(31, 21, 53, 0.5); border: 1px solid var(--border); border-radius: 4px; display: flex; align-items: center; gap: 12px; font-size: 13px; color: #fff; transition: all 0.3s; cursor: default; position: relative; overflow: hidden; }
+.skill-chip::after { content: ''; position: absolute; inset: 0; background: radial-gradient(160px circle at var(--sx, 50%) var(--sy, 50%), rgba(196,181,253,0.12), transparent 60%); opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+.skill-chip:hover { border-color: var(--accent); background: rgba(167, 139, 250, 0.08); transform: translateY(-2px); }
+.skill-chip:hover::after { opacity: 1; }
+.skill-icon { width: 28px; height: 28px; background: linear-gradient(135deg, var(--accent), var(--accent-deep)); border-radius: 4px; display: grid; place-items: center; font-size: 11px; font-weight: 700; color: #fff; font-family: 'Archivo Black', sans-serif; box-shadow: 0 0 16px -4px var(--accent); }
+.skill-sub { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
+
+/* === CONTACT === */
+#contact { min-height: 100vh; padding: 80px 48px 60px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; overflow: hidden; }
+#contact .section-eyebrow, #contact .section-title { position: relative; z-index: 2; text-align: center; }
+#contact .section-eyebrow::before { display: none; }
+#contact .section-title { margin-bottom: 14px; }
+.contact-intro { text-align: center; color: var(--muted); font-size: 13px; max-width: 480px; margin: 0 auto 44px; position: relative; z-index: 2; line-height: 1.7; }
+
+.dog-tag { position: relative; width: 340px; margin-top: 0; opacity: 0; transform: translateY(-120vh); z-index: 2; }
+.dog-tag.drop { animation: drop-tag 2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+@keyframes drop-tag {
+  0% { transform: translateY(-120vh) rotate(10deg); opacity: 0; }
+  50% { transform: translateY(30px) rotate(-4deg); opacity: 1; }
+  65% { transform: translateY(-12px) rotate(3deg); }
+  78% { transform: translateY(6px) rotate(-1.5deg); }
+  88% { transform: translateY(-3px) rotate(0.5deg); }
+  100% { transform: translateY(0) rotate(0deg); opacity: 1; }
+}
+.dog-tag .swing { animation: swing 4s 2s ease-in-out infinite; transform-origin: 50% 0; }
+@keyframes swing { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(2deg); } 75% { transform: rotate(-2deg); } }
+.tag-string { width: 2px; height: 80px; background: linear-gradient(to bottom, transparent, var(--accent-glow)); margin: 0 auto; box-shadow: 0 0 8px var(--accent), 0 0 16px var(--accent); position: relative; }
+.tag-string::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 12px; height: 12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 16px var(--accent); }
+.tag-body { background: linear-gradient(160deg, #1a0f2e 0%, #2d1f4a 50%, #1f1535 100%); border: 2px solid var(--accent); border-radius: 14px 14px 28px 28px; padding: 32px 30px; box-shadow: 0 0 80px rgba(167, 139, 250, 0.5), 0 30px 60px -20px rgba(0, 0, 0, 0.6), inset 0 0 30px rgba(167, 139, 250, 0.15); position: relative; }
+.tag-body::before { content: ''; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 24px; height: 24px; background: radial-gradient(circle, var(--accent-glow), var(--accent)); border-radius: 50%; box-shadow: 0 0 24px var(--accent), 0 0 40px var(--accent); }
+.tag-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent); letter-spacing: 0.4em; text-transform: uppercase; text-align: center; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.tag-eyebrow::before, .tag-eyebrow::after { content: ''; flex: 1; height: 1px; background: var(--accent); opacity: 0.4; max-width: 50px; }
+.tag-title { font-family: 'Archivo Black', sans-serif; font-size: 28px; text-align: center; color: #fff; letter-spacing: 0.08em; margin-bottom: 24px; text-transform: uppercase; }
+.tag-divider { width: 70%; height: 1px; background: linear-gradient(to right, transparent, var(--accent), transparent); margin: 0 auto 22px; opacity: 0.6; }
+.tag-field { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(167, 139, 250, 0.2); font-size: 13px; cursor: pointer; transition: background 0.2s; }
+.tag-field:last-child { border-bottom: none; }
+.tag-field:hover { background: rgba(167, 139, 250, 0.05); }
+.tag-field:active { background: rgba(167, 139, 250, 0.12); }
+.tag-label { font-family: 'JetBrains Mono', monospace; color: var(--muted); letter-spacing: 0.2em; text-transform: uppercase; font-size: 10px; }
+.tag-value { color: #fff; font-weight: 500; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+.tag-copy-tip { position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%); font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent-glow); letter-spacing: 0.2em; text-transform: uppercase; opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s; white-space: nowrap; }
+.tag-copy-tip.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+.tag-qr { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 18px; padding-top: 18px; border-top: 1px solid rgba(167, 139, 250, 0.2); }
+.tag-qr img { width: 150px; height: 150px; border-radius: 8px; border: 2px solid var(--accent); background: #fff; padding: 4px; box-shadow: 0 0 24px -6px var(--accent); }
+.tag-qr-hint { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.25em; text-transform: uppercase; }
+footer { margin-top: 60px; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--dim); letter-spacing: 0.2em; text-transform: uppercase; position: relative; z-index: 2; }
+
+/* === Modal === */
+.modal { position: fixed; inset: 0; z-index: 600; display: none; align-items: center; justify-content: center; padding: 40px; }
+.modal.show { display: flex; animation: modalIn 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+@keyframes modalIn { from { opacity: 0; } to { opacity: 1; } }
+.modal-back { position: absolute; inset: 0; background: rgba(5, 3, 8, 0.85); backdrop-filter: blur(20px); }
+.modal-card { position: relative; max-width: 880px; width: 100%; max-height: 90vh; overflow-y: auto; background: var(--bg-card); border: 1px solid var(--accent); border-radius: 12px; box-shadow: 0 0 80px rgba(167, 139, 250, 0.4), 0 40px 80px rgba(0,0,0,0.5); animation: cardPop 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+@keyframes cardPop { from { opacity: 0; transform: scale(0.92) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+.modal-thumb { aspect-ratio: 16/9; position: relative; background: linear-gradient(135deg, var(--bg-card), var(--accent-deep)); overflow: hidden; }
+.modal-thumb video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.modal-thumb-icon { position: absolute; inset: 0; display: grid; place-items: center; font-size: 96px; filter: drop-shadow(0 0 30px rgba(196, 181, 253, 0.6)); }
+.modal-body { padding: 32px 36px; }
+.modal-cat { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent); letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+.modal-cat::before { content: ''; width: 20px; height: 1px; background: var(--accent); }
+.modal-title { font-family: 'Archivo Black', sans-serif; font-weight: 400; font-size: 36px; color: #fff; margin-bottom: 8px; letter-spacing: 0.005em; }
+.modal-meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 24px; }
+.modal-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.modal-tag { padding: 6px 12px; border: 1px solid var(--border-hi); border-radius: 99px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase; }
+.modal-close { position: absolute; top: 16px; right: 16px; width: 36px; height: 36px; border-radius: 50%; background: rgba(5, 3, 8, 0.7); border: 1px solid var(--border-hi); color: #fff; font-size: 18px; cursor: pointer; display: grid; place-items: center; transition: all 0.2s; z-index: 2; }
+.modal-close:hover { background: var(--accent); color: var(--bg); transform: rotate(90deg); }
+
+@media (max-width: 900px) {
+  .nav { padding: 16px 20px; }
+  .nav-links { gap: 16px; }
+  .nav-links a { font-size: 10px; }
+  #home { padding: 0 24px; }
+  .home-content { padding: 100px 0 90px; }
+  #work { padding: 90px 24px 60px; }
+  .work-grid { grid-template-columns: 1fr; }
+  .work-tab { padding: 9px 16px; font-size: 10px; }
+  .ring-stage { height: 380px; }
+  .ring-item { width: 190px; height: 120px; margin: -60px 0 0 -95px; }
+  #about { flex-direction: column; padding: 100px 24px; gap: 40px; }
+  .about-photo { flex: 1 1 auto; width: 100%; max-width: 400px; }
+  .skills-grid { grid-template-columns: repeat(2, 1fr); }
+  #contact { padding: 60px 24px 50px; }
+  .dog-tag { width: 92%; max-width: 340px; }
+  .section-head { flex-direction: column; align-items: flex-start; }
+  .modal { padding: 20px; }
+  .modal-title { font-size: 24px; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="fxCanvas"></canvas>
+
+<nav class="nav">
+  <div class="brand"><span class="brand-mark"></span><span>Huxueting</span></div>
+  <ul class="nav-links">
+    <li><a href="#home">Home</a></li>
+    <li><a href="#work">Work</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<div class="overlay" id="overlay">
+  <span class="word">Work</span>
+  <span class="tag-sub">Huxueting · Portfolio</span>
+</div>
+
+<!-- HOME -->
+<section id="home">
+  <canvas id="jellyCanvas"></canvas>
+  <div class="home-content">
+    <div class="home-eyebrow"><span class="dot"></span><span>Video Editor · Motion Designer</span></div>
+    <h1 class="home-title">
+      <span class="line">Huxueting</span>
+      <span class="line">Digital</span>
+      <span class="line">Portfolio</span>
+    </h1>
+    <p class="home-subtitle">胡雪婷 · 南师大艺术硕士，专注 <em>数字影像</em>、<em>创意策划</em> 与 <em>AIGC 内容创作</em>。</p>
+    <div class="cta-row">
+      <a href="#work" class="btn btn-primary">View Work <span class="arr">→</span></a>
+      <a href="#about" class="btn btn-ghost">About Me</a>
+    </div>
+  </div>
+  <div class="scroll-indicator"><span>Scroll</span><div class="scroll-arrow"></div></div>
+</section>
+
+<!-- WORK -->
+<section id="work">
+  <div class="section-head">
+    <div class="section-head-left">
+      <div class="section-eyebrow">Selected Works</div>
+      <h2 class="section-title">Reels & Cuts<span class="zh">买量广告、AIGC 作品、动画系列、影视混剪</span></h2>
+    </div>
+  </div>
+
+  <div class="work-tabs" id="workTabs"></div>
+
+  <div class="ring-wrap">
+    <div class="ring-stage" id="ringStage">
+      <div class="ring-track" id="ringTrack"></div>
+      <div class="ring-center">
+        <div class="orbit"></div>
+        <div class="c-title">Selected</div>
+        <div class="c-count" id="ringCount">9</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="work-grid" id="workGrid"></div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="about-photo">
+    <div class="about-photo-placeholder">
+      <div class="icon">✦</div>
+      <div>Drop your photo here</div>
+      <div class="hint">assets/avatar.jpg (3:4)</div>
+    </div>
+  </div>
+  <div class="about-content">
+    <div class="section-eyebrow">About</div>
+    <h2 class="section-title" style="margin-bottom: 28px;">Who is she<span class="zh">数字影像 / 创意策划 / AIGC 内容创作</span></h2>
+    <p class="about-bio"><strong>胡雪婷</strong>，南京师范大学艺术硕士，拥有<strong>游族网络买量广告设计实战经验</strong>。负责二次元手游<strong>《绯色回响》</strong>素材全流程，覆盖 Facebook、Google、TikTok 等全渠道，累计产出 <strong>100+ 核心创意</strong>、消耗超 <strong>$400K+</strong>。精通<strong>脚本策划、分镜设计</strong>与 <strong>AIGC 素材高效产出</strong>，技术栈涵盖 剪映 / AE / PR / PS / AI / C4D / Maya / ZBrush / 3ds Max / Substance 3D Painter / Marmoset Toolbag / Unity / AI Workflow 等。</p>
+    <div class="skills-grid">
+      <div class="skill-chip"><div class="skill-icon">JY</div><div><div>剪映</div><div class="skill-sub">视频剪辑</div></div></div>
+      <div class="skill-chip"><div class="skill-icon">AE</div><div><div>After Effects</div><div class="skill-sub">后期合成</div></div></div>
+      <div class="skill-chip"><div class="skill-icon">PR</div><div><div>Premiere</div><div class="skill-sub">视频剪辑</div></div></div>
+      <div class="skill-chip"><div class="skill-icon">PS</div><div><div>Photoshop</div><div class="skill-sub">图像处理</div></div></div>
+      <div class="skill-chip"><div class="skill-icon">AI</div><div><div>Illustrator</div><div class="skill-sub">矢量绘图</div></div></div>
+      <div class="skill-chip"><div class="skill-icon">C4D</div><div><div>Cinema 4D</div><div class="skill-sub">动态设计</div></div></div>
+      <div class="skill-chip"><div class="skill-icon">M</div><div><div>Maya</div><div class="skill-sub">角色动画</div></div></div>
+      <div class="skill-chip"><div class="skill-icon">Z</div><div><div>ZBrush</div><div class="skill-sub">高模雕刻</div></div></div>
+      <div class="skill-chip"><div class="skill-icon">3D</div><div><div>3ds Max</div><div class="skill-sub">三维建模</div></div></div>
+      <div class="skill-chip"><div class="skill-icon">S</div><div><div>Substance</div><div class="skill-sub">材质贴图</div></div></div>
+      <div class="skill-chip"><div class="skill-icon">MT</div><div><div>Marmoset</div><div class="skill-sub">渲染预览</div></div></div>
+      <div class="skill-chip"><div class="skill-icon">U</div><div><div>Unity</div><div class="skill-sub">场景搭建</div></div></div>
+      <div class="skill-chip"><div class="skill-icon">AW</div><div><div>AI Workflow</div><div class="skill-sub">AI 工作流</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="section-eyebrow">Get in Touch</div>
+  <h2 class="section-title">Hang the Tag<span class="zh">远程 · 兼职 · Freelance 全开放</span></h2>
+  <p class="contact-intro">海外买量素材 / KOC 脚本 / 影视混剪 / 3D 角色 都接。<br>点击下方任一行可复制联系方式 ↓</p>
+
+  <div class="dog-tag" id="dogTag">
+    <div class="swing">
+      <div class="tag-string"></div>
+      <div class="tag-body">
+        <div class="tag-eyebrow"><span>ID Card</span></div>
+        <div class="tag-title">HUXUETING</div>
+        <div class="tag-divider"></div>
+        <div class="tag-field" data-copy="1955998482.qq.com"><span class="tag-label">Email</span><span class="tag-value">1955998482.qq.com</span></div>
+        <div class="tag-qr">
+          <img src="assets/wechat-qr.jpg" alt="WeChat QR" />
+          <span class="tag-qr-hint">扫一扫 · 加微信</span>
+        </div>
+        <div class="tag-copy-tip" id="copyTip">Copied ✓</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>© 2026 ARIA HU · Built with HTML · Canvas</footer>
+</section>
+
+<!-- Modal -->
+<div class="modal" id="modal">
+  <div class="modal-back"></div>
+  <div class="modal-card">
+    <button class="modal-close">×</button>
+    <div class="modal-thumb">
+      <div class="modal-thumb-icon" id="modalIcon">🎬</div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-cat" id="modalCat">Buy Ad</div>
+      <h3 class="modal-title" id="modalTitle">Title</h3>
+      <div class="modal-meta" id="modalMeta">Language</div>
+      <div class="modal-tags" id="modalTags"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* === 真实作品数据（占位符，将被替换） === */
+const REAL_WORKS = [{"c":"aigc","l":"CN","t":"上下左右","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786358709/portfolio/videos/b72f52aab031ab03.mp4","k":""},{"c":"aigc","l":"CN","t":"下班打开","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786361543/portfolio/videos/7db960e1b167e861.mp4","k":""},{"c":"aigc","l":"EN","t":"真人解说+RE夏日爱丽丝","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785857953/portfolio/videos/8b6735737eeb7434.mp4","k":""},{"c":"aigc","l":"EN","t":"旋转婚纱+蜃加多角色升级","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785946271/portfolio/videos/7f87b2b475b7c38f.mp4","k":""},{"c":"aigc","l":"EN","t":"上下左右","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785947451/portfolio/videos/d07b623b20eef976.mp4","k":""},{"c":"aigc","l":"EN","t":"RE黛莫妮卡","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785947795/portfolio/videos/ad9816d78846c8aa.mp4","k":""},{"c":"aigc","l":"EN","t":"球迷解说","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785947939/portfolio/videos/36c64d0d4ab6da93.mp4","k":""},{"c":"aigc","l":"EN","t":"仰视老婆","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948004/portfolio/videos/0fd997a6ff59ffa5.mp4","k":""},{"c":"aigc","l":"EN","t":"90°登陆老婆","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948068/portfolio/videos/f7fd1361b499fc51.mp4","k":""},{"c":"aigc","l":"EN","t":"旋转婚纱+90°蜃多角色升级","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948375/portfolio/videos/2606c5acd64fa432.mp4","k":""},{"c":"aigc","l":"EN","t":"想看卡点和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948596/portfolio/videos/7159c70257d0d802.mp4","k":""},{"c":"aigc","l":"EN","t":"很有影响力","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948657/portfolio/videos/da11517d3ec32f86.mp4","k":""},{"c":"aigc","l":"EN","t":"拉你下水","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948761/portfolio/videos/ac79b872e064c6a3.mp4","k":""},{"c":"aigc","l":"EN","t":"我当蜃迷妹和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948817/portfolio/videos/8dbdc439957135d6.mp4","k":""},{"c":"aigc","l":"EN","t":"AI手办化","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948901/portfolio/videos/33078d1e76b81155.mp4","k":""},{"c":"aigc","l":"EN","t":"白羽也出sp和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949011/portfolio/videos/1fcf3a209b9cc0af.mp4","k":""},{"c":"aigc","l":"EN","t":"半神半妖","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949105/portfolio/videos/2b2cf0fa353921d7.mp4","k":""},{"c":"aigc","l":"EN","t":"四宫格漫画和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949167/portfolio/videos/b048ef9a24e15bf0.mp4","k":""},{"c":"aigc","l":"EN","t":"help卡点","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949359/portfolio/videos/e0e86f3d21d46e4f.mp4","k":""},{"c":"aigc","l":"EN","t":"福利磕了","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949415/portfolio/videos/98d1f4e6115c5602.mp4","k":""},{"c":"aigc","l":"EN","t":"上下左右魔女版","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949495/portfolio/videos/fd8965f353dc16ce.mp4","k":""},{"c":"aigc","l":"EN","t":"跨出屏幕卡点","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949523/portfolio/videos/48fb5e2c2de8fceb.mp4","k":""},{"c":"aigc","l":"EN","t":"背影眺望","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949614/portfolio/videos/7797fdab6999d04a.mp4","k":""},{"c":"aigc","l":"EN","t":"补水时间","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949708/portfolio/videos/2a30e8a5e0cd2449.mp4","k":""},{"c":"aigc","l":"EN","t":"90°蜃皮肤框内看板娘","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949788/portfolio/videos/65e7b9147ca4fd50.mp4","k":""},{"c":"aigc","l":"EN","t":"电扇变装和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949911/portfolio/videos/30a140be5db1b4e3.mp4","k":""},{"c":"aigc","l":"EN","t":"扭动展示","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785950030/portfolio/videos/8e92850f2a1d79a7.mp4","k":""},{"c":"aigc","l":"EN","t":"RE丝西娜简和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785950121/portfolio/videos/d49b30041bf1ec58.mp4","k":""},{"c":"aigc","l":"EN","t":"拼图展示和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785950203/portfolio/videos/27dc0cfad6c0f0d3.mp4","k":""},{"c":"aigc","l":"EN","t":"开局就抽到和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785950295/portfolio/videos/fd291d6f97879d9c.mp4","k":""},{"c":"aigc","l":"EN","t":"砍一刀","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785950509/portfolio/videos/f3dcdf882d89a2d2.mp4","k":""},{"c":"aigc","l":"EN","t":"AI角色PV","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785950591/portfolio/videos/089811a256efbc6e.mp4","k":""},{"c":"aigc","l":"EN","t":"多角色点触","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785950676/portfolio/videos/203d788e82989798.mp4","k":""},{"c":"aigc","l":"EN","t":"互换衣服和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785950739/portfolio/videos/224a2a4dda43092d.mp4","k":""},{"c":"aigc","l":"EN","t":"AI滚屏和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785950826/portfolio/videos/e3ff408d1c7ff416.mp4","k":""},{"c":"aigc","l":"EN","t":"末日火车","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786365072/portfolio/videos/4ccd302393c5b3ce.mp4","k":""},{"c":"aigc","l":"JP","t":"上下左右","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786021091/portfolio/videos/35d1bbc43ec49bb5.mp4","k":""},{"c":"aigc","l":"JP","t":"RE黛莫妮卡和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786021549/portfolio/videos/d6ce8a874385a5d3.mp4","k":""},{"c":"aigc","l":"JP","t":"框内未央看板娘和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786021652/portfolio/videos/29f75812f0542b8c.mp4","k":""},{"c":"aigc","l":"JP","t":"框内未央皮肤看板娘和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786021837/portfolio/videos/5caf1aa3572a4f06.mp4","k":""},{"c":"aigc","l":"JP","t":"登录老婆和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786021948/portfolio/videos/7a8b7516ccbf1c4a.mp4","k":""},{"c":"aigc","l":"JP","t":"RE丝西娜简","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786022135/portfolio/videos/6e9d4974e867818f.mp4","k":""},{"c":"aigc","l":"JP","t":"拼图展示和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786022256/portfolio/videos/d84f8136c488ed8d.mp4","k":""},{"c":"aigc","l":"JP","t":"我当蜃迷妹和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786022403/portfolio/videos/4fd4f1a7567841d4.mp4","k":""},{"c":"aigc","l":"JP","t":"砍一刀","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786022482/portfolio/videos/c1e8337361d76641.mp4","k":""},{"c":"aigc","l":"JP","t":"开局就抽到","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786022612/portfolio/videos/333db71c049e670b.mp4","k":""},{"c":"aigc","l":"JP","t":"90°登录老婆","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786023079/portfolio/videos/5f1c355915feac5e.mp4","k":""},{"c":"aigc","l":"JP","t":"AI手办化和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786124362/portfolio/videos/d5019efd2bce728d.mp4","k":""},{"c":"aigc","l":"JP","t":"想看卡点和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786124757/portfolio/videos/ea63e2b600ea8294.mp4","k":""},{"c":"aigc","l":"KR","t":"上下左右和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786358273/portfolio/videos/a99b57f2fd7d0a26.mp4","k":""},{"c":"buyAd","l":"CN","t":"开局抽白羽","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786357927/portfolio/videos/8393b12b7d728b79.mp4","k":""},{"c":"buyAd","l":"CN","t":"色轮转场","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786358773/portfolio/videos/89cf615d9cf234b9.mp4","k":""},{"c":"buyAd","l":"CN","t":"丝西娜是亲女儿","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786358908/portfolio/videos/51f5e1a17d8a974f.mp4","k":""},{"c":"buyAd","l":"CN","t":"开局就抽到","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786358949/portfolio/videos/c7b813356bbbbf98.mp4","k":""},{"c":"buyAd","l":"CN","t":"要不要告诉他","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786359131/portfolio/videos/7768b420c1413c38.mp4","k":""},{"c":"buyAd","l":"CN","t":"约瑟芬录屏轮播","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786359364/portfolio/videos/2b098b7d75d86661.mp4","k":""},{"c":"buyAd","l":"CN","t":"泰希卡pv","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786359508/portfolio/videos/c65c30f7337a8239.mp4","k":""},{"c":"buyAd","l":"CN","t":"砍一刀","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786359610/portfolio/videos/d890cf12ea3ddd9c.mp4","k":""},{"c":"buyAd","l":"CN","t":"爱丽丝角色解说","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786359652/portfolio/videos/f4de2b95c8b6ed5e.mp4","k":""},{"c":"buyAd","l":"CN","t":"前贴带爱丽丝回家","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786359771/portfolio/videos/233e1263fc8e31c0.mp4","k":""},{"c":"buyAd","l":"CN","t":"开局抽爱丽丝","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786360087/portfolio/videos/6651b43c6b72c24a.mp4","k":""},{"c":"buyAd","l":"CN","t":"前贴几点下班","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786360121/portfolio/videos/e836a83474a64225.mp4","k":""},{"c":"buyAd","l":"CN","t":"前贴召唤是我","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786360170/portfolio/videos/2f654eb3fcae7306.mp4","k":""},{"c":"buyAd","l":"CN","t":"紧急通知","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786360201/portfolio/videos/0a1612e7e8eb02fc.mp4","k":""},{"c":"buyAd","l":"CN","t":"2.5周年福利","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786361591/portfolio/videos/7fac3f593182bbf0.mp4","k":""},{"c":"buyAd","l":"CN","t":"20G游戏","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786361617/portfolio/videos/2141c2e8dbbbffcb.mp4","k":""},{"c":"buyAd","l":"EN","t":"框内蜃看板娘","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785947225/portfolio/videos/2ff285c997c3008d.mp4","k":""},{"c":"buyAd","l":"EN","t":"框内蜃皮肤看板娘","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785947329/portfolio/videos/98926afb92c1a2c3.mp4","k":""},{"c":"buyAd","l":"EN","t":"循环展示老婆","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785947631/portfolio/videos/3fc19f26043ab8a4.mp4","k":""},{"c":"buyAd","l":"EN","t":"开局抽钰","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785947835/portfolio/videos/8cf598730b51220d.mp4","k":""},{"c":"buyAd","l":"EN","t":"框内看白羽","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948137/portfolio/videos/ed28c92f7f0ac4a6.mp4","k":""},{"c":"buyAd","l":"EN","t":"佐娅看板娘和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948224/portfolio/videos/cd528ca69691e71c.mp4","k":""},{"c":"buyAd","l":"EN","t":"开局抽蜃和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948461/portfolio/videos/571a7e413cf1c0d2.mp4","k":""},{"c":"buyAd","l":"EN","t":"开局抽佐娅和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948503/portfolio/videos/f77795a754539043.mp4","k":""},{"c":"buyAd","l":"EN","t":"框内未央皮肤看板娘和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948713/portfolio/videos/86f0fd44aa1baf05.mp4","k":""},{"c":"buyAd","l":"EN","t":"弃号重开朱丽叶和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785948852/portfolio/videos/5b6fdf2e74c502e5.mp4","k":""},{"c":"buyAd","l":"EN","t":"好消息芃芃","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949223/portfolio/videos/592641d18e327b8b.mp4","k":""},{"c":"buyAd","l":"EN","t":"黎看板娘","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785950418/portfolio/videos/5a9f9fa96c8e3a5d.mp4","k":""},{"c":"buyAd","l":"EN","t":"色轮转场和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785950462/portfolio/videos/2fbebc3de4a63de0.mp4","k":""},{"c":"buyAd","l":"EN","t":"七美女展示","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785950552/portfolio/videos/60c5cb43c2d0dfe6.mp4","k":""},{"c":"buyAd","l":"JP","t":"框内蜃看板娘","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786018427/portfolio/videos/18d3e491af5b9b6b.mp4","k":""},{"c":"buyAd","l":"JP","t":"开局抽佐娅和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786019059/portfolio/videos/2fd852fac9896023.mp4","k":""},{"c":"buyAd","l":"JP","t":"开局抽钰和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786019379/portfolio/videos/b30cf29a864f7e3e.mp4","k":""},{"c":"buyAd","l":"JP","t":"开局抽蜃和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786020602/portfolio/videos/5d878e62b848abe7.mp4","k":""},{"c":"buyAd","l":"JP","t":"开局抽白羽和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786021414/portfolio/videos/f3285110d49a3eea.mp4","k":""},{"c":"buyAd","l":"JP","t":"佐娅看板娘和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786021485/portfolio/videos/944f58a671a4dd15.mp4","k":""},{"c":"buyAd","l":"JP","t":"弃号重开朱丽叶和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786021761/portfolio/videos/6da2ee0e5141d418.mp4","k":""},{"c":"buyAd","l":"JP","t":"好消息芃芃和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786021894/portfolio/videos/7c03869aedeff0c8.mp4","k":""},{"c":"buyAd","l":"JP","t":"色轮转场","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786022555/portfolio/videos/3df56f5bd165e3e9.mp4","k":""},{"c":"buyAd","l":"JP","t":"框内看白羽和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786124190/portfolio/videos/79d81b2f4fb6d144.mp4","k":""},{"c":"buyAd","l":"JP","t":"仰视老婆","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786125281/portfolio/videos/853991dddd0d1c54.mp4","k":""},{"c":"buyAd","l":"JP","t":"上下左右魔女篇","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786125493/portfolio/videos/0a5a71d75ccf01fe.mp4","k":""},{"c":"buyAd","l":"JP","t":"福利磕了","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786125598/portfolio/videos/2bad08b1bb815a01.mp4","k":""},{"c":"buyAd","l":"JP","t":"扭动展示","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786125635/portfolio/videos/18efeb0e22ea021d.mp4","k":""},{"c":"buyAd","l":"JP","t":"很有影响力","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786125734/portfolio/videos/1e105b30421d81ab.mp4","k":""},{"c":"buyAd","l":"JP","t":"蜃皮肤看板娘和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786125831/portfolio/videos/6621c3237c710c84.mp4","k":""},{"c":"buyAd","l":"JP","t":"AI滚屏和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786126551/portfolio/videos/46e80b865a6a7396.mp4","k":""},{"c":"buyAd","l":"JP","t":"四宫格漫画和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786126781/portfolio/videos/ca8cb5a8e7c8c166.mp4","k":""},{"c":"buyAd","l":"JP","t":"半神半妖","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786126941/portfolio/videos/d2bbe0a89af85c39.mp4","k":""},{"c":"buyAd","l":"JP","t":"电扇变装和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786127204/portfolio/videos/dd8472e61c770825.mp4","k":""},{"c":"buyAd","l":"JP","t":"互换衣服和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786127283/portfolio/videos/a88d152b27709a43.mp4","k":""},{"c":"buyAd","l":"JP","t":"喜不喜欢和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786127436/portfolio/videos/4deb46b1c87c2db5.mp4","k":""},{"c":"buyAd","l":"JP","t":"跨出屏幕卡点","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786127583/portfolio/videos/8e591ce0b23eef87.mp4","k":""},{"c":"buyAd","l":"JP","t":"七美女展示和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786127655/portfolio/videos/8dd1514f5feb8512.mp4","k":""},{"c":"buyAd","l":"KR","t":"开局抽白羽","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786358220/portfolio/videos/4822c17dd4de5c54.mp4","k":""},{"c":"buyAd","l":"KR","t":"框内未央看板娘","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786358362/portfolio/videos/3defed9f8d547bd5.mp4","k":""},{"c":"buyAd","l":"KR","t":"框内未央皮肤看板娘","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786358500/portfolio/videos/918090b7c021806c.mp4","k":""},{"c":"buyAd","l":"KR","t":"循环展示和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786358584/portfolio/videos/c59473d54820b8b8.mp4","k":""},{"c":"buyAd","l":"Multi","t":"情怀_KOL碰巧巧1","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786364714/portfolio/videos/1b4f78adc1fcbb0d.mp4","k":""},{"c":"buyAd","l":"Multi","t":"情怀_KOL碰巧巧2","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786364780/portfolio/videos/1069784486a1c0d9.mp4","k":""},{"c":"buyAd","l":"Multi","t":"情怀_KOL张天翊1","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786364978/portfolio/videos/f9cc0d36e6302a99.mp4","k":""},{"c":"buyAd","l":"Multi","t":"情怀_KOL张天翊2","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786365005/portfolio/videos/13cd6cf454e1dcb6.mp4","k":""},{"c":"clip","l":"CN","t":"约瑟芬混剪","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786359316/portfolio/videos/274b7b5dd04397b6.mp4","k":""},{"c":"clip","l":"EN","t":"ROAD混剪和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949334/portfolio/videos/e68540761a141496.mp4","k":""},{"c":"clip","l":"EN","t":"goal混剪","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1785949879/portfolio/videos/316a4c322109f672.mp4","k":""},{"c":"clip","l":"JP","t":"goal混剪","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786022824/portfolio/videos/2828b6877fa78d1f.mp4","k":""},{"c":"clip","l":"JP","t":"Road混剪和谐","v":"https://res.cloudinary.com/fagndkrs/video/upload/v1786124553/portfolio/videos/78aaebb0481b30a3.mp4","k":""}];
+
+const catLabels = { buyAd: 'Buy Ad', aigc: 'AIGC', clip: 'Clip' };
+const catIcon = { buyAd: '🎬', aigc: '✨', clip: '🏯' };
+const catGrad = {
+  buyAd: 'radial-gradient(circle at 30% 30%, #a78bfa, transparent 60%)',
+  aigc: 'radial-gradient(circle at 50% 70%, #7c5fbb, transparent 60%)',
+  clip: 'radial-gradient(circle at 70% 30%, #c4b5fd, transparent 60%)'
+};
+const langLabel = { EN: 'English', JP: 'Japanese', CN: 'Chinese', KR: 'Korean', Multi: 'Multi' };
+
+const TABS = [
+  { filter: 'buyAd', label: 'UA Ads', count: REAL_WORKS.filter(w => w.c === 'buyAd').length },
+  { filter: 'aigc', label: 'AIGC', count: REAL_WORKS.filter(w => w.c === 'aigc').length },
+  { filter: 'anime', label: 'Anime', count: 0 },
+  { filter: 'clip', label: 'Reels', count: REAL_WORKS.filter(w => w.c === 'clip').length }
+];
+let currentFilter = 'all';
+
+/* === 全局点击粒子 + 光晕跟随 === */
+(function() {
+  const canvas = document.getElementById('fxCanvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  let w, h;
+  function resize() {
+    w = canvas.width = innerWidth * dpr;
+    h = canvas.height = innerHeight * dpr;
+    canvas.style.width = innerWidth + 'px';
+    canvas.style.height = innerHeight + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize();
+  addEventListener('resize', resize);
+  const bursts = [];
+  const rings = [];
+  let gx = -200, gy = -200, gtx = -200, gty = -200;
+  addEventListener('mousemove', (e) => { gtx = e.clientX; gty = e.clientY; });
+  addEventListener('click', (e) => {
+    const n = 12 + Math.floor(Math.random() * 8);
+    for (let i = 0; i < n; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const spd = 1.5 + Math.random() * 4.5;
+      bursts.push({ x: e.clientX, y: e.clientY, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd - 0.8, life: 1, decay: 0.018 + Math.random() * 0.02, size: 1 + Math.random() * 2.6, col: Math.random() > 0.35 ? '196,181,253' : '167,139,250' });
+    }
+    rings.push({ x: e.clientX, y: e.clientY, r: 4, max: 46 + Math.random() * 34, alpha: 0.55 });
+  });
+  function frame() {
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    gx += (gtx - gx) * 0.16; gy += (gty - gy) * 0.16;
+    const g = ctx.createRadialGradient(gx, gy, 0, gx, gy, 200);
+    g.addColorStop(0, 'rgba(167,139,250,0.10)');
+    g.addColorStop(0.5, 'rgba(167,139,250,0.04)');
+    g.addColorStop(1, 'rgba(167,139,250,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(gx, gy, 200, 0, Math.PI * 2); ctx.fill();
+    for (let i = bursts.length - 1; i >= 0; i--) {
+      const p = bursts[i];
+      p.x += p.vx; p.y += p.vy;
+      p.vx *= 0.96; p.vy = p.vy * 0.96 + 0.12;
+      p.life -= p.decay;
+      if (p.life <= 0) { bursts.splice(i, 1); continue; }
+      ctx.fillStyle = `rgba(${p.col},${p.life})`;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = `rgba(${p.col},${p.life * 0.25})`;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size * 3 * p.life, 0, Math.PI * 2); ctx.fill();
+    }
+    for (let i = rings.length - 1; i >= 0; i--) {
+      const r = rings[i];
+      r.r += 2.2; r.alpha -= 0.02;
+      if (r.alpha <= 0 || r.r > r.max) { rings.splice(i, 1); continue; }
+      ctx.strokeStyle = `rgba(196,181,253,${r.alpha})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2); ctx.stroke();
+    }
+    requestAnimationFrame(frame);
+  }
+  frame();
+})();
+
+/* === 顶部水母 + 气泡雨 + 漂浮光斑 === */
+(function() {
+  const canvas = document.getElementById('jellyCanvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  let cw, ch;
+  let mouseX = 0.5, mouseY = 0.5;
+  let jcx = 0, jcy = 0, jR = 0;
+  let shock = 0;
+  let proximity = 0;
+
+  function resize() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    cw = rect.width; ch = rect.height;
+    canvas.width = cw * dpr; canvas.height = ch * dpr;
+    canvas.style.width = cw + 'px'; canvas.style.height = ch + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize();
+  addEventListener('resize', resize);
+
+  addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mouseX = (e.clientX - rect.left) / rect.width;
+    mouseY = (e.clientY - rect.top) / rect.height;
+  });
+  document.getElementById('home').addEventListener('click', () => { shock = 1; });
+
+  // 伞内稀疏柔光粒子
+  const inner = [];
+  for (let i = 0; i < 40; i++) {
+    inner.push({
+      angle: Math.random() * Math.PI * 2,
+      r: Math.sqrt(Math.random()),
+      size: 0.6 + Math.random() * 1.3,
+      base: 0.18 + Math.random() * 0.34,
+      phase: Math.random() * Math.PI * 2,
+      freq: 0.4 + Math.random() * 1.0
+    });
+  }
+
+  // 气泡雨（从水母下方大量涌出，密集、锥形扩散）
+  const bubbles = [];
+  for (let i = 0; i < 150; i++) {
+    bubbles.push({
+      xRel: (Math.random() - 0.5) * 0.7,
+      t: Math.random(),
+      speed: 0.0025 + Math.random() * 0.0055,
+      size: 1.6 + Math.random() * 4.5,
+      alpha: 0.35 + Math.random() * 0.55,
+      phase: Math.random() * Math.PI * 2,
+      drift: (Math.random() - 0.5) * 0.12,
+      color: Math.random() < 0.7 ? '200,188,245' : '167,139,250'
+    });
+  }
+
+  // 背景光斑（加大、增多、加亮）
+  const bg = [];
+  const bgColors = ['167,139,250', '196,181,253', '77,227,200', '230,222,255', '147,120,220'];
+  for (let i = 0; i < 38; i++) {
+    bg.push({
+      x: Math.random(), y: Math.random(),
+      size: 10 + Math.random() * 22,
+      vy: -(0.00006 + Math.random() * 0.0003),
+      sway: 30 + Math.random() * 60,
+      swaySpd: 0.25 + Math.random() * 0.6,
+      alpha: 0.12 + Math.random() * 0.22,
+      color: bgColors[Math.floor(Math.random() * bgColors.length)],
+      breath: Math.random() * Math.PI * 2,
+      breathSpd: 0.4 + Math.random() * 0.7
+    });
+  }
+
+  let time = 0;
+
+  function draw() {
+    ctx.clearRect(0, 0, cw, ch);
+    time += 0.016;
+    shock = Math.max(0, shock - 0.012);
+
+    // 水母四处移动（傅里叶合成）+ 轻微呼吸浮动
+    jcx = cw * 0.50
+      + Math.sin(time * 0.22) * 180
+      + Math.sin(time * 0.61) * 90
+      + Math.sin(time * 1.13) * 40;
+    jcy = ch * 0.30
+      + Math.cos(time * 0.27) * 130
+      + Math.sin(time * 0.52) * 65
+      + Math.cos(time * 0.97) * 30
+      + Math.sin(time * 0.6) * 6;
+    jR = Math.min(cw, ch) * 0.12;
+
+    const mdx = mouseX * cw - jcx;
+    const mdy = mouseY * ch - jcy;
+    const mdist = Math.sqrt(mdx * mdx + mdy * mdy);
+    proximity = Math.max(0, 1 - mdist / (jR * 6));
+    proximity = Math.min(1, proximity);
+
+    const breath = Math.sin(time * 0.7) * 2.5;
+
+    // 1. 大光晕
+    const halo = ctx.createRadialGradient(jcx, jcy, 0, jcx, jcy, jR * 3);
+    halo.addColorStop(0, `rgba(215, 205, 255, ${0.35 + proximity * 0.3 + shock * 0.2})`);
+    halo.addColorStop(0.5, 'rgba(167, 139, 250, 0.18)');
+    halo.addColorStop(1, 'rgba(120, 100, 200, 0)');
+    ctx.fillStyle = halo;
+    ctx.beginPath(); ctx.arc(jcx, jcy, jR * 3, 0, Math.PI * 2); ctx.fill();
+
+    // 2. 伞形主体
+    const dome = ctx.createLinearGradient(jcx, jcy - jR * 0.65, jcx, jcy + jR * 0.5);
+    dome.addColorStop(0, 'rgba(242, 238, 255, 0.65)');
+    dome.addColorStop(0.35, 'rgba(205, 195, 250, 0.45)');
+    dome.addColorStop(0.75, 'rgba(167, 139, 250, 0.22)');
+    dome.addColorStop(1, 'rgba(120, 100, 200, 0)');
+    ctx.fillStyle = dome;
+    ctx.beginPath();
+    for (let a = Math.PI; a <= 2 * Math.PI; a += 0.05) {
+      const wave = Math.sin(a * 7 + time * 1.2) * 2;
+      const x = jcx + Math.cos(a) * (jR * 0.85 + wave);
+      const y = jcy + Math.sin(a) * jR * 0.5 + breath * 0.3;
+      if (a === Math.PI) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    for (let a = 0; a <= Math.PI; a += 0.05) {
+      const x = jcx + Math.cos(a) * jR * 0.85;
+      const y = jcy + Math.sin(a) * jR * 0.5 + breath * 0.3;
+      ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    // 3. 顶部高光
+    const hi = ctx.createRadialGradient(jcx, jcy - jR * 0.4, 0, jcx, jcy - jR * 0.4, jR * 0.55);
+    hi.addColorStop(0, `rgba(255, 255, 255, ${0.55 + proximity * 0.3})`);
+    hi.addColorStop(1, 'rgba(196, 181, 253, 0)');
+    ctx.fillStyle = hi;
+    ctx.beginPath(); ctx.arc(jcx, jcy - jR * 0.4, jR * 0.55, 0, Math.PI * 2); ctx.fill();
+
+    // 4. 内部柔光粒子
+    for (const p of inner) {
+      p.angle += 0.0008 + Math.sin(time * 0.5 + p.phase) * 0.001;
+      const px = jcx + Math.cos(p.angle) * p.r * jR * 0.6;
+      const py = jcy + Math.sin(p.angle) * p.r * jR * 0.32 + breath * 0.3;
+      const a = p.base * (0.7 + 0.3 * Math.sin(time * p.freq + p.phase)) * (1 + proximity * 0.4);
+      if (a < 0.03) continue;
+      ctx.fillStyle = `rgba(230, 222, 255, ${a})`;
+      ctx.beginPath(); ctx.arc(px, py, p.size, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // 5. 马蹄形性腺
+    ctx.strokeStyle = `rgba(196, 181, 253, ${0.22 * (1 + proximity * 0.5)})`;
+    ctx.lineWidth = 1.1;
+    for (let i = 0; i < 4; i++) {
+      const cx = jcx - jR * 0.5 + i * (jR * 0.33);
+      const cy = jcy + jR * 0.12 + breath * 0.3;
+      ctx.beginPath();
+      for (let a = 0; a <= Math.PI; a += 0.1) {
+        const x = cx + Math.cos(a) * jR * 0.13;
+        const y = cy + Math.sin(a) * jR * 0.2;
+        if (a === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    // 6. 气泡雨（从水母下方涌出，密集、锥形扩散）
+    const bubbleBaseY = jcy + jR * 0.55;
+    const bubbleFallLen = ch * 0.72;
+    for (const b of bubbles) {
+      b.t += b.speed * (1 + shock * 1.2);
+      if (b.t > 1.05) {
+        b.t = 0;
+        b.xRel = (Math.random() - 0.5) * 0.7;
+        b.size = 1.6 + Math.random() * 4.5;
+      }
+      const t = b.t;
+      // 锥形扩散：越往下越宽
+      const widthSpread = 0.5 + t * 1.5;
+      const driftX = Math.sin(t * 4 + b.phase) * b.drift * jR * t * 6;
+      const x = jcx + b.xRel * jR * widthSpread + driftX;
+      const y = bubbleBaseY + t * bubbleFallLen;
+      const fadeIn = t < 0.1 ? t / 0.1 : 1;
+      const fadeOut = t > 0.82 ? Math.max(0, 1 - (t - 0.82) / 0.18) : 1;
+      const a = b.alpha * fadeIn * fadeOut * (1 + proximity * 0.25);
+      if (a < 0.02) continue;
+      const r = b.size;
+      const grad = ctx.createRadialGradient(x, y, 0, x, y, r * 1.6);
+      grad.addColorStop(0, `rgba(${b.color}, ${a})`);
+      grad.addColorStop(0.5, `rgba(167, 139, 250, ${a * 0.5})`);
+      grad.addColorStop(1, `rgba(120, 100, 200, 0)`);
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(x, y, r * 1.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 7. 背景光斑（径向渐变，加大、增多、加亮）
+    for (const p of bg) {
+      p.y += p.vy;
+      p.breath += p.breathSpd * 0.016;
+      if (p.y < -0.12) { p.y = 1.12; p.x = Math.random(); }
+      const swayX = Math.sin(time * p.swaySpd + p.breath) * p.sway;
+      const px = p.x * cw + swayX;
+      const py = p.y * ch;
+      const breathe = 0.75 + 0.25 * Math.sin(p.breath);
+      const a = p.alpha * breathe;
+      const r = p.size * breathe;
+      const grad = ctx.createRadialGradient(px, py, 0, px, py, r);
+      grad.addColorStop(0, `rgba(${p.color}, ${a})`);
+      grad.addColorStop(0.45, `rgba(${p.color}, ${a * 0.5})`);
+      grad.addColorStop(1, `rgba(${p.color}, 0)`);
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(px, py, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* === 导航遮罩 === */
+const overlay = document.getElementById('overlay');
+const overlayWord = overlay.querySelector('.word');
+const sectionNames = { '#home': 'Home', '#work': 'Work', '#about': 'About', '#contact': 'Contact' };
+let overlayBusy = false;
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', (e) => {
+    e.preventDefault();
+    const hash = a.getAttribute('href');
+    const target = document.querySelector(hash);
+    if (!target || overlayBusy) return;
+    overlayBusy = true;
+    overlayWord.textContent = sectionNames[hash] || 'Go';
+    overlay.classList.add('show');
+    setTimeout(() => {
+      target.scrollIntoView({ behavior: 'auto', block: 'start' });
+      setTimeout(() => {
+        overlay.classList.remove('show');
+        setTimeout(() => { overlayBusy = false; }, 300);
+      }, 250);
+    }, 580);
+  });
+});
+
+/* === WORK === */
+const workTabs = document.getElementById('workTabs');
+const workGrid = document.getElementById('workGrid');
+const ringTrack = document.getElementById('ringTrack');
+const ringStage = document.getElementById('ringStage');
+const ringCount = document.getElementById('ringCount');
+const modal = document.getElementById('modal');
+const modalIcon = document.getElementById('modalIcon');
+const modalCat = document.getElementById('modalCat');
+const modalTitle = document.getElementById('modalTitle');
+const modalMeta = document.getElementById('modalMeta');
+const modalTags = document.getElementById('modalTags');
+
+TABS.forEach(t => {
+  const btn = document.createElement('button');
+  btn.className = 'work-tab' + (t.filter === 'all' ? ' active' : '');
+  btn.dataset.filter = t.filter;
+  btn.innerHTML = `${t.label}<span class="count">${t.count}</span>`;
+  btn.addEventListener('click', () => setFilter(t.filter));
+  workTabs.appendChild(btn);
+});
+
+function openModal(w) {
+  modalIcon.textContent = catIcon[w.c];
+  modalCat.textContent = catLabels[w.c] + ' · ' + (langLabel[w.l] || w.l);
+  modalTitle.textContent = w.t;
+  modalMeta.textContent = (langLabel[w.l] || w.l) + ' · ' + catLabels[w.c];
+  modalTags.innerHTML = '';
+  [w.l, catLabels[w.c]].forEach(t => {
+    const span = document.createElement('span');
+    span.className = 'modal-tag';
+    span.textContent = t;
+    modalTags.appendChild(span);
+  });
+  // 视频播放
+  const thumb = document.querySelector('.modal-thumb');
+  const oldVideo = thumb.querySelector('video');
+  if (oldVideo) oldVideo.remove();
+  modalIcon.style.display = 'grid';
+  if (w.v) {
+    const vid = document.createElement('video');
+    vid.src = w.v;
+    vid.autoplay = true;
+    vid.loop = true;
+    vid.muted = true;
+    vid.playsInline = true;
+    vid.addEventListener('loadeddata', () => { modalIcon.style.display = 'none'; });
+    vid.addEventListener('error', () => { vid.remove(); modalIcon.style.display = 'grid'; });
+    thumb.appendChild(vid);
+  }
+  modal.classList.add('show');
+}
+document.querySelector('.modal-back').addEventListener('click', () => {
+  modal.classList.remove('show');
+  const v = document.querySelector('.modal-thumb video');
+  if (v) v.pause();
+});
+document.querySelector('.modal-close').addEventListener('click', () => {
+  modal.classList.remove('show');
+  const v = document.querySelector('.modal-thumb video');
+  if (v) v.pause();
+});
+addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    modal.classList.remove('show');
+    const v = document.querySelector('.modal-thumb video');
+    if (v) v.pause();
+  }
+});
+
+function attachCardFx(el, w) {
+  el.addEventListener('mousemove', (e) => {
+    const r = el.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width - 0.5;
+    const py = (e.clientY - r.top) / r.height - 0.5;
+    el.style.transform = `perspective(900px) rotateX(${-py * 6}deg) rotateY(${px * 8}deg) translateY(-4px)`;
+    el.style.setProperty('--sx', `${(px + 0.5) * 100}%`);
+    el.style.setProperty('--sy', `${(py + 0.5) * 100}%`);
+  });
+  el.addEventListener('mouseleave', () => {
+    el.style.transform = '';
+    el.style.setProperty('--sx', '50%');
+    el.style.setProperty('--sy', '50%');
+  });
+  el.addEventListener('click', () => openModal(w));
+}
+
+function renderGrid(filter) {
+  workGrid.innerHTML = '';
+  const list = REAL_WORKS.filter(w => filter === 'all' || w.c === filter);
+  list.forEach((w, i) => {
+    const el = document.createElement('div');
+    el.className = 'work-card';
+    el.style.setProperty('--thumb-gradient', catGrad[w.c]);
+    el.innerHTML = `
+      <div class="spot"></div>
+      <div class="work-thumb"><div class="work-thumb-icon">${catIcon[w.c]}</div></div>
+      <div class="work-info">
+        <div class="work-cat">${catLabels[w.c]} · ${w.l}</div>
+        <div class="work-title">${w.t}</div>
+        <div class="work-meta">${langLabel[w.l] || w.l}</div>
+      </div>`;
+    attachCardFx(el, w);
+    el.style.animation = `cardIn 0.5s ${i * 0.04}s cubic-bezier(0.22,1,0.36,1) both`;
+    workGrid.appendChild(el);
+  });
+}
+
+let ringAngle = 0, ringDragging = false, ringStartX = 0, ringStartAngle = 0;
+function buildRing(filter) {
+  let items = REAL_WORKS.filter(w => filter === 'all' || w.c === filter);
+  // ring 最多显示 12 个（避免太挤）
+  if (items.length > 12) items = items.slice(0, 12);
+  if (items.length < 4) items = REAL_WORKS.slice(0, 9);
+  ringTrack.innerHTML = '';
+  ringCount.textContent = items.length;
+  const n = items.length;
+  const stepDeg = 360 / n;
+  const radius = Math.min(640, Math.max(300, n * 52));
+  items.forEach((w, i) => {
+    const el = document.createElement('div');
+    el.className = 'ring-item';
+    el.style.setProperty('--ring-gradient', catGrad[w.c]);
+    el.innerHTML = `<div class="thumb"><div class="ghost"></div><div class="icon">${catIcon[w.c]}</div></div><div class="label"><div class="t">${w.t}</div><div class="l-cat">${catLabels[w.c]}</div><div class="l-meta">${w.l} · ${langLabel[w.l] || ''}</div></div>`;
+    el.style.transform = `rotateY(${i * stepDeg}deg) translateZ(${radius}px)`;
+    el.addEventListener('click', (e) => { e.stopPropagation(); openModal(w); });
+    ringTrack.appendChild(el);
+  });
+  ringAngle = 0;
+}
+ringStage.addEventListener('pointerdown', (e) => {
+  ringDragging = true; ringStartX = e.clientX; ringStartAngle = ringAngle;
+  ringStage.classList.add('dragging');
+  try { ringStage.setPointerCapture(e.pointerId); } catch (err) {}
+});
+ringStage.addEventListener('pointermove', (e) => {
+  if (!ringDragging) return;
+  ringAngle = ringStartAngle + (e.clientX - ringStartX) * 0.45;
+});
+ringStage.addEventListener('pointerup', () => { ringDragging = false; ringStage.classList.remove('dragging'); });
+ringStage.addEventListener('pointerleave', () => { ringDragging = false; ringStage.classList.remove('dragging'); });
+
+function ringLoop() {
+  if (ringTrack.children.length) {
+    if (!ringDragging) ringAngle += 0.12;
+    ringTrack.style.transform = `rotateY(${ringAngle}deg)`;
+    const n = ringTrack.children.length;
+    const stepDeg = 360 / n;
+    const items = ringTrack.children;
+    for (let i = 0; i < n; i++) {
+      const el = items[i];
+      let a = ((ringAngle + i * stepDeg) % 360 + 360) % 360;
+      const front = a < 15 || a > 345;
+      el.classList.toggle('hot', front);
+      const diff = Math.abs(((a + 180) % 360) - 180);
+      el.style.opacity = front ? 1 : 0.35 + (1 - diff / 180) * 0.4;
+    }
+  }
+  requestAnimationFrame(ringLoop);
+}
+
+function setFilter(filter) {
+  if (filter === currentFilter) return;
+  currentFilter = filter;
+  document.querySelectorAll('.work-tab').forEach(b => b.classList.toggle('active', b.dataset.filter === filter));
+  renderGrid(filter);
+  buildRing(filter);
+}
+
+renderGrid('all');
+buildRing('all');
+ringLoop();
+
+/* === 磁性按钮 === */
+document.querySelectorAll('.btn').forEach(btn => {
+  btn.addEventListener('mousemove', (e) => {
+    const r = btn.getBoundingClientRect();
+    const dx = (e.clientX - (r.left + r.width / 2)) * 0.22;
+    const dy = (e.clientY - (r.top + r.height / 2)) * 0.3;
+    btn.style.transform = `translate(${dx}px, ${dy}px)`;
+  });
+  btn.addEventListener('mouseleave', () => { btn.style.transform = ''; });
+});
+
+document.querySelectorAll('.skill-chip').forEach(chip => {
+  chip.addEventListener('mousemove', (e) => {
+    const r = chip.getBoundingClientRect();
+    chip.style.setProperty('--sx', `${e.clientX - r.left}px`);
+    chip.style.setProperty('--sy', `${e.clientY - r.top}px`);
+  });
+});
+
+/* === 滚动入场 === */
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.style.opacity = '1';
+      entry.target.style.transform = 'translateY(0)';
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -80px 0px' });
+document.querySelectorAll('.skill-chip, .about-photo, .about-content, .contact-intro').forEach((el) => {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(24px)';
+  el.style.transition = 'opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1)';
+  revealObserver.observe(el);
+});
+
+/* === 吊牌入场（CSS 弹性坠落，每次进 contact 触发） === */
+const dogTag = document.getElementById('dogTag');
+let lastTagDrop = 0;
+function triggerTagDrop() {
+  const now = Date.now();
+  if (now - lastTagDrop < 2500) return;
+  lastTagDrop = now;
+  dogTag.classList.remove('drop');
+  void dogTag.offsetWidth;
+  dogTag.classList.add('drop');
+}
+const tagObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) triggerTagDrop();
+  });
+}, { threshold: 0.25 });
+tagObserver.observe(dogTag);
+document.querySelectorAll('a[href="#contact"]').forEach(a => {
+  a.addEventListener('click', () => setTimeout(triggerTagDrop, 900));
+});
+
+/* === 吊牌复制 === */
+const copyTip = document.getElementById('copyTip');
+let copyTimer = null;
+document.querySelectorAll('.tag-field').forEach(field => {
+  field.addEventListener('click', () => {
+    const val = field.dataset.copy;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(val).catch(() => {});
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = val; document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (err) {}
+      document.body.removeChild(ta);
+    }
+    copyTip.textContent = 'Copied · ' + val;
+    copyTip.classList.add('show');
+    if (copyTimer) clearTimeout(copyTimer);
+    copyTimer = setTimeout(() => copyTip.classList.remove('show'), 1800);
+  });
+});
+</script>
+
+</body>
+</html>
