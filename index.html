@@ -1014,7 +1014,9 @@ const tagObserver = new IntersectionObserver((entries) => {
     if (entry.isIntersecting) triggerTagDrop();
   });
 }, { threshold: 0.25 });
-tagObserver.observe(dogTag);
+// 吊牌初始被 transform 移到视口上方 120vh，自身永远不会进入视口，
+// 改为观察 contact 区块进入视口时触发坠落
+tagObserver.observe(document.getElementById('contact'));
 document.querySelectorAll('a[href="#contact"]').forEach(a => {
   a.addEventListener('click', () => setTimeout(triggerTagDrop, 900));
 });
