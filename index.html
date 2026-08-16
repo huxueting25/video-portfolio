@@ -7,19 +7,63 @@
   <title>胡雪婷 · HUXUETING PORTFOLIO</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;700&family=Noto+Serif+SC:wght@500;700;900&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/portfolio.css">
 </head>
 <body>
+
+<canvas id="fxCanvas"></canvas>
 
 <button id="scroll-to-top" title="回到顶端" onclick="scrollToTop()" style="display:none">
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 15l-6-6-6 6"/></svg>
 </button>
 
 <nav class="top-nav">
-  <div class="nav-brand">胡雪婷 · 作品集</div>
-  <div class="badge-private">🔒 私密分享</div>
+  <div class="nav-brand"><span class="brand-mark"></span><span>胡雪婷 · 作品集</span></div>
+  <div class="nav-right">
+    <ul class="nav-links">
+      <li><a href="#home">Home</a></li>
+      <li><a href="#work">Work</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <div class="badge-private">🔒 私密分享</div>
+  </div>
 </nav>
+
+<div class="overlay" id="overlay">
+  <span class="word">Home</span>
+  <span class="tag-sub">Huxueting · Portfolio</span>
+</div>
+
+<!-- HOME -->
+<section id="home">
+  <canvas id="jellyCanvas"></canvas>
+  <div class="home-content">
+    <div class="home-eyebrow"><span class="dot"></span><span>Video Editor · Motion Designer</span></div>
+    <h1 class="home-title">
+      <span class="line">Huxueting</span>
+      <span class="line">Digital</span>
+      <span class="line">Portfolio</span>
+    </h1>
+    <p class="home-subtitle">胡雪婷 · 南京师范大学(211) <em>跨媒体与动画艺术</em> 硕士，专注 <em>数字影像</em>、<em>创意策划</em> 与 <em>AIGC 内容创作</em>。</p>
+    <div class="cta-row">
+      <a href="#work" class="btn btn-primary">View Work <span class="arr">→</span></a>
+      <a href="#about" class="btn btn-ghost">About Me</a>
+    </div>
+  </div>
+  <div class="scroll-indicator"><span>Scroll</span><div class="scroll-arrow"></div></div>
+</section>
+
+<!-- WORK -->
+<section id="work">
+  <div class="section-head">
+    <div class="section-head-left">
+      <div class="section-eyebrow">Selected Works</div>
+      <h2 class="section-title">Reels & Cuts<span class="zh">买量广告、AIGC 作品、动画系列、影视混剪</span></h2>
+    </div>
+  </div>
+  <div class="work-body">
 
 <aside class="sidebar">
   <nav class="sidebar-nav">
@@ -108,15 +152,10 @@
   </nav>
 </aside>
 
-<main class="main-content">
-  <div class="hero-text">
-    <p class="hero-name-en">HUXUETING PORTFOLIO</p>
-    <h1 class="hero-name">胡雪婷 · 作品集</h1>
-    <p class="hero-sub">南京师范大学(211) · 跨媒体与动画艺术 · 硕士</p>
-  </div>
+<main class="work-main">
   <div class="search-bar" id="search-bar" style="display:none">
     <div class="search-input-wrap">
-      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b7fad" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
       <input type="text" class="search-input" id="search-input" placeholder="搜索作品标题..." oninput="onSearch(this.value)">
       <button class="search-clear" id="search-clear" onclick="clearSearch()" style="display:none">✕</button>
     </div>
@@ -125,10 +164,69 @@
   <div id="category-sections"></div>
 </main>
 
-<footer class="footer"><p>此页面通过私密链接分享，仅供指定收件人查看</p></footer>
+  </div><!-- /.work-body -->
+</section><!-- /#work -->
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="about-photo">
+    <div class="about-photo-placeholder">
+      <div class="icon">✦</div>
+      <div>Drop your photo here</div>
+      <div class="hint">assets/avatar.jpg (3:4)</div>
+    </div>
+  </div>
+  <div class="about-content">
+    <div class="section-eyebrow">About</div>
+    <h2 class="section-title" style="margin-bottom: 28px;">Who is she<span class="zh">数字影像 / 创意策划 / AIGC 内容创作</span></h2>
+    <p class="about-bio"><strong>胡雪婷</strong>，南京师范大学艺术硕士，拥有<strong>游族网络买量广告设计实战经验</strong>。负责二次元手游<strong>《绯色回响》</strong>素材全流程，覆盖 Facebook、Google、TikTok 等全渠道，累计产出 <strong>100+ 核心创意</strong>、消耗超 <strong>$400K+</strong>。精通<strong>脚本策划、分镜设计</strong>与 <strong>AIGC 素材高效产出</strong>，技术栈涵盖 剪映 / AE / PR / PS / AI / C4D / Maya / ZBrush / 3ds Max / Substance 3D Painter / Marmoset Toolbag / Unity / AI Workflow 等。</p>
+    <div class="skills-grid">
+      <div class="skill-chip"><div class="skill-icon">JY</div><div><div>剪映</div><div class="skill-sub">视频剪辑</div></div></div>
+      <div class="skill-chip"><div class="skill-icon">AE</div><div><div>After Effects</div><div class="skill-sub">后期合成</div></div></div>
+      <div class="skill-chip"><div class="skill-icon">PR</div><div><div>Premiere</div><div class="skill-sub">视频剪辑</div></div></div>
+      <div class="skill-chip"><div class="skill-icon">PS</div><div><div>Photoshop</div><div class="skill-sub">图像处理</div></div></div>
+      <div class="skill-chip"><div class="skill-icon">AI</div><div><div>Illustrator</div><div class="skill-sub">矢量绘图</div></div></div>
+      <div class="skill-chip"><div class="skill-icon">C4D</div><div><div>Cinema 4D</div><div class="skill-sub">动态设计</div></div></div>
+      <div class="skill-chip"><div class="skill-icon">M</div><div><div>Maya</div><div class="skill-sub">角色动画</div></div></div>
+      <div class="skill-chip"><div class="skill-icon">Z</div><div><div>ZBrush</div><div class="skill-sub">高模雕刻</div></div></div>
+      <div class="skill-chip"><div class="skill-icon">3D</div><div><div>3ds Max</div><div class="skill-sub">三维建模</div></div></div>
+      <div class="skill-chip"><div class="skill-icon">S</div><div><div>Substance</div><div class="skill-sub">材质贴图</div></div></div>
+      <div class="skill-chip"><div class="skill-icon">MT</div><div><div>Marmoset</div><div class="skill-sub">渲染预览</div></div></div>
+      <div class="skill-chip"><div class="skill-icon">U</div><div><div>Unity</div><div class="skill-sub">场景搭建</div></div></div>
+      <div class="skill-chip"><div class="skill-icon">AW</div><div><div>AI Workflow</div><div class="skill-sub">AI 工作流</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="section-eyebrow">Get in Touch</div>
+  <h2 class="section-title">Contact Me</h2>
+  <p class="contact-intro">有合作或交流想法？欢迎通过以下方式联系。</p>
+
+  <div class="dog-tag" id="dogTag">
+    <div class="swing">
+      <div class="tag-string"></div>
+      <div class="tag-body">
+        <div class="tag-eyebrow"><span>ID Card</span></div>
+        <div class="tag-title">HUXUETING</div>
+        <div class="tag-divider"></div>
+        <div class="tag-field" data-copy="1955998482@qq.com"><span class="tag-label">Email</span><span class="tag-value">1955998482@qq.com</span></div>
+        <div class="tag-field" data-copy="15905264341" style="border-bottom: none;"><span class="tag-label">Phone</span><span class="tag-value">15905264341</span></div>
+        <div class="tag-qr">
+          <img src="assets/wechat-qr.jpg" alt="WeChat QR" />
+          <span class="tag-qr-hint">扫一扫 · 加微信</span>
+        </div>
+        <div class="tag-copy-tip" id="copyTip">Copied ✓</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>© 2026 ARIA HU · Built with HTML · Canvas<br><span class="footer-note">此页面通过私密链接分享，仅供指定收件人查看</span></footer>
+</section>
 
 <div class="loading-overlay" id="loading-overlay">
-  <div class="loading-animation"><div class="pulse-ring"></div><svg width="40" height="40" viewBox="0 0 48 48" fill="none"><path d="M16 14L36 24L16 34V14Z" fill="#e94560"/></svg></div>
+  <div class="loading-animation"><div class="pulse-ring"></div><svg width="40" height="40" viewBox="0 0 48 48" fill="none"><path d="M16 14L36 24L16 34V14Z" fill="#a78bfa"/></svg></div>
   <p>正在加载作品集...</p>
 </div>
 
@@ -313,7 +411,7 @@ function renderAll() {
 function renderCard(w) {
   const idx = vidCounter++;
   const pUrl = posterUrl(w);
-  return '<div class="work-card"><div class="work-video-wrap">'
+  return '<div class="work-card"><div class="spot"></div><div class="work-video-wrap">'
     +'<video id="video-'+idx+'" controls playsinline preload="none" class="work-video" data-src="'+ (w.videoUrl||'') +'" poster="'+pUrl+'"></video>'
     +'<div class="video-placeholder" id="placeholder-'+idx+'" onclick="playVideo('+idx+')">'
     +(pUrl?'<img class="cover-img" src="'+pUrl+'" alt="" loading="lazy">':'')
@@ -339,6 +437,24 @@ function setupObservers() {
     });
   }, { rootMargin: '200px' });
   allVideos.forEach(v => obs.observe(v));
+  // 卡片 3D 倾斜 + 光标聚光（每次重渲染重新绑定）
+  document.querySelectorAll('.work-card').forEach(c => attachCardFx(c));
+}
+
+function attachCardFx(el) {
+  el.addEventListener('mousemove', (e) => {
+    const r = el.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width - 0.5;
+    const py = (e.clientY - r.top) / r.height - 0.5;
+    el.style.transform = `perspective(900px) rotateX(${-py * 6}deg) rotateY(${px * 8}deg) translateY(-4px)`;
+    el.style.setProperty('--sx', `${(px + 0.5) * 100}%`);
+    el.style.setProperty('--sy', `${(py + 0.5) * 100}%`);
+  });
+  el.addEventListener('mouseleave', () => {
+    el.style.transform = '';
+    el.style.setProperty('--sx', '50%');
+    el.style.setProperty('--sy', '50%');
+  });
 }
 
 function playVideo(idx) {
@@ -542,6 +658,398 @@ function clearSearch() {
 const stb = document.getElementById('scroll-to-top');
 window.addEventListener('scroll', () => { stb.style.display = window.scrollY > 400 ? 'flex' : 'none'; });
 function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+</script>
+
+<script>
+/* === 以下效果移植自 visitor-v7-final-demo.html（仅视觉与交互，不影响数据分类逻辑） === */
+
+/* === 全局点击粒子 + 光晕跟随 === */
+(function() {
+  const canvas = document.getElementById('fxCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  let w, h;
+  function resize() {
+    w = canvas.width = innerWidth * dpr;
+    h = canvas.height = innerHeight * dpr;
+    canvas.style.width = innerWidth + 'px';
+    canvas.style.height = innerHeight + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize();
+  addEventListener('resize', resize);
+  const bursts = [];
+  const rings = [];
+  let gx = -200, gy = -200, gtx = -200, gty = -200;
+  addEventListener('mousemove', (e) => { gtx = e.clientX; gty = e.clientY; });
+  addEventListener('click', (e) => {
+    const n = 12 + Math.floor(Math.random() * 8);
+    for (let i = 0; i < n; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const spd = 1.5 + Math.random() * 4.5;
+      bursts.push({ x: e.clientX, y: e.clientY, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd - 0.8, life: 1, decay: 0.018 + Math.random() * 0.02, size: 1 + Math.random() * 2.6, col: Math.random() > 0.35 ? '196,181,253' : '167,139,250' });
+    }
+    rings.push({ x: e.clientX, y: e.clientY, r: 4, max: 46 + Math.random() * 34, alpha: 0.55 });
+  });
+  function frame() {
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    gx += (gtx - gx) * 0.16; gy += (gty - gy) * 0.16;
+    const g = ctx.createRadialGradient(gx, gy, 0, gx, gy, 200);
+    g.addColorStop(0, 'rgba(167,139,250,0.10)');
+    g.addColorStop(0.5, 'rgba(167,139,250,0.04)');
+    g.addColorStop(1, 'rgba(167,139,250,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(gx, gy, 200, 0, Math.PI * 2); ctx.fill();
+    for (let i = bursts.length - 1; i >= 0; i--) {
+      const p = bursts[i];
+      p.x += p.vx; p.y += p.vy;
+      p.vx *= 0.96; p.vy = p.vy * 0.96 + 0.12;
+      p.life -= p.decay;
+      if (p.life <= 0) { bursts.splice(i, 1); continue; }
+      ctx.fillStyle = `rgba(${p.col},${p.life})`;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = `rgba(${p.col},${p.life * 0.25})`;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size * 3 * p.life, 0, Math.PI * 2); ctx.fill();
+    }
+    for (let i = rings.length - 1; i >= 0; i--) {
+      const r = rings[i];
+      r.r += 2.2; r.alpha -= 0.02;
+      if (r.alpha <= 0 || r.r > r.max) { rings.splice(i, 1); continue; }
+      ctx.strokeStyle = `rgba(196,181,253,${r.alpha})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2); ctx.stroke();
+    }
+    requestAnimationFrame(frame);
+  }
+  frame();
+})();
+
+/* === 顶部水母 + 气泡雨 + 漂浮光斑 === */
+(function() {
+  const canvas = document.getElementById('jellyCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  let cw, ch;
+  let mouseX = 0.5, mouseY = 0.5;
+  let jcx = 0, jcy = 0, jR = 0;
+  let shock = 0;
+  let proximity = 0;
+
+  function resize() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    cw = rect.width; ch = rect.height;
+    canvas.width = cw * dpr; canvas.height = ch * dpr;
+    canvas.style.width = cw + 'px'; canvas.style.height = ch + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize();
+  addEventListener('resize', resize);
+
+  addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mouseX = (e.clientX - rect.left) / rect.width;
+    mouseY = (e.clientY - rect.top) / rect.height;
+  });
+  document.getElementById('home').addEventListener('click', () => { shock = 1; });
+
+  // 伞内稀疏柔光粒子
+  const inner = [];
+  for (let i = 0; i < 40; i++) {
+    inner.push({
+      angle: Math.random() * Math.PI * 2,
+      r: Math.sqrt(Math.random()),
+      size: 0.6 + Math.random() * 1.3,
+      base: 0.18 + Math.random() * 0.34,
+      phase: Math.random() * Math.PI * 2,
+      freq: 0.4 + Math.random() * 1.0
+    });
+  }
+
+  // 气泡雨（从水母下方大量涌出，密集、锥形扩散）
+  const bubbles = [];
+  for (let i = 0; i < 150; i++) {
+    bubbles.push({
+      xRel: (Math.random() - 0.5) * 0.7,
+      t: Math.random(),
+      speed: 0.0025 + Math.random() * 0.0055,
+      size: 1.6 + Math.random() * 4.5,
+      alpha: 0.35 + Math.random() * 0.55,
+      phase: Math.random() * Math.PI * 2,
+      drift: (Math.random() - 0.5) * 0.12,
+      color: Math.random() < 0.7 ? '200,188,245' : '167,139,250'
+    });
+  }
+
+  // 背景光斑（加大、增多、加亮）
+  const bg = [];
+  const bgColors = ['167,139,250', '196,181,253', '77,227,200', '230,222,255', '147,120,220'];
+  for (let i = 0; i < 38; i++) {
+    bg.push({
+      x: Math.random(), y: Math.random(),
+      size: 10 + Math.random() * 22,
+      vy: -(0.00006 + Math.random() * 0.0003),
+      sway: 30 + Math.random() * 60,
+      swaySpd: 0.25 + Math.random() * 0.6,
+      alpha: 0.12 + Math.random() * 0.22,
+      color: bgColors[Math.floor(Math.random() * bgColors.length)],
+      breath: Math.random() * Math.PI * 2,
+      breathSpd: 0.4 + Math.random() * 0.7
+    });
+  }
+
+  let time = 0;
+
+  function draw() {
+    ctx.clearRect(0, 0, cw, ch);
+    time += 0.016;
+    shock = Math.max(0, shock - 0.012);
+
+    // 水母四处移动（傅里叶合成）+ 轻微呼吸浮动
+    jcx = cw * 0.50
+      + Math.sin(time * 0.22) * 180
+      + Math.sin(time * 0.61) * 90
+      + Math.sin(time * 1.13) * 40;
+    jcy = ch * 0.30
+      + Math.cos(time * 0.27) * 130
+      + Math.sin(time * 0.52) * 65
+      + Math.cos(time * 0.97) * 30
+      + Math.sin(time * 0.6) * 6;
+    jR = Math.min(cw, ch) * 0.12;
+
+    const mdx = mouseX * cw - jcx;
+    const mdy = mouseY * ch - jcy;
+    const mdist = Math.sqrt(mdx * mdx + mdy * mdy);
+    proximity = Math.max(0, 1 - mdist / (jR * 6));
+    proximity = Math.min(1, proximity);
+
+    const breath = Math.sin(time * 0.7) * 2.5;
+
+    // 1. 大光晕
+    const halo = ctx.createRadialGradient(jcx, jcy, 0, jcx, jcy, jR * 3);
+    halo.addColorStop(0, `rgba(215, 205, 255, ${0.35 + proximity * 0.3 + shock * 0.2})`);
+    halo.addColorStop(0.5, 'rgba(167, 139, 250, 0.18)');
+    halo.addColorStop(1, 'rgba(120, 100, 200, 0)');
+    ctx.fillStyle = halo;
+    ctx.beginPath(); ctx.arc(jcx, jcy, jR * 3, 0, Math.PI * 2); ctx.fill();
+
+    // 2. 伞形主体
+    const dome = ctx.createLinearGradient(jcx, jcy - jR * 0.65, jcx, jcy + jR * 0.5);
+    dome.addColorStop(0, 'rgba(242, 238, 255, 0.65)');
+    dome.addColorStop(0.35, 'rgba(205, 195, 250, 0.45)');
+    dome.addColorStop(0.75, 'rgba(167, 139, 250, 0.22)');
+    dome.addColorStop(1, 'rgba(120, 100, 200, 0)');
+    ctx.fillStyle = dome;
+    ctx.beginPath();
+    for (let a = Math.PI; a <= 2 * Math.PI; a += 0.05) {
+      const wave = Math.sin(a * 7 + time * 1.2) * 2;
+      const x = jcx + Math.cos(a) * (jR * 0.85 + wave);
+      const y = jcy + Math.sin(a) * jR * 0.5 + breath * 0.3;
+      if (a === Math.PI) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    for (let a = 0; a <= Math.PI; a += 0.05) {
+      const x = jcx + Math.cos(a) * jR * 0.85;
+      const y = jcy + Math.sin(a) * jR * 0.5 + breath * 0.3;
+      ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    // 3. 顶部高光
+    const hi = ctx.createRadialGradient(jcx, jcy - jR * 0.4, 0, jcx, jcy - jR * 0.4, jR * 0.55);
+    hi.addColorStop(0, `rgba(255, 255, 255, ${0.55 + proximity * 0.3})`);
+    hi.addColorStop(1, 'rgba(196, 181, 253, 0)');
+    ctx.fillStyle = hi;
+    ctx.beginPath(); ctx.arc(jcx, jcy - jR * 0.4, jR * 0.55, 0, Math.PI * 2); ctx.fill();
+
+    // 4. 内部柔光粒子
+    for (const p of inner) {
+      p.angle += 0.0008 + Math.sin(time * 0.5 + p.phase) * 0.001;
+      const px = jcx + Math.cos(p.angle) * p.r * jR * 0.6;
+      const py = jcy + Math.sin(p.angle) * p.r * jR * 0.32 + breath * 0.3;
+      const a = p.base * (0.7 + 0.3 * Math.sin(time * p.freq + p.phase)) * (1 + proximity * 0.4);
+      if (a < 0.03) continue;
+      ctx.fillStyle = `rgba(230, 222, 255, ${a})`;
+      ctx.beginPath(); ctx.arc(px, py, p.size, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // 5. 马蹄形性腺
+    ctx.strokeStyle = `rgba(196, 181, 253, ${0.22 * (1 + proximity * 0.5)})`;
+    ctx.lineWidth = 1.1;
+    for (let i = 0; i < 4; i++) {
+      const cx = jcx - jR * 0.5 + i * (jR * 0.33);
+      const cy = jcy + jR * 0.12 + breath * 0.3;
+      ctx.beginPath();
+      for (let a = 0; a <= Math.PI; a += 0.1) {
+        const x = cx + Math.cos(a) * jR * 0.13;
+        const y = cy + Math.sin(a) * jR * 0.2;
+        if (a === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    // 6. 气泡雨（从水母下方涌出，密集、锥形扩散）
+    const bubbleBaseY = jcy + jR * 0.55;
+    const bubbleFallLen = ch * 0.72;
+    for (const b of bubbles) {
+      b.t += b.speed * (1 + shock * 1.2);
+      if (b.t > 1.05) {
+        b.t = 0;
+        b.xRel = (Math.random() - 0.5) * 0.7;
+        b.size = 1.6 + Math.random() * 4.5;
+      }
+      const t = b.t;
+      // 锥形扩散：越往下越宽
+      const widthSpread = 0.5 + t * 1.5;
+      const driftX = Math.sin(t * 4 + b.phase) * b.drift * jR * t * 6;
+      const x = jcx + b.xRel * jR * widthSpread + driftX;
+      const y = bubbleBaseY + t * bubbleFallLen;
+      const fadeIn = t < 0.1 ? t / 0.1 : 1;
+      const fadeOut = t > 0.82 ? Math.max(0, 1 - (t - 0.82) / 0.18) : 1;
+      const a = b.alpha * fadeIn * fadeOut * (1 + proximity * 0.25);
+      if (a < 0.02) continue;
+      const r = b.size;
+      const grad = ctx.createRadialGradient(x, y, 0, x, y, r * 1.6);
+      grad.addColorStop(0, `rgba(${b.color}, ${a})`);
+      grad.addColorStop(0.5, `rgba(167, 139, 250, ${a * 0.5})`);
+      grad.addColorStop(1, `rgba(120, 100, 200, 0)`);
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(x, y, r * 1.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 7. 背景光斑（径向渐变，加大、增多、加亮）
+    for (const p of bg) {
+      p.y += p.vy;
+      p.breath += p.breathSpd * 0.016;
+      if (p.y < -0.12) { p.y = 1.12; p.x = Math.random(); }
+      const swayX = Math.sin(time * p.swaySpd + p.breath) * p.sway;
+      const px = p.x * cw + swayX;
+      const py = p.y * ch;
+      const breathe = 0.75 + 0.25 * Math.sin(p.breath);
+      const a = p.alpha * breathe;
+      const r = p.size * breathe;
+      const grad = ctx.createRadialGradient(px, py, 0, px, py, r);
+      grad.addColorStop(0, `rgba(${p.color}, ${a})`);
+      grad.addColorStop(0.45, `rgba(${p.color}, ${a * 0.5})`);
+      grad.addColorStop(1, `rgba(${p.color}, 0)`);
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(px, py, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* === 导航遮罩过渡（仅绑定顶部导航与首页 CTA，不拦截侧边栏链接） === */
+const overlay = document.getElementById('overlay');
+const overlayWord = overlay.querySelector('.word');
+const sectionNames = { '#home': 'Home', '#work': 'Work', '#about': 'About', '#contact': 'Contact' };
+let overlayBusy = false;
+document.querySelectorAll('.nav-links a[href^="#"], .cta-row a[href^="#"]').forEach(a => {
+  a.addEventListener('click', (e) => {
+    e.preventDefault();
+    const hash = a.getAttribute('href');
+    const target = document.querySelector(hash);
+    if (!target || overlayBusy) return;
+    overlayBusy = true;
+    overlayWord.textContent = sectionNames[hash] || 'Go';
+    overlay.classList.add('show');
+    setTimeout(() => {
+      target.scrollIntoView({ behavior: 'auto', block: 'start' });
+      setTimeout(() => {
+        overlay.classList.remove('show');
+        setTimeout(() => { overlayBusy = false; }, 300);
+      }, 250);
+    }, 580);
+  });
+});
+
+/* === 磁性按钮 === */
+document.querySelectorAll('.btn').forEach(btn => {
+  btn.addEventListener('mousemove', (e) => {
+    const r = btn.getBoundingClientRect();
+    const dx = (e.clientX - (r.left + r.width / 2)) * 0.22;
+    const dy = (e.clientY - (r.top + r.height / 2)) * 0.3;
+    btn.style.transform = `translate(${dx}px, ${dy}px)`;
+  });
+  btn.addEventListener('mouseleave', () => { btn.style.transform = ''; });
+});
+
+/* === 技能卡光标聚光 === */
+document.querySelectorAll('.skill-chip').forEach(chip => {
+  chip.addEventListener('mousemove', (e) => {
+    const r = chip.getBoundingClientRect();
+    chip.style.setProperty('--sx', `${e.clientX - r.left}px`);
+    chip.style.setProperty('--sy', `${e.clientY - r.top}px`);
+  });
+});
+
+/* === 滚动入场 === */
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.style.opacity = '1';
+      entry.target.style.transform = 'translateY(0)';
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -80px 0px' });
+document.querySelectorAll('.skill-chip, .about-photo, .about-content, .contact-intro').forEach((el) => {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(24px)';
+  el.style.transition = 'opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1)';
+  revealObserver.observe(el);
+});
+
+/* === 吊牌入场（CSS 弹性坠落，每次进 contact 触发） === */
+const dogTag = document.getElementById('dogTag');
+let lastTagDrop = 0;
+function triggerTagDrop() {
+  const now = Date.now();
+  if (now - lastTagDrop < 2500) return;
+  lastTagDrop = now;
+  dogTag.classList.remove('drop');
+  void dogTag.offsetWidth;
+  dogTag.classList.add('drop');
+}
+const tagObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) triggerTagDrop();
+  });
+}, { threshold: 0.25 });
+tagObserver.observe(dogTag);
+document.querySelectorAll('a[href="#contact"]').forEach(a => {
+  a.addEventListener('click', () => setTimeout(triggerTagDrop, 900));
+});
+
+/* === 吊牌复制 === */
+const copyTip = document.getElementById('copyTip');
+let copyTimer = null;
+document.querySelectorAll('.tag-field').forEach(field => {
+  field.addEventListener('click', () => {
+    const val = field.dataset.copy;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(val).catch(() => {});
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = val; document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (err) {}
+      document.body.removeChild(ta);
+    }
+    copyTip.textContent = 'Copied · ' + val;
+    copyTip.classList.add('show');
+    if (copyTimer) clearTimeout(copyTimer);
+    copyTimer = setTimeout(() => copyTip.classList.remove('show'), 1800);
+  });
+});
 </script>
 </body>
 </html>
