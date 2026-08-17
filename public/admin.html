@@ -343,7 +343,7 @@ function renderWorks() {
       const animWorks = currentWorks.filter(w=>(w.project||'echocalypse')==='animation' && (!adminSearchQuery||w.title.toLowerCase().includes(adminSearchQuery))).sort((a,b)=>a.order-b.order);
       const anim3dWorks = animWorks.filter(w=>(w.category||'3d')==='3d');
       const anim2dWorks = animWorks.filter(w=>(w.category||'3d')==='2d');
-      html += '<div style="margin-bottom:32px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid var(--accent);"><span style="font-size:20px;">✨</span><h2 style="font-size:18px;font-weight:700;">动画系列</h2><span style="font-size:12px;color:var(--text-muted);background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:10px;">'+animWorks.length+' 个</span>';
+      html += '<div style="margin-bottom:32px;" id="admin-section-animation" data-proj="animation"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid var(--accent);"><span style="font-size:20px;">✨</span><h2 style="font-size:18px;font-weight:700;">动画系列</h2><span style="font-size:12px;color:var(--text-muted);background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:10px;">'+animWorks.length+' 个</span>';
       html += '<button class="btn-primary btn-sm" style="margin-left:auto;" onclick="quickUploadAnimation()">+ 上传动画作品</button>';
       html += '</div>';
       // 三维子分类
