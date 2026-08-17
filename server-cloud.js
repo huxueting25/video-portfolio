@@ -161,68 +161,37 @@ let cloudinaryReady = false;
 const DATA_PUBLIC_ID = 'portfolio/data/works';
 
 async function loadWorksFromCloudinary() {
-  try {
-    const result = await cloudinary.api.resource(DATA_PUBLIC_ID, { resource_type: 'raw' });
-    const response = await fetch(result.secure_url);
-    const data = await response.json();
-    if (data.works && Array.isArray(data.works)) {
-      works = data.works;
-      console.log(`✅ 从 Cloudinary 加载了 ${works.length} 个作品`);
-    }
-    if (data.config) {
-      config = { ...config, ...data.config };
-    }
-    cloudinaryReady = true;
-  } catch (e) {
-    console.log('⚠️ Cloudinary 加载失败，从 R2 备份加载...');
-    cloudinaryReady = true;
-    // 失败时回退到 R2 备份
-    if (R2_ENABLED) {
-      try {
-        const url = await new Promise((resolve, reject) => {
-          const u = https.request({ hostname: R2_HOST, path: `/${R2_BUCKET}/data/works.json`, method: 'GET' }, res => {
-            let body = '';
-            res.on('data', c => body += c);
-            res.on('end', () => resolve({ status: res.statusCode, body }));
-          });
-          u.on('error', reject);
-          u.end();
+  // 已迁移至 R2：直接读取 R2 data/works.json（Cloudinary 已弃用）
+  if (R2_ENABLED) {
+    try {
+      const url = await new Promise((resolve, reject) => {
+        const u = https.request({ hostname: R2_HOST, path: `/${R2_BUCKET}/data/works.json`, method: 'GET' }, res => {
+          let body = '';
+          res.on('data', c => body += c);
+          res.on('end', () => resolve({ status: res.statusCode, body }));
         });
-        if (url.status === 200) {
-          const data = JSON.parse(url.body);
-          if (data.works && Array.isArray(data.works)) {
-            works = data.works;
-            console.log(`✅ 从 R2 备份加载了 ${works.length} 个作品`);
-          }
-          if (data.config) {
-            config = { ...config, ...data.config };
-          }
+        u.on('error', reject);
+        u.end();
+      });
+      if (url.status === 200) {
+        const data = JSON.parse(url.body);
+        if (data.works && Array.isArray(data.works)) {
+          works = data.works;
+          console.log(`✅ 从 R2 加载了 ${works.length} 个作品`);
         }
-      } catch (e2) { console.log('⚠️ R2 备份也不可用，从空数据开始'); }
-    }
+        if (data.config) {
+          config = { ...config, ...data.config };
+        }
+      } else {
+        console.log(`⚠️ R2 works.json 状态 ${url.status}，从空数据开始`);
+      }
+    } catch (e) { console.log('⚠️ R2 备份不可用，从空数据开始: ' + e.message); }
   }
+  cloudinaryReady = true;
 }
 
 async function saveWorksToCloudinary() {
-  try {
-    const data = JSON.stringify({ config, works });
-    const buffer = Buffer.from(data, 'utf-8');
-
-    // 先尝试覆盖，如果不存在则上传
-    try {
-      await cloudinary.uploader.destroy(DATA_PUBLIC_ID, { resource_type: 'raw' });
-    } catch (e) { /* 忽略 */ }
-
-    const result = await uploadToCloudinary(buffer, {
-      resource_type: 'raw',
-      public_id: DATA_PUBLIC_ID,
-      overwrite: true,
-    });
-    console.log(`💾 数据已保存到 Cloudinary (${works.length} 个作品)`);
-  } catch (e) {
-    console.error('❌ 保存到 Cloudinary 失败:', e.message);
-  }
-  // 同步备份到 R2 raw 文件（Cloudinary 限流时仍可保存）+ 导出公开 works JSON
+  // 已迁移至 R2：同步备份到 R2 raw 文件 + 导出公开 works JSON（Cloudinary 已弃用）
   if (R2_ENABLED) {
     try {
       const data = JSON.stringify({ config, works, _savedAt: new Date().toISOString() });
@@ -284,16 +253,7 @@ function authShare(req, res, next) {
   next();
 }
 
-// ========== Cloudinary 上传辅助 ==========
-function uploadToCloudinary(buffer, options) {
-  return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
-      if (error) reject(error);
-      else resolve(result);
-    });
-    Readable.from(buffer).pipe(stream);
-  });
-}
+// 已弃用：原 Cloudinary 上传辅助 uploadToCloudinary 已移除（全部迁移到 R2）
 
 const VIDEO_MAX_SIZE = 500 * 1024 * 1024; // 500MB
 const VIDEO_EXT = ['.mp4', '.webm', '.mov', '.avi', '.mkv'];
@@ -816,22 +776,26 @@ app.get('/api/cloudinary-sign', authAdmin, (req, res) => {
   }
 });
 
-// 上传封面图到 Cloudinary
+// 上传封面图到 R2（Cloudinary 已弃用，改直传 R2 covers/）
 app.post('/api/upload-cover', authAdmin, coverUpload.single('cover'), async (req, res) => {
   if (!req.file) return res.json({ success: false, error: '未收到文件' });
+  if (!R2_ENABLED) return res.json({ success: false, error: 'R2 未配置' });
   try {
-    const result = await uploadToCloudinary(req.file.buffer, {
-      resource_type: 'image',
-      folder: 'portfolio/covers',
-      public_id: 'cover_' + crypto.randomBytes(8).toString('hex'),
+    const ext = (req.file.mimetype === 'image/png' || req.file.originalname.toLowerCase().endsWith('.png')) ? '.png' : '.jpg';
+    const contentType = req.file.mimetype || 'image/jpeg';
+    const key = `covers/${crypto.randomBytes(12).toString('hex')}${ext}`;
+    const putUrl = r2PresignedUrl('PUT', key, contentType, 600);
+    await new Promise((r, rj) => {
+      const upReq = https.request(putUrl, { method: 'PUT', headers: { 'Content-Type': contentType, 'Content-Length': req.file.size } }, (upRes) => {
+        if (upRes.statusCode >= 200 && upRes.statusCode < 300) r();
+        else { let b = ''; upRes.on('data', c => b += c); upRes.on('end', () => rj(new Error(`R2 ${upRes.statusCode}: ${b}`))); }
+      });
+      upReq.on('error', rj);
+      upReq.end(req.file.buffer);
     });
-    res.json({
-      success: true,
-      coverFilename: result.public_id,
-      coverUrl: result.secure_url,
-    });
+    res.json({ success: true, coverFilename: key, coverUrl: r2PublicUrl(key) });
   } catch (err) {
-    console.error('Cloudinary cover upload error:', err);
+    console.error('R2 cover upload error:', err);
     res.json({ success: false, error: '封面上传失败: ' + err.message });
   }
 });
