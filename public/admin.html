@@ -66,9 +66,9 @@
         <a class="side-link proj" href="#admin-section-shaonian" data-proj="shaonian" onclick="scrollToAdmin('shaonian')"><span class="side-dot side-dot-shaonian"></span>少年三国志 <span class="side-count" id="admin-proj-count-shaonian">0</span></a>
         <a class="side-link proj" href="#admin-section-zomline" data-proj="zomline" onclick="scrollToAdmin('zomline')"><span class="side-dot side-dot-zomline"></span>Zomline Survival <span class="side-count" id="admin-proj-count-zomline">0</span></a>
         <a class="side-link proj" href="#admin-section-gr" data-proj="gr" onclick="scrollToAdmin('gr')"><span class="side-dot side-dot-gr"></span>代号GR <span class="side-count" id="admin-proj-count-gr">0</span></a>
-        <a class="side-link proj" href="#admin-section-clip" data-proj="clip" onclick="scrollToAdmin('clip')"><span class="side-dot side-dot-clip"></span>影视混剪 <span class="side-count" id="admin-proj-count-clip">0</span></a>
         <a class="side-link proj" href="#admin-section-aigc" data-proj="aigc" onclick="scrollToAdmin('aigc')"><span class="side-dot side-dot-aigc"></span>AIGC作品 <span class="side-count" id="admin-proj-count-aigc">0</span></a>
         <a class="side-link proj" href="#admin-section-animation" data-proj="animation" onclick="scrollToAdmin('animation')"><span class="side-dot" style="background:#a855f7;"></span>动画系列 <span class="side-count" id="admin-proj-count-animation">0</span></a>
+        <a class="side-link proj" href="#admin-section-clip" data-proj="clip" onclick="scrollToAdmin('clip')"><span class="side-dot side-dot-clip"></span>影视混剪 <span class="side-count" id="admin-proj-count-clip">0</span></a>
       </nav>
     </aside>
 
@@ -204,7 +204,32 @@ document.getElementById('login-form').addEventListener('submit', async e => {
 })();
 
 async function loadConfig() {
-  try { const r=await fetch('/api/config',{headers:{'X-Admin-Token':adminToken}}); const d=await r.json(); portfolioToken=d.portfolioToken; if(Array.isArray(d.sectionOrder)&&d.sectionOrder.length){ sectionOrder=d.sectionOrder; if(currentWorks.length) renderWorks(); } document.getElementById('portfolio-link').value='https://huxueting25.github.io/video-portfolio/?p='+portfolioToken; } catch(e){}
+  try { const r=await fetch('/api/config',{headers:{'X-Admin-Token':adminToken}}); const d=await r.json(); portfolioToken=d.portfolioToken; if(Array.isArray(d.sectionOrder)&&d.sectionOrder.length){ sectionOrder=d.sectionOrder; syncSidebarOrder(); if(currentWorks.length) renderWorks(); } document.getElementById('portfolio-link').value='https://huxueting25.github.io/video-portfolio/?p='+portfolioToken; } catch(e){}
+}
+
+// 侧边栏顺序跟随 sectionOrder：买量广告组(buyAd) + AIGC/动画/混剪 独立栏目按栏目顺序重排
+function syncSidebarOrder() {
+  const nav = document.querySelector('.admin-sidebar .sidebar-nav');
+  if (!nav) return;
+  const groups = {};
+  let currentGroup = null;
+  Array.from(nav.children).forEach(el => {
+    if (el.classList && el.classList.contains('side-project')) {
+      currentGroup = { key: 'buyAd', els: [el] };
+      groups.buyAd = currentGroup;
+    } else if (el.classList && el.classList.contains('side-link') && el.dataset.proj) {
+      if (['shaonian','zomline','gr'].indexOf(el.dataset.proj) >= 0) {
+        // 买量广告子项目：并入当前 buyAd 组
+        if (currentGroup) currentGroup.els.push(el);
+        else { currentGroup = { key: el.dataset.proj, els: [el] }; groups[el.dataset.proj] = currentGroup; }
+      } else {
+        currentGroup = { key: el.dataset.proj, els: [el] };
+        groups[el.dataset.proj] = currentGroup;
+      }
+    }
+  });
+  sectionOrder.forEach(sec => { if (groups[sec]) groups[sec].els.forEach(e => nav.appendChild(e)); });
+  Object.keys(groups).forEach(sec => { if (sectionOrder.indexOf(sec) < 0) groups[sec].els.forEach(e => nav.appendChild(e)); });
 }
 function copyPortfolioLink() { const l=document.getElementById('portfolio-link').value; navigator.clipboard.writeText(l).then(()=>showToast('✅ 已复制')).catch(()=>prompt('手动复制:',l)); }
 async function regeneratePortfolioToken() {
@@ -373,11 +398,11 @@ function quickUploadAnimation() {
 
 function moveSectionUp(section) {
   const i = sectionOrder.indexOf(section);
-  if (i > 0) { [sectionOrder[i-1], sectionOrder[i]] = [sectionOrder[i], sectionOrder[i-1]]; saveSectionOrder(); renderWorks(); }
+  if (i > 0) { [sectionOrder[i-1], sectionOrder[i]] = [sectionOrder[i], sectionOrder[i-1]]; saveSectionOrder(); syncSidebarOrder(); renderWorks(); }
 }
 function moveSectionDown(section) {
   const i = sectionOrder.indexOf(section);
-  if (i < sectionOrder.length-1) { [sectionOrder[i], sectionOrder[i+1]] = [sectionOrder[i+1], sectionOrder[i]]; saveSectionOrder(); renderWorks(); }
+  if (i < sectionOrder.length-1) { [sectionOrder[i], sectionOrder[i+1]] = [sectionOrder[i+1], sectionOrder[i]]; saveSectionOrder(); syncSidebarOrder(); renderWorks(); }
 }
 function saveSectionOrder() {
   fetch('/api/works', { method:'POST', headers:{'Content-Type':'application/json','X-Admin-Token':adminToken}, body:JSON.stringify({ sectionOrder }) });
