@@ -162,19 +162,13 @@ const DATA_PUBLIC_ID = 'portfolio/data/works';
 
 async function loadWorksFromCloudinary() {
   // 已迁移至 R2：直接读取 R2 data/works.json（Cloudinary 已弃用）
+  // 注意：用 r2.dev 公开域名读取（S3 API 需要签名，无签名的 S3 GET 会 403）
   if (R2_ENABLED) {
     try {
-      const url = await new Promise((resolve, reject) => {
-        const u = https.request({ hostname: R2_HOST, path: `/${R2_BUCKET}/data/works.json`, method: 'GET' }, res => {
-          let body = '';
-          res.on('data', c => body += c);
-          res.on('end', () => resolve({ status: res.statusCode, body }));
-        });
-        u.on('error', reject);
-        u.end();
-      });
-      if (url.status === 200) {
-        const data = JSON.parse(url.body);
+      const url = R2_DEV_URL + '/data/works.json';
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
         if (data.works && Array.isArray(data.works)) {
           works = data.works;
           console.log(`✅ 从 R2 加载了 ${works.length} 个作品`);
@@ -183,7 +177,7 @@ async function loadWorksFromCloudinary() {
           config = { ...config, ...data.config };
         }
       } else {
-        console.log(`⚠️ R2 works.json 状态 ${url.status}，从空数据开始`);
+        console.log(`⚠️ R2 works.json 状态 ${res.status}，从空数据开始`);
       }
     } catch (e) { console.log('⚠️ R2 备份不可用，从空数据开始: ' + e.message); }
   }
