@@ -492,7 +492,7 @@ function clearAdminSearch() { document.getElementById('admin-search-input').valu
 
 // ===== 上传弹窗 =====
 document.getElementById('btn-add').addEventListener('click',()=>{uploadedFile=null;resetForm();document.getElementById('modal-upload').style.display='flex';});
-function onProjectChange() {
+function onProjectChange(target) {
   const p = document.getElementById('work-project').value;
   const grp = document.getElementById('work-category-group');
   const catSelect = document.getElementById('work-category');
@@ -501,9 +501,12 @@ function onProjectChange() {
   } else if (p === 'animation') {
     grp.style.display = '';
     catSelect.innerHTML = '<option value="3d">🧊 三维</option><option value="2d">🎨 二维</option>';
+    catSelect.value = (target === '3d' || target === '2d') ? target : '3d';
   } else {
     grp.style.display = '';
     catSelect.innerHTML = '<option value="EN">🌍 欧美EN</option><option value="JP">🎌 日本JP</option><option value="CN">🇨🇳 简中CN</option><option value="KR">🇰🇷 韩国KR</option>';
+    const valid = ['EN','JP','CN','KR'].includes(target) ? target : 'EN';
+    catSelect.value = valid;
   }
 }
 function resetForm() {
@@ -691,7 +694,9 @@ document.getElementById('upload-form').addEventListener('submit',async e=>{
 
 function editWork(id) {
   const w=currentWorks.find(x=>x.id===id); if(!w)return;
-  document.getElementById('edit-id').value=w.id; document.getElementById('work-title').value=w.title; document.getElementById('work-description').value=w.description||''; document.getElementById('work-category').value=w.category||'EN'; document.getElementById('work-project').value=w.project||'echocalypse'; document.getElementById('work-video-url').value=w.videoUrl||'';
+  document.getElementById('edit-id').value=w.id; document.getElementById('work-title').value=w.title; document.getElementById('work-description').value=w.description||''; document.getElementById('work-project').value=w.project||'echocalypse'; document.getElementById('work-video-url').value=w.videoUrl||'';
+  // 关键：先 set project 触发 onchange 切换 options（3d/2d 或 EN/JP/CN/KR），再设 category 让其匹配
+  onProjectChange(w.category || (w.project==='animation' ? '3d' : 'EN'));
   document.getElementById('modal-title').textContent='编辑：'+w.title; document.getElementById('upload-area').style.display='none'; document.getElementById('replace-video-area').style.display='block';
   document.getElementById('current-video-name').textContent=w.originalName||w.filename; uploadedFile=null; restoreCover(w);
   document.getElementById('modal-upload').style.display='flex';
