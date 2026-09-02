@@ -133,6 +133,43 @@ function r2Http(method, key, extraQuery, body) {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// ========== 流量统计（诊断 Render 带宽来源，每 10 分钟快照到 R2 logs/traffic.json） ==========
+const trafficStats = {};
+function trafficKey(req) {
+  const p = (req.path || '/').split('?')[0];
+  if (p.startsWith('/v/')) return '/v/*';
+  if (p.startsWith('/static/')) return '/static/*';
+  if (p.startsWith('/api/')) return p.split('/').slice(0, 3).join('/'); // /api/works, /api/share-data...
+  return p;
+}
+app.use((req, res, next) => {
+  const key = trafficKey(req);
+  let bytes = 0;
+  const origWrite = res.write.bind(res);
+  res.write = (chunk, ...args) => {
+    if (chunk) bytes += chunk.length;
+    return origWrite(chunk, ...args);
+  };
+  res.on('finish', () => {
+    if (!trafficStats[key]) trafficStats[key] = { count: 0, bytes: 0 };
+    trafficStats[key].count++;
+    trafficStats[key].bytes += bytes;
+  });
+  next();
+});
+setInterval(() => {
+  if (!R2_ENABLED || !Object.keys(trafficStats).length) return;
+  try {
+    const data = JSON.stringify({ _at: new Date().toISOString(), stats: trafficStats }, null, 1);
+    const key = 'logs/traffic.json';
+    const putUrl = r2PresignedUrl('PUT', key, 'application/json', 600);
+    const req = https.request(putUrl, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) } }, res => res.resume());
+    req.on('error', () => {});
+    req.write(data);
+    req.end();
+  } catch (e) {}
+}, 10 * 60 * 1000);
+
 // ========== 性能优化 ==========
 // 1. Gzip 压缩 - 减少网络传输 70%+
 app.use(compression({ level: 6, threshold: 1024 }));
